@@ -1,0 +1,36 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CAMPAIGN TEST: 60 physics ticks/s
+PASS: Campaign begins at the locked Slime foyer
+PASS: Foyer cannot be skipped before clearing enemies
+PASS: Foyer clear unlocks the next stage
+PASS: Exit enters a separate exploration stage 1.5
+PASS: Stage transition preserves HP and the equipped weapon
+PASS: Stage transition preserves unique item identity and exact rune loadout
+PASS: Passive relic slots persist between stages
+PASS: Exploration room contains a guarded relic chest without combat waves
+PASS: Secret chest can be opened after its barriers are cleared
+PASS: Secret reward spawns a collectible relic resource
+PASS: Secret chest cannot duplicate its loot
+PASS: Exploration exit enters the mutant elite arena
+PASS: Elite room instantiates two distinct mutant enemies
+PASS: Mutant owns doubled geometry and starts with one hundred twenty HP
+PASS: Mutant can emit a finite elemental projectile
+PASS: Poison mutant projectile resolves Player damage and poison
+PASS: Two mutant waves clear the room and award finite elite souls
+PASS: Elite exit enters the complete two-phase Golem fight
+PASS: Campaign boss starts phase two and summons two adds exactly once
+PASS: Boss defeat opens rewards and victory portal, preserving souls
+PASS: Victory portal completes the campaign loop
+PASS: Standalone test F8 loads the boss campaign
+PASS: Standalone F8 retains HP and the existing inventory ledger
+PASS: Standalone F8 retains exact rune and relic loadout
+PASS: Campaign teardown frees room hazards and loot
+PASS: Physical F8 jumps to Boss while retaining HP
+STRESS content campaign objects 2221 -> 2221, resources 467 -> 467
+PASS: Repeated content campaigns retain no growing object population
+PASS: Repeated content campaigns release item and spell runtime resources
+PASS: Content room transitions release all spells and pickups
+PASS: System teardown restores global time and pause
+PASS: System teardown releases incident and trap visuals
+RESULT: 31 checks, 0 failures

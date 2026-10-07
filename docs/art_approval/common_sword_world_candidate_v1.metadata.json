@@ -1,0 +1,15 @@
+{
+  "width": 2172,
+  "height": 724,
+  "pixel_format": "Format32bppArgb",
+  "sampled_min_alpha": 0,
+  "sampled_max_alpha": 255,
+  "transparent_samples": 5404,
+  "opaque_samples": 1,
+  "sample_step": 16,
+  "gameplay_imported": true,
+  "approval_status": "candidate; board approved, individual sprite not yet reviewed",
+  "sha256": "23580d5f90019ec56c3e58ac99229862a3c2249a40e7f0319abf3a2d73c7f9fc",
+  "gameplay_asset": "res://assets/sprites/weapons/common_sword.png",
+  "status": "Derived from approved six-tier board; integrated as first Common sword slice"
+}

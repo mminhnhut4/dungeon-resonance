@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"poison_bolt"
+display_name = "Độc Tiễn"
+recipe_rune_ids = Array[StringName]([&"poison"])
+behavior_id = &"basic"
+base_damage = 12.0
+cooldown_seconds = 1.1
+poison_stacks = 1

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://dprevrr5pjynb"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_33b8c"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/ring.tres" id="ring"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"ring"
+bone_slot = &"hand_right"
+texture = ExtResource("ring")
+pivot_pixels = Vector2(43.8, -103.2)
+display_scale = Vector2(0.009589, 0.00969)
+draw_order = 5
+
+[resource]
+script = ExtResource("1")
+id = &"starter_ring"
+item_name = "Nhẫn Đồng Mộc"
+description = "Một vòng đồng trơn của lữ khách. Trang bị Thường; không có hào quang và chưa cộng chỉ số."
+slot_type = 2
+icon_texture = ExtResource("ring")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0")])

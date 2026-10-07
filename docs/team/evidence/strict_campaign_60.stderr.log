@@ -1,0 +1,8 @@
+ERROR: Condition "slot >= slot_max" is true. Returning: nullptr
+   at: get_instance (./core/object/object.h:912)
+   GDScript backtrace (most recent call first):
+       [0] record (res://scripts/actors/enemies/enemy_hit_aggro.gd:26)
+       [1] _on_hit (res://scripts/actors/enemies/boss_golem.gd:200)
+       [2] take_damage (res://scripts/combat/hurtbox.gd:45)
+       [3] test_system (res://tests/campaign_test.gd:73)
+       [4] _step (res://tests/survival_test_base.gd:85)

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3 uid="uid://buo2mnhfganef"]
+
+[ext_resource type="Script" uid="uid://djdyd07laeyxg" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape"]
+size = Vector2(22, 22)
+
+[sub_resource type="Resource" id="punch"]
+script = ExtResource("2")
+id = &"basic_punch"
+windup_seconds = 0.06
+active_seconds = 0.08
+recovery_seconds = 0.16
+hitbox_shape = SubResource("shape")
+hitbox_offset = Vector2(17, 0)
+knockback = Vector2(60, -20)
+motion = &"punch"
+stagger_force = 3.0
+
+[resource]
+script = ExtResource("1")
+id = &"unarmed"
+display_name = "Tay không"
+visual_archetype = "swordsman"
+base_damage = 5.0
+combo_steps = Array[ExtResource("2")]([SubResource("punch")])

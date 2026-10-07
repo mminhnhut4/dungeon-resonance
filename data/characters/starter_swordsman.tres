@@ -1,0 +1,169 @@
+[gd_resource type="Resource" script_class="ModularCharacterSkin" format=3 uid="uid://drnrc0226f0s5"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/foot.tres" id="foot"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/forearm.tres" id="forearm"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/hair.tres" id="hair"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/hand.tres" id="hand"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/head.tres" id="head"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/hip.tres" id="hip"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/shin.tres" id="shin"]
+[ext_resource type="Script" uid="uid://bixfvg8d3nqxf" path="res://scripts/resources/modular_character_skin.gd" id="Skin"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/thigh.tres" id="thigh"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/torso.tres" id="torso"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/upper_arm.tres" id="upper_arm"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"head"
+bone_slot = &"head"
+texture = ExtResource("head")
+pivot_pixels = Vector2(101.05, 254.74)
+display_scale = Vector2(0.038298, 0.038376)
+draw_order = 2
+
+[sub_resource type="Resource" id="Part_1"]
+script = ExtResource("Part")
+id = &"hair"
+bone_slot = &"hair"
+texture = ExtResource("hair")
+pivot_pixels = Vector2(133.7, 47.84)
+display_scale = Vector2(0.043979, 0.050167)
+draw_order = -5
+
+[sub_resource type="Resource" id="Part_2"]
+script = ExtResource("Part")
+id = &"undershirt"
+bone_slot = &"torso"
+texture = ExtResource("torso")
+pivot_pixels = Vector2(96.35, 197.83)
+display_scale = Vector2(0.058537, 0.055351)
+
+[sub_resource type="Resource" id="Part_3"]
+script = ExtResource("Part")
+id = &"hips"
+bone_slot = &"hip"
+texture = ExtResource("hip")
+pivot_pixels = Vector2(108, 67.64)
+display_scale = Vector2(0.055556, 0.033708)
+draw_order = -1
+
+[sub_resource type="Resource" id="Part_4"]
+script = ExtResource("Part")
+id = &"upper_left"
+bone_slot = &"upper_arm_left"
+texture = ExtResource("upper_arm")
+pivot_pixels = Vector2(60, 25.63)
+display_scale = Vector2(0.028333, 0.028326)
+draw_order = -3
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_5"]
+script = ExtResource("Part")
+id = &"fore_left"
+bone_slot = &"forearm_left"
+texture = ExtResource("forearm")
+pivot_pixels = Vector2(53, 16.38)
+display_scale = Vector2(0.028302, 0.034188)
+draw_order = -3
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_6"]
+script = ExtResource("Part")
+id = &"hand_left"
+bone_slot = &"hand_left"
+texture = ExtResource("hand")
+pivot_pixels = Vector2(60.96, 18.9)
+display_scale = Vector2(0.027559, 0.025397)
+draw_order = -3
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_7"]
+script = ExtResource("Part")
+id = &"thigh_left"
+bone_slot = &"thigh_left"
+texture = ExtResource("thigh")
+pivot_pixels = Vector2(85, 23.4)
+display_scale = Vector2(0.035294, 0.042735)
+draw_order = -2
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_8"]
+script = ExtResource("Part")
+id = &"shin_left"
+bone_slot = &"shin_left"
+texture = ExtResource("shin")
+pivot_pixels = Vector2(49.5, 18.88)
+display_scale = Vector2(0.038384, 0.038136)
+draw_order = -2
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_9"]
+script = ExtResource("Part")
+id = &"foot_left"
+bone_slot = &"foot_left"
+texture = ExtResource("foot")
+pivot_pixels = Vector2(50.25, 29.2041)
+display_scale = Vector2(0.034826, 0.030818)
+draw_order = -2
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_10"]
+script = ExtResource("Part")
+id = &"upper_right"
+bone_slot = &"upper_arm_right"
+texture = ExtResource("upper_arm")
+pivot_pixels = Vector2(60, 25.63)
+display_scale = Vector2(0.028333, 0.028326)
+draw_order = 2
+
+[sub_resource type="Resource" id="Part_11"]
+script = ExtResource("Part")
+id = &"fore_right"
+bone_slot = &"forearm_right"
+texture = ExtResource("forearm")
+pivot_pixels = Vector2(53, 16.38)
+display_scale = Vector2(0.028302, 0.034188)
+draw_order = 2
+
+[sub_resource type="Resource" id="Part_12"]
+script = ExtResource("Part")
+id = &"hand_right"
+bone_slot = &"hand_right"
+texture = ExtResource("hand")
+pivot_pixels = Vector2(60.96, 18.9)
+display_scale = Vector2(0.027559, 0.025397)
+draw_order = 2
+
+[sub_resource type="Resource" id="Part_13"]
+script = ExtResource("Part")
+id = &"thigh_right"
+bone_slot = &"thigh_right"
+texture = ExtResource("thigh")
+pivot_pixels = Vector2(85, 23.4)
+display_scale = Vector2(0.035294, 0.042735)
+draw_order = -1
+
+[sub_resource type="Resource" id="Part_14"]
+script = ExtResource("Part")
+id = &"shin_right"
+bone_slot = &"shin_right"
+texture = ExtResource("shin")
+pivot_pixels = Vector2(49.5, 18.88)
+display_scale = Vector2(0.038384, 0.038136)
+draw_order = -1
+
+[sub_resource type="Resource" id="Part_15"]
+script = ExtResource("Part")
+id = &"foot_right"
+bone_slot = &"foot_right"
+texture = ExtResource("foot")
+pivot_pixels = Vector2(50.25, 29.2041)
+display_scale = Vector2(0.034826, 0.030818)
+draw_order = -1
+
+[resource]
+script = ExtResource("Skin")
+id = &"starter_swordsman"
+parts = Array[ExtResource("Part")]([SubResource("Part_0"), SubResource("Part_1"), SubResource("Part_2"), SubResource("Part_3"), SubResource("Part_4"), SubResource("Part_5"), SubResource("Part_6"), SubResource("Part_7"), SubResource("Part_8"), SubResource("Part_9"), SubResource("Part_10"), SubResource("Part_11"), SubResource("Part_12"), SubResource("Part_13"), SubResource("Part_14"), SubResource("Part_15")])
+visual_scale = 1.25

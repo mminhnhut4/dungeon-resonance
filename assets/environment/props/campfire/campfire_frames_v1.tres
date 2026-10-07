@@ -1,0 +1,43 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bokajnxt2sm8v"]
+
+[ext_resource type="Texture2D" uid="uid://c5bbpjtagn0sr" path="res://assets/environment/props/campfire/campfire_frames_v1.png" id="1"]
+
+[sub_resource type="AtlasTexture" id="frame_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 0, 543, 724)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_1"]
+atlas = ExtResource("1")
+region = Rect2(543, 0, 543, 724)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_2"]
+atlas = ExtResource("1")
+region = Rect2(1086, 0, 543, 724)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="frame_3"]
+atlas = ExtResource("1")
+region = Rect2(1629, 0, 543, 724)
+filter_clip = true
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("frame_0")
+}, {
+"duration": 0.8,
+"texture": SubResource("frame_1")
+}, {
+"duration": 1.1,
+"texture": SubResource("frame_2")
+}, {
+"duration": 0.9,
+"texture": SubResource("frame_3")
+}],
+"loop": 1,
+"name": &"burn",
+"speed": 8.0
+}]

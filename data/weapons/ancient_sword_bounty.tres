@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3 uid="uid://bb38ahth6fb6w"]
+
+[ext_resource type="Script" uid="uid://djdyd07laeyxg" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"ancient_sword_bounty_0"
+windup_seconds = 0.07
+active_seconds = 0.09
+recovery_seconds = 0.12
+hitbox_shape = SubResource("shape0")
+reach = 68
+sweep_angle_degrees = 100
+stagger_force = 10
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"ancient_sword_bounty_1"
+windup_seconds = 0.085
+active_seconds = 0.09
+recovery_seconds = 0.155
+hitbox_shape = SubResource("shape1")
+damage_multiplier = 1.35
+reach = 68
+sweep_angle_degrees = 100
+stagger_force = 10
+
+[sub_resource type="RectangleShape2D" id="shape2"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step2"]
+script = ExtResource("2")
+id = &"ancient_sword_bounty_2"
+active_seconds = 0.09
+recovery_seconds = 0.19
+hitbox_shape = SubResource("shape2")
+damage_multiplier = 1.7
+reach = 68
+sweep_angle_degrees = 100
+stagger_force = 10
+
+[sub_resource type="RectangleShape2D" id="shape3"]
+size = Vector2(72, 16)
+
+[sub_resource type="Resource" id="step3"]
+script = ExtResource("2")
+id = &"ancient_sword_bounty_3"
+windup_seconds = 0.12
+active_seconds = 0.08
+recovery_seconds = 0.21
+hitbox_shape = SubResource("shape3")
+hitbox_offset = Vector2(43, 0)
+damage_multiplier = 1.55
+reach = 82
+motion = &"thrust"
+stagger_force = 25
+lunge_speed = 180
+lunge_seconds = 0.07
+
+[resource]
+script = ExtResource("1")
+id = &"ancient_sword_bounty"
+display_name = "Kiếm Lữ Hành · Liên Thức"
+visual_profile = &"sweep"
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1"), SubResource("step2"), SubResource("step3")])

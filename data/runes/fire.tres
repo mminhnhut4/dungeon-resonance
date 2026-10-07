@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RuneDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/rune_definition.gd" id="1_rune"]
+
+[resource]
+script = ExtResource("1_rune")
+id = &"fire"
+display_name = "Fire"
+tags = Array[StringName]([&"element", &"fire"])
+display_color = Color(1, 0.4, 0.15, 1)

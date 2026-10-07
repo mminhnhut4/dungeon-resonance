@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://c22o761pwpc7x"]
+
+[ext_resource type="Script" uid="uid://b38b3pmy1qkt0" path="res://scripts/definitions/WeaponData.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(80, 60)
+
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"demon_greatsword_0"
+windup_seconds = 0.34
+active_seconds = 0.14
+recovery_seconds = 0.38
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(0, 0)
+knockback = Vector2(370, -35)
+reach = 130.0
+sweep_angle_degrees = 180.0
+stagger_force = 32.0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(80, 60)
+
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"demon_greatsword_1"
+windup_seconds = 0.34
+active_seconds = 0.14
+recovery_seconds = 0.38
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(0, 0)
+damage_multiplier = 1.25
+knockback = Vector2(370, -35)
+reach = 130.0
+sweep_angle_degrees = 180.0
+stagger_force = 32.0
+super_armor = true
+
+[resource]
+script = ExtResource("1")
+id = &"demon_greatsword"
+display_name = "Trảm Ma Đao"
+base_damage = 32.0
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1")])
+combo_window_seconds = 0.24
+critical_chance = 0.08

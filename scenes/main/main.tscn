@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/rooms/test_room.tscn" id="1_room"]
+
+[node name="Main" type="Node"]
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="TestRoom" parent="World" instance=ExtResource("1_room")]
+
+[node name="UI" type="CanvasLayer" parent="."]

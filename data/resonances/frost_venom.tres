@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"frost_venom"
+display_name = "Hàn Độc"
+recipe_rune_ids = Array[StringName]([&"poison", &"ice"])
+behavior_id = &"frost_venom"
+base_damage = 12.0
+cooldown_seconds = 1.1
+freeze_points = 100.0
+poison_stacks = 2
+effect_radius = 95.0

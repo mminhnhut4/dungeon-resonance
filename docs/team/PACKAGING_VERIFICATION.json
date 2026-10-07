@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-08",
+  "repo": "https://github.com/mminhnhut4/dungeon-resonance",
+  "visibility": "private",
+  "scope": "Source and contributor handoff; no new gameplay change or graphical benchmark in this task",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "engine_sha256": "ab1824f85bfd8e0e4128182c000c4003a3e042245b2967848d089b2a04b22424",
+  "renderer": "GL Compatibility",
+  "main": "res://scenes/maps/prologue_hub.tscn",
+  "candidate_tree": "b27b2d54e2ce6095c41ef239c4c7bca995515d69",
+  "zip_crc_and_manifest": "PASS: all candidate entries verified before extraction",
+  "candidate_source_files_changed_by_qa": [],
+  "strict": {
+    "passed": false,
+    "mode": "Default strict; no GameplayOnly",
+    "passed_gates": [
+      "import",
+      "addons",
+      "addon_entrypoints",
+      "addon_editor_scene",
+      "addon_lifecycle",
+      "validate",
+      "player_rig_editor",
+      "main_scene",
+      "resonance",
+      "content_data",
+      "asset_pipeline",
+      "audio_quit",
+      "antique_icon_catalog_audit",
+      "movement_60",
+      "combat_60",
+      "milestone_60",
+      "alpha_60",
+      "gear_60",
+      "storyteller_60",
+      "conditions_60",
+      "crafting_60",
+      "sanctuary_60",
+      "weapon_content_60",
+      "spell_matrix_60",
+      "relics_60"
+    ],
+    "passed_gate_count": 25,
+    "reported_zero_failure_checks": 986,
+    "failed_gate": "campaign_60",
+    "failed_gate_assertions": 31,
+    "failed_gate_process_exit": 0,
+    "reason": "Godot ERROR ObjectDB slot >= slot_max; EnemyHitAggro.record calls instance_from_id with SurvivalTestBase fake source_id 987654",
+    "remaining_gates": "not executed after default strict stopped",
+    "raw_log": "evidence/strict_package.log"
+  },
+  "validator": {
+    "scripts": 208,
+    "scenes": 34,
+    "failures": 0
+  },
+  "qa_helper_smoke": {
+    "exit": 0,
+    "diagnostics": [],
+    "save_isolated": true,
+    "frames": 12
+  },
+  "skill": {
+    "minimal_supported_frontmatter": "PASS",
+    "local_markdown_links_checked": 33,
+    "missing_local_links": 0,
+    "official_python_quick_validate": "NOT RUN successfully: PyYAML unavailable; no packages installed"
+  },
+  "source_preservation": {
+    "concurrent_resources_preserved": 17,
+    "paths": [
+      "assets/environment/props/campfire/campfire_frames_v1.tres",
+      "assets/environment/props/campfire/torch_flame_frames_v1.tres",
+      "data/pilgrimage_p01_art.tres",
+      "data/characters/starter_swordsman.tres",
+      "data/equipment/starter_amulet.tres",
+      "data/equipment/starter_boots.tres",
+      "data/equipment/starter_gloves.tres",
+      "data/equipment/starter_pants.tres",
+      "data/equipment/starter_ring.tres",
+      "data/equipment/starter_top.tres",
+      "data/weapons/ancient_sword_bounty.tres",
+      "data/weapons/ancient_sword.tres",
+      "data/weapons/blood_spiked_whip.tres",
+      "data/weapons/gale_dual_daggers.tres",
+      "data/weapons/shadow_dagger.tres",
+      "data/weapons/storm_arcane_staff.tres",
+      "data/weapons/unarmed.tres"
+    ],
+    "gameplay_source_overwritten_by_handoff": false,
+    "runtime_snapshot": "frozen before package QA; not automatically updated from subsequent local changes"
+  },
+  "known_limits": [
+    "strict campaign fixture error remains",
+    "800x600 layout failures from previous combat checkpoint remain",
+    "synchronous save frame peaks remain",
+    "historical native crash root cause unresolved",
+    "no new native gameplay/FPS/audio evidence in this packaging task"
+  ],
+  "final_documents_changed_after_qa": "Only handoff documents/receipt/journal; runtime byte identity compared to candidate tree"
+}

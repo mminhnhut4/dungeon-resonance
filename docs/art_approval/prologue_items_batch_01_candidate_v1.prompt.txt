@@ -1,0 +1,17 @@
+Use case: stylized-concept. Asset type: item approval sheet for a 2D side-scrolling Chinese cultivation dark-fantasy RPG. Create ONE landscape board with exactly TWELVE clearly separated item illustrations in a clean 4-column by 3-row grid. Each cell has a tiny simple number 01 through 12 beneath its object, no item names. All objects isolated on a uniform dark charcoal-blue matte board, same icon scale and crisp hand-painted cel shading with expressive ink contour, clear readable silhouette, subtle jade/teal accents, warm worn wood/leather, aged steel and bronze. Ordinary loot is humble and believable, no legendary ornament, no excessive magic aura, no copied icons from another game. At 64px thumbnail each object must remain distinct.
+Row 1 left to right:
+01: cluster of small uneven pale jade spirit-crystal fragments, angular mineral pieces, a faint inner glint.
+02: translucent green slime essence in a small stoppered glass bottle, viscous rounded droplets, visibly different from angular crystals.
+03: bundle of bent ancient iron scrap fragments, rough oxidized grey metal and one small bronze fitting.
+04: small ceramic bowl containing finely crushed pale-violet magic crystal dust, a few tiny sparkling grains.
+Row 2 left to right:
+05: damaged plain swordsman's straight jian sword, nicked silver blade, chipped steel near tip, weathered brown handle, humble dark metal guard.
+06: broken short assassin dagger with a missing blade tip, battered dark leather grip.
+07: cracked modest wooden spell staff, split upper shaft held by loose cord and a small dull jade bead.
+08: torn muted teal cloth tunic with cream collar and ragged hem, rust-red sash, no body/mannequin.
+Row 3 left to right:
+09: a pair of worn brown leather fingerless gloves with visible stitching and patched knuckles.
+10: small sealed crimson healing potion bottle with a simple bronze/wood stopper and cord.
+11: rolled off-white cloth bandage with a loose clean strip.
+12: pale green antidote in a narrow ceramic vial, leaf-shaped ink mark, distinct from slime bottle; restrained herbal medicine design.
+No characters, no inventory window, no big rarity borders, no excessive gold, no paper charms floating from melee weapons. Exactly twelve separate proposed item designs; no merged items or duplicated numbers.

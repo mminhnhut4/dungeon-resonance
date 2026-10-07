@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"combustion"
+display_name = "Độc Hỏa Bạo Phát"
+recipe_rune_ids = Array[StringName]([&"poison", &"fire"])
+behavior_id = &"combustion"
+base_damage = 18.0
+cooldown_seconds = 1.1
+consume_poison = true
+explosion_damage = 20.0
+effect_radius = 100.0

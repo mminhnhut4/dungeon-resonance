@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"astral_firestorm"
+display_name = "Tinh Vân Hỏa Lôi"
+recipe_rune_ids = Array[StringName]([&"fire", &"fire", &"wind", &"lightning"])
+behavior_id = &"firestorm"
+base_damage = 20.0
+explosion_damage = 38.0
+cooldown_seconds = 1.6
+windup_seconds = 0.18
+recovery_seconds = 0.18
+projectile_speed = 560.0
+

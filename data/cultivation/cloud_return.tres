@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="CultivationStyleData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cultivation/cultivation_style_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"cloud_return"
+display_name = "Hồi Phong Kiếm"

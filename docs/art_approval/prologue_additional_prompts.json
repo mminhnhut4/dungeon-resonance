@@ -1,0 +1,14 @@
+[
+  {
+    "key": "prologue_props",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_environment_candidate_v1.png",
+    "alpha": true,
+    "prompt": "Edit the approved sanctuary art board into a TRANSPARENT production prop atlas, exactly FOUR equal square cells arranged 2x2, with generous transparent padding: top-left ONE modest timber house facade, tiled roof, amber hanging lanterns and blank cloth closed doorway with an invented circular geometric mark; top-right ONE old stone arch doorway with faint jade magical light and eroded abstract scratches; bottom-left ONE dark wooden stash chest with simple iron bands; bottom-right ONE short stone worktable with a small iron anvil and modest hammer laid on top. Preserve painterly 2D side-on cổ phong jade/teal/rust/amber identity. Single object per cell, matching orthographic side elevation and ground foot line, no ground/background/shadows/UI/panel labels. NO Chinese characters, no text, no tall banners, no characters, no aura around ordinary chest. True alpha transparency. Objects must not overlap cell edges."
+  },
+  {
+    "key": "kael_cleanup",
+    "path": "D:/hầm ngục/assets/sprites/npc/kael_side_v1.png",
+    "alpha": true,
+    "prompt": "Clean up this already-generated Kael side sprite ONLY: remove the diffuse brown/green haze and glow behind the person and staff. Keep character pixels, face, clothing, staff, silhouette, feet and pose unchanged. The empty space behind him and all margins must be exactly transparent alpha zero, no shadow/glow at all. Full body on true transparent background, no text. This is an in-game NPC sprite, no atmospheric backdrop. Do not redraw or change the merchant."
+  }
+]

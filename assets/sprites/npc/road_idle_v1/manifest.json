@@ -1,0 +1,275 @@
+{
+  "schema": "dungeon-resonance.road-npc-atlas.v1",
+  "version": 1,
+  "status": "idle_fallback_ready",
+  "walk_animation_ready": false,
+  "art_direction": "Original aged painterly East Asian xianxia / jianghu supporting NPCs",
+  "source": "image_gen generated artwork; no user PC files used",
+  "coordinate_system": "top-left origin; rect=[x,y,width,height]; pivot measured within frame; pivot marks ground contact",
+  "alpha": "RGBA straight alpha, generated alpha preserved through crop, resize and transparent padding",
+  "facing": "right",
+  "left_facing": "mirror horizontally about the ground pivot",
+  "atlas": {
+    "file": "runtime/road_npcs_idle_atlas.png",
+    "size": [
+      256,
+      864
+    ],
+    "cell": [
+      256,
+      288
+    ],
+    "columns": 1,
+    "rows": 3
+  },
+  "native_60px_atlas": {
+    "file": "runtime/road_npcs_idle_atlas_60px.png",
+    "size": [
+      64,
+      216
+    ],
+    "cell": [
+      64,
+      72
+    ]
+  },
+  "recommended_body_height_px": 60,
+  "render_scale_from_main_atlas": 0.25,
+  "filter": "linear / bilinear; disable texture repeat; preserve alpha",
+  "characters": [
+    {
+      "id": "pilot_traveler",
+      "pilot_id": "P01",
+      "role": "Luggage-bearing traveler",
+      "frame_count": 1,
+      "idle": {
+        "file": "runtime/pilot_traveler_idle.png",
+        "atlas_rect": [
+          0,
+          0,
+          256,
+          288
+        ],
+        "pivot_px": [
+          128,
+          272
+        ],
+        "pivot_normalized": [
+          0.5,
+          0.9444444444444444
+        ],
+        "effective_alpha_bounds": [
+          69,
+          32,
+          164,
+          272
+        ]
+      },
+      "idle_60px": {
+        "file": "runtime/pilot_traveler_idle_60px.png",
+        "atlas_rect": [
+          0,
+          0,
+          64,
+          72
+        ],
+        "pivot_px": [
+          32,
+          68
+        ],
+        "effective_alpha_bounds": [
+          17,
+          8,
+          41,
+          68
+        ]
+      },
+      "animations": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 0,
+          "loop": false
+        },
+        "walk": null
+      },
+      "source_column_rect": [
+        0,
+        0,
+        512,
+        1024
+      ],
+      "source_effective_alpha_bounds": [
+        83,
+        65,
+        431,
+        945
+      ],
+      "source_foot_center_x": 298.0,
+      "source_crop_with_padding": [
+        75,
+        57,
+        439,
+        953
+      ],
+      "export_scale": 0.2727272727272727
+    },
+    {
+      "id": "pilot_bridge_keeper",
+      "pilot_id": "P02",
+      "role": "Bridge caretaker",
+      "frame_count": 1,
+      "idle": {
+        "file": "runtime/pilot_bridge_keeper_idle.png",
+        "atlas_rect": [
+          0,
+          288,
+          256,
+          288
+        ],
+        "pivot_px": [
+          128,
+          272
+        ],
+        "pivot_normalized": [
+          0.5,
+          0.9444444444444444
+        ],
+        "effective_alpha_bounds": [
+          78,
+          31,
+          167,
+          272
+        ]
+      },
+      "idle_60px": {
+        "file": "runtime/pilot_bridge_keeper_idle_60px.png",
+        "atlas_rect": [
+          0,
+          72,
+          64,
+          72
+        ],
+        "pivot_px": [
+          32,
+          68
+        ],
+        "effective_alpha_bounds": [
+          19,
+          7,
+          42,
+          68
+        ]
+      },
+      "animations": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 0,
+          "loop": false
+        },
+        "walk": null
+      },
+      "source_column_rect": [
+        512,
+        0,
+        512,
+        1024
+      ],
+      "source_effective_alpha_bounds": [
+        119,
+        120,
+        423,
+        946
+      ],
+      "source_foot_center_x": 288.5,
+      "source_crop_with_padding": [
+        111,
+        112,
+        431,
+        954
+      ],
+      "export_scale": 0.29055690072639223
+    },
+    {
+      "id": "pilot_pilgrim",
+      "pilot_id": "P03",
+      "role": "Pilgrim",
+      "frame_count": 1,
+      "idle": {
+        "file": "runtime/pilot_pilgrim_idle.png",
+        "atlas_rect": [
+          0,
+          576,
+          256,
+          288
+        ],
+        "pivot_px": [
+          128,
+          272
+        ],
+        "pivot_normalized": [
+          0.5,
+          0.9444444444444444
+        ],
+        "effective_alpha_bounds": [
+          63,
+          31,
+          165,
+          272
+        ]
+      },
+      "idle_60px": {
+        "file": "runtime/pilot_pilgrim_idle_60px.png",
+        "atlas_rect": [
+          0,
+          144,
+          64,
+          72
+        ],
+        "pivot_px": [
+          32,
+          68
+        ],
+        "effective_alpha_bounds": [
+          16,
+          7,
+          42,
+          68
+        ]
+      },
+      "animations": {
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 0,
+          "loop": false
+        },
+        "walk": null
+      },
+      "source_column_rect": [
+        1024,
+        0,
+        512,
+        1024
+      ],
+      "source_effective_alpha_bounds": [
+        36,
+        115,
+        388,
+        945
+      ],
+      "source_foot_center_x": 260.0,
+      "source_crop_with_padding": [
+        28,
+        107,
+        396,
+        953
+      ],
+      "export_scale": 0.2891566265060241
+    }
+  ]
+}

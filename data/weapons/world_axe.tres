@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+[ext_resource type="Script" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(61.599999999999994, 36)
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"world_axe_0"
+windup_seconds = 0.2000
+active_seconds = 0.12
+recovery_seconds = 0.2400
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(36, 0)
+reach = 88
+sweep_angle_degrees = 140
+motion = &"slash"
+stagger_force = 34
+damage_multiplier = 1.00
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(61.599999999999994, 36)
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"world_axe_1"
+windup_seconds = 0.2200
+active_seconds = 0.12
+recovery_seconds = 0.2928
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(36, 0)
+reach = 96
+sweep_angle_degrees = 150
+motion = &"slash"
+stagger_force = 51
+damage_multiplier = 1.22
+knockback = Vector2(210, -55)
+super_armor = true
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[resource]
+script = ExtResource("1")
+id = &"world_axe"
+display_name = "Rìu Liệt Nham"
+base_damage = 25
+visual_profile = &"overhead"
+attack_kind = &"melee"
+visual_archetype = "swordsman"
+critical_chance = 0.08
+combo_window_seconds = 0.24
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1")])
+

@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+[ext_resource type="Script" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"world_mace_0"
+windup_seconds = 0.1700
+active_seconds = 0.1
+recovery_seconds = 0.2000
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(36, 0)
+reach = 75
+sweep_angle_degrees = 95
+motion = &"slash"
+stagger_force = 38
+damage_multiplier = 1.00
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"world_mace_1"
+windup_seconds = 0.1870
+active_seconds = 0.1
+recovery_seconds = 0.2000
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(36, 0)
+reach = 75
+sweep_angle_degrees = 95
+motion = &"slash"
+stagger_force = 38
+damage_multiplier = 1.22
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape2"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step2"]
+script = ExtResource("2")
+id = &"world_mace_2"
+windup_seconds = 0.2040
+active_seconds = 0.1
+recovery_seconds = 0.2440
+hitbox_shape = SubResource("shape2")
+hitbox_offset = Vector2(36, 0)
+reach = 83
+sweep_angle_degrees = 105
+motion = &"slash"
+stagger_force = 57
+damage_multiplier = 1.44
+knockback = Vector2(210, -55)
+super_armor = true
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[resource]
+script = ExtResource("1")
+id = &"world_mace"
+display_name = "Chùy Chấn Thiết"
+base_damage = 24
+visual_profile = &"crush"
+attack_kind = &"melee"
+visual_archetype = "swordsman"
+critical_chance = 0.04
+combo_window_seconds = 0.24
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1"), SubResource("step2")])
+

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"blizzard"
+display_name = "Bão Tuyết"
+recipe_rune_ids = Array[StringName]([&"ice", &"wind"])
+behavior_id = &"blizzard"
+base_damage = 14.0
+cooldown_seconds = 1.1
+slow_multiplier = 0.4
+slow_seconds = 3.0
+freeze_points = 40.0
+effect_radius = 100.0

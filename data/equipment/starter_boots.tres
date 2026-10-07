@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://bdoxtjq5sa1pu"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_7ogjr"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/boot.tres" id="boot"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"boot_left"
+bone_slot = &"foot_left"
+texture = ExtResource("boot")
+pivot_pixels = Vector2(63.84, 92.1429)
+display_scale = Vector2(0.033772, 0.032558)
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_1"]
+script = ExtResource("Part")
+id = &"boot_right"
+bone_slot = &"foot_right"
+texture = ExtResource("boot")
+pivot_pixels = Vector2(63.84, 92.1429)
+display_scale = Vector2(0.033772, 0.032558)
+draw_order = 2
+
+[resource]
+script = ExtResource("1")
+id = &"starter_boots"
+item_name = "Giày Vải Lữ Hành"
+description = "Đôi giày vải đế mềm, tông màu trầm. Bộ khởi đầu Thường, chưa có hiệu ứng nguyên tố."
+slot_type = 5
+icon_texture = ExtResource("boot")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0"), SubResource("Part_1")])

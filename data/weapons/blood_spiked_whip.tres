@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://kl5k1dpe5wny"]
+
+[ext_resource type="Script" uid="uid://b38b3pmy1qkt0" path="res://scripts/definitions/WeaponData.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(190, 20)
+
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"blood_spiked_whip_0"
+windup_seconds = 0.14
+active_seconds = 0.12
+recovery_seconds = 0.19
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(103, 0)
+knockback = Vector2(0, -35)
+reach = 190.0
+motion = &"thrust"
+stagger_force = 12.0
+pull_force = 170.0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(190, 20)
+
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"blood_spiked_whip_1"
+windup_seconds = 0.14
+active_seconds = 0.12
+recovery_seconds = 0.19
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(103, 0)
+damage_multiplier = 1.25
+knockback = Vector2(0, -35)
+reach = 190.0
+motion = &"thrust"
+stagger_force = 12.0
+pull_force = 170.0
+
+[resource]
+script = ExtResource("1")
+id = &"blood_spiked_whip"
+display_name = "Huyết Thiết Tiên"
+base_damage = 13.0
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1")])
+combo_window_seconds = 0.24
+critical_chance = 0.12

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"miasma_cloud"
+display_name = "Mây Độc Khí"
+recipe_rune_ids = Array[StringName]([&"poison", &"wind"])
+behavior_id = &"miasma_cloud"
+base_damage = 10.0
+cooldown_seconds = 1.1
+poison_stacks = 1
+effect_duration = 4.0
+effect_radius = 110.0

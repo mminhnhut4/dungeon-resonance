@@ -1,0 +1,5 @@
+[gd_resource type="Resource" script_class="DropTableResource" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/resources/drop_table_resource.gd" id="1"]
+[resource]
+script = ExtResource("1")
+blueprint_ids = Array[StringName]([&"world_saber", &"world_greatsword", &"world_twinblades", &"world_spear", &"world_halberd", &"world_axe", &"world_mace", &"world_chain", &"world_fan", &"world_staff"])

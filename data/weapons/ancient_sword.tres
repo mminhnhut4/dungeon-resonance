@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3 uid="uid://bw4ns7r04itol"]
+
+[ext_resource type="Script" uid="uid://djdyd07laeyxg" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"ancient_sword_0"
+windup_seconds = 0.07
+active_seconds = 0.09
+recovery_seconds = 0.12
+hitbox_shape = SubResource("shape0")
+reach = 68.0
+sweep_angle_degrees = 100.0
+stagger_force = 10.0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"ancient_sword_1"
+windup_seconds = 0.085
+active_seconds = 0.09
+recovery_seconds = 0.155
+hitbox_shape = SubResource("shape1")
+damage_multiplier = 1.35
+knockback = Vector2(210, -90)
+reach = 68.0
+sweep_angle_degrees = 100.0
+stagger_force = 10.0
+
+[sub_resource type="RectangleShape2D" id="shape2"]
+size = Vector2(56, 40)
+
+[sub_resource type="Resource" id="step2"]
+script = ExtResource("2")
+id = &"ancient_sword_2"
+active_seconds = 0.09
+recovery_seconds = 0.19
+hitbox_shape = SubResource("shape2")
+damage_multiplier = 1.7
+knockback = Vector2(280, -120)
+reach = 68.0
+sweep_angle_degrees = 100.0
+stagger_force = 10.0
+
+[resource]
+script = ExtResource("1")
+id = &"ancient_sword"
+display_name = "Thanh Kiếm Cổ"
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1"), SubResource("step2")])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=5 format=3]
+[ext_resource type="Script" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+[sub_resource type="RectangleShape2D" id="shape"]
+size = Vector2(20, 20)
+[sub_resource type="Resource" id="step"]
+script = ExtResource("2")
+windup_seconds = 0.22
+active_seconds = 0.05
+recovery_seconds = 0.38
+hitbox_shape = SubResource("shape")
+reach = 65.0
+motion = &"thrust"
+[resource]
+script = ExtResource("1")
+id = &"ritual_staff"
+display_name = "Trượng Trì Chú"
+attack_kind = &"ranged"
+base_damage = 22.0
+projectile_pattern = &"bolt"
+combo_steps = Array[ExtResource("2")]([SubResource("step")])

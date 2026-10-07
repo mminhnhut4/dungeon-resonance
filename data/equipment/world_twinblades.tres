@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EquipmentData" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/regions/world_twinblades.tres" id="2"]
+[ext_resource type="Resource" path="res://data/weapons/world_twinblades.tres" id="3"]
+[resource]
+script = ExtResource("1")
+id = &"world_twinblades"
+item_name = "Song Đao Liên Ảnh"
+description = "Bốn nhát đảo tay nhanh; kết thúc bằng bước lao ngắn."
+icon_texture = ExtResource("2")
+world_sprite_texture = ExtResource("2")
+moveset = ExtResource("3")
+hand_origin = Vector2(65, 124)
+displayed_weapon_length = 38.0
+

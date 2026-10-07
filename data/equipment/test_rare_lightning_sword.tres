@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EquipmentData" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/common_sword.png" id="2"]
+[ext_resource type="Resource" path="res://data/weapons/ancient_sword.tres" id="3"]
+[ext_resource type="Resource" path="res://data/runes/LightningRune.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/definitions/RuneData.gd" id="5"]
+[resource]
+script = ExtResource("1")
+id = &"test_rare_lightning_sword"
+item_name = "Kiếm Lôi · Hiếm (thử nghiệm)"
+description = "Kiếm mẫu tại sân luyện, có Lôi cố hữu. Chỉ thử phẩm cấp Hiếm; chưa phải vật phẩm chế tạo đã cân bằng."
+icon_texture = ExtResource("2")
+world_sprite_texture = ExtResource("2")
+moveset = ExtResource("3")
+intrinsic_runes = Array[ExtResource("5")]([ExtResource("4")])

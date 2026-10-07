@@ -1,0 +1,109 @@
+[gd_resource type="Resource" script_class="PilgrimageArtPack" format=3 uid="uid://buuiu3ihnqxo1"]
+
+[ext_resource type="Script" uid="uid://dt748ci0xkjfw" path="res://scripts/presentation/pilgrimage_art_pack.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://blcjuerkn3v6r" path="res://assets/environment/exterior/pilgrimage_v1/pilgrimage_far_background.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://1s2e2a3hu5m0" path="res://assets/environment/exterior/pilgrimage_v1/pilgrimage_midground_grove_ruin.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://c6dvu6fing0et" path="res://assets/environment/exterior/pilgrimage_v1/pilgrimage_props_final.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://c7nejoh26n5jn" path="res://assets/environment/exterior/pilgrimage_v1/pilgrimage_terrain_material.png" id="5"]
+[ext_resource type="Shader" uid="uid://baohbvmdbxgir" path="res://shaders/pilgrimage_alpha_cleanup.gdshader" id="6"]
+
+[sub_resource type="AtlasTexture" id="Prop_pine"]
+atlas = ExtResource("4")
+region = Rect2(40, 60, 520, 540)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Prop_shrine"]
+atlas = ExtResource("4")
+region = Rect2(585, 125, 445, 475)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Prop_lantern"]
+atlas = ExtResource("4")
+region = Rect2(1125, 100, 320, 505)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Prop_rocks"]
+atlas = ExtResource("4")
+region = Rect2(25, 670, 530, 300)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Prop_bench"]
+atlas = ExtResource("4")
+region = Rect2(585, 755, 430, 215)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Prop_bridge"]
+atlas = ExtResource("4")
+region = Rect2(1060, 670, 465, 300)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Middle_grove"]
+atlas = ExtResource("3")
+region = Rect2(0, 60, 625, 870)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Middle_ruin"]
+atlas = ExtResource("3")
+region = Rect2(740, 340, 796, 600)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Terrain_body"]
+atlas = ExtResource("5")
+region = Rect2(0, 100, 1536, 924)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Terrain_cap"]
+atlas = ExtResource("5")
+region = Rect2(0, 0, 1536, 100)
+filter_clip = true
+
+[resource]
+script = ExtResource("1")
+far_panorama = ExtResource("2")
+terrain_texture = ExtResource("5")
+terrain_cap = SubResource("Terrain_cap")
+terrain_body = SubResource("Terrain_body")
+prop_textures = Dictionary[StringName, Texture2D]({
+&"bench": SubResource("Prop_bench"),
+&"bridge": SubResource("Prop_bridge"),
+&"lantern": SubResource("Prop_lantern"),
+&"middle_grove": SubResource("Middle_grove"),
+&"middle_ruin": SubResource("Middle_ruin"),
+&"rock": SubResource("Prop_rocks"),
+&"shrine": SubResource("Prop_shrine"),
+&"tree": SubResource("Prop_pine")
+})
+prop_foot_pivots = Dictionary[StringName, Vector2]({
+&"bench": Vector2(215, 184),
+&"bridge": Vector2(235, 270),
+&"lantern": Vector2(142, 473),
+&"middle_grove": Vector2(270, 839),
+&"middle_ruin": Vector2(380, 557),
+&"rock": Vector2(261, 273),
+&"shrine": Vector2(227, 447),
+&"tree": Vector2(242, 516)
+})
+prop_ground_profiles = Dictionary[StringName, PackedVector2Array]({
+&"tree": PackedVector2Array(90, 517, 130, 517, 170, 511, 210, 507, 242, 516, 280, 515, 320, 516, 410, 512, 435, 514)
+})
+prop_scales = Dictionary[StringName, float]({
+&"bench": 0.281879,
+&"bridge": 0.302326,
+&"lantern": 0.286344,
+&"rock": 0.242915,
+&"shrine": 0.372093,
+&"tree": 0.6
+})
+prop_reference_heights = Dictionary[StringName, float]({
+&"bench": 42.0,
+&"bridge": 78.0,
+&"lantern": 130.0,
+&"rock": 60.0,
+&"shrine": 160.0,
+&"tree": 300.0
+})
+alpha_cleanup = ExtResource("6")
+alpha_cleanup_enabled = true
+far_tint = Color(0.84, 0.88, 0.9, 1)
+stone_tint = Color(0.8, 0.85, 0.83, 1)
+provenance_label = "User-approved original pilgrimage art pack2026-10-02; verified local ZIP/source hashes; original PNGs preserved"

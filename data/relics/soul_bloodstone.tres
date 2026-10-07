@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"soul_bloodstone"
+display_name = "Huyết Thạch Hút Hồn"
+description = "Hồi 2 HP khi hạ địch bằng đòn cận chiến."
+effect_id = &"melee_heal"
+magnitude = 2
+cooldown_multiplier = 1

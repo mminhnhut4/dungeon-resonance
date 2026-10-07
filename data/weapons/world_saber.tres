@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+[ext_resource type="Script" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"world_saber_0"
+windup_seconds = 0.0750
+active_seconds = 0.085
+recovery_seconds = 0.1300
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(36, 0)
+reach = 75
+sweep_angle_degrees = 110
+motion = &"slash"
+stagger_force = 15
+damage_multiplier = 1.00
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"world_saber_1"
+windup_seconds = 0.0825
+active_seconds = 0.085
+recovery_seconds = 0.1300
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(36, 0)
+reach = 75
+sweep_angle_degrees = 110
+motion = &"slash"
+stagger_force = 15
+damage_multiplier = 1.22
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape2"]
+size = Vector2(52.5, 36)
+[sub_resource type="Resource" id="step2"]
+script = ExtResource("2")
+id = &"world_saber_2"
+windup_seconds = 0.0900
+active_seconds = 0.085
+recovery_seconds = 0.1586
+hitbox_shape = SubResource("shape2")
+hitbox_offset = Vector2(36, 0)
+reach = 83
+sweep_angle_degrees = 120
+motion = &"slash"
+stagger_force = 22.5
+damage_multiplier = 1.44
+knockback = Vector2(210, -55)
+super_armor = false
+lunge_speed = 190
+lunge_seconds = 0.075
+pull_force = 0
+
+[resource]
+script = ExtResource("1")
+id = &"world_saber"
+display_name = "Kiếm Cong Phong Trần"
+base_damage = 16
+visual_profile = &"sweep"
+attack_kind = &"melee"
+visual_archetype = "swordsman"
+critical_chance = 0.1
+combo_window_seconds = 0.24
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1"), SubResource("step2")])
+

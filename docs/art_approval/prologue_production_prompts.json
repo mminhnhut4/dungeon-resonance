@@ -1,0 +1,38 @@
+[
+  {
+    "key": "courtyard",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_environment_candidate_v1.png",
+    "alpha": false,
+    "prompt": "Approved reference is the attached four-panel art board. Preserve its painterly 2D side-scrolling cổ phong cultivation fantasy, muted jade/teal stone, rust timber, warm amber lights, dark clean outlines. Vietnamese audience: absolutely NO Chinese/Han characters, no legible text, no lettering; any old inscriptions become abstract irregular scratches or invented geometric marks. Produce ONE production background only matching COURTYARD top-left. Wide horizontal landscape 3:1, orthographic side elevation for side-scrolling game. Mountain sanctuary with distant misty peaks, dim warm sunset, a modest timber house with closed door at left-middle, quiet stone retaining walls and tree silhouettes. Calm low contrast playable band near lower quarter. NO player, merchant, chest, training dummy, portal, foreground floor, campfire, UI or panel borders; these are separate gameplay objects. Full bleed background, no labels. House has blank cloth curtains with abstract faded geometric decoration. Architectural details readable at game scale."
+  },
+  {
+    "key": "home",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_environment_candidate_v1.png",
+    "alpha": false,
+    "prompt": "Approved reference is the attached four-panel art board. Preserve its painterly 2D side-scrolling cổ phong cultivation fantasy, muted jade/teal stone, rust timber, warm amber lights, dark clean outlines. Vietnamese audience: absolutely NO Chinese/Han characters, no legible text, no lettering; any old inscriptions become abstract irregular scratches or invented geometric marks. Produce ONE production background only matching HOME top-right, wide horizontal 2:1 side-view cutaway interior. Humble warm timber house, plaster wall, bed/mat on left, writing table with oil lamp center, shelf and doorway right. Fixed side-on game perspective, enough empty walking space across bottom quarter, NO character, HUD, title or panels. No baked foreground stone floor. Remove all Chinese characters from cloth over door: use a faded abstract circle and three short irregular strokes with no linguistic meaning. Soft amber lamplight, restful beginner home, detailed yet subdued."
+  },
+  {
+    "key": "dungeon",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_environment_candidate_v1.png",
+    "alpha": false,
+    "prompt": "Approved reference is the attached four-panel art board. Preserve its painterly 2D side-scrolling cổ phong cultivation fantasy, muted jade/teal stone, rust timber, warm amber lights, dark clean outlines. Vietnamese audience: absolutely NO Chinese/Han characters, no legible text, no lettering; any old inscriptions become abstract irregular scratches or invented geometric marks. Produce ONE production background only matching DUNGEON bottom-left, wide horizontal 2:1. Ancient deserted cultivation temple inside cavern, broken organic stone arches and jade cracks, dim distant carved anonymous guardian statue behind mist, hanging chains, worn plaster, muted cyan/blue-grey with warm tiny niches. Orthographic side-scrolling backdrop, no perspective runway. Dark low contrast center, empty playable area along lower third; NO player/enemy/chests/foreground floor/interactive platforms/fire/UI/panel/title. All old pillar banners show eroded abstract circles and crack patterns, absolutely no Chinese text."
+  },
+  {
+    "key": "campfire",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_environment_candidate_v1.png",
+    "alpha": true,
+    "prompt": "Approved reference is the attached four-panel art board. Preserve its painterly 2D side-scrolling cổ phong cultivation fantasy, muted jade/teal stone, rust timber, warm amber lights, dark clean outlines. Vietnamese audience: absolutely NO Chinese/Han characters, no legible text, no lettering; any old inscriptions become abstract irregular scratches or invented geometric marks. Extract the approved CAMPFIRE bottom-right design into a production TRANSPARENT sprite sheet, exactly FOUR equal square cells in one horizontal row, no borders/gaps/title/text. Same stone ring and crossed realistic charred logs, fixed scale/position and shared ground pivot across all four cells; flames vary only in flickering curl and height for a looping 4-frame animation. Amber orange fire with bright pale yellow center, small ember detail. Each frame object contained inside its cell with transparent padding, logs align at y~80% of each cell, no ground plane/background/shadow rectangle, actual alpha transparency. No extra flame copies or tiny versions."
+  },
+  {
+    "key": "items",
+    "path": "D:/hầm ngục/docs/art_approval/prologue_items_batch_01_candidate_v1.png",
+    "alpha": true,
+    "prompt": "Edit the attached APPROVED 12-item board into a production TRANSPARENT atlas with exactly 4 columns x3 rows of equal SQUARE cells, each object centered with 12% transparent inset. Keep the approved original objects/style/order: row1 jade crystal fragments, green slime essence stoppered bottle, iron/bronze scrap, violet powder ceramic bowl; row2 nicked ordinary sword, broken dagger, cracked wooden staff with jade bead, torn teal cloth top rust sash; row3 worn brown leather gloves, red healing potion bottle, linen bandage roll, pale-green herbal antidote vial. Preserve original shapes/material colors and humble tier, improve icon readability. REMOVE all 01-12 labels, numbers, borders, background and ground shadows, use actual transparent alpha. Exactly one object/group per cell, no overlap. No lettering or Chinese characters; ceramic decorations are abstract swirls. Do not add elemental aura/glow to common gear. Atlas ratio4:3, no perspective, flat game item art."
+  },
+  {
+    "key": "kael",
+    "path": "D:/hầm ngục/assets/sprites/npc/npc_merchant_kael.png",
+    "alpha": true,
+    "prompt": "Edit the supplied Kael concept sheet into ONE full-body orthographic side-view merchant sprite, extracting the full side-facing person at RIGHT only. Preserve this adult's face/hair/teal robes/white pale-green inner clothing/rust cord and wooden walking staff; facing LEFT, original identity and illustration style. Ground feet at same y, full body uncropped, modest cloth without magic aura. Remove all other views, portrait/logo/name/text/white background. Centered single cutout with transparent padding, actual alpha transparency, no floor, no rectangular shadow, no Chinese writing, no panel border."
+  }
+]

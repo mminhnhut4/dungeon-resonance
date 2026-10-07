@@ -1,0 +1,4310 @@
+{
+  "status": "offline_artwork_candidate_not_game_integrated",
+  "canvas": [
+    448,
+    320
+  ],
+  "root_pivot": [
+    168,
+    292
+  ],
+  "neutral_height_target": 200,
+  "world_scale": 0.3,
+  "display_height_target": 60,
+  "walk_distance_per_cycle": 36,
+  "parts": {
+    "back_cape": {
+      "rect": [
+        15,
+        18,
+        358,
+        312
+      ],
+      "anchor": [
+        300,
+        22
+      ],
+      "scale": 0.38
+    },
+    "pelvis": {
+      "rect": [
+        449,
+        42,
+        275,
+        277
+      ],
+      "anchor": [
+        137,
+        27
+      ],
+      "scale": 0.2
+    },
+    "torso": {
+      "rect": [
+        830,
+        17,
+        205,
+        302
+      ],
+      "a": [
+        106,
+        270
+      ],
+      "b": [
+        104,
+        26
+      ]
+    },
+    "head_helmet": {
+      "rect": [
+        1103,
+        27,
+        418,
+        278
+      ],
+      "anchor": [
+        296,
+        253
+      ],
+      "scale": 0.2194
+    },
+    "sword_upper_arm": {
+      "rect": [
+        142,
+        326,
+        109,
+        197
+      ],
+      "a": [
+        54,
+        25
+      ],
+      "b": [
+        61,
+        177
+      ]
+    },
+    "sword_forearm": {
+      "rect": [
+        522,
+        326,
+        81,
+        198
+      ],
+      "a": [
+        38,
+        20
+      ],
+      "b": [
+        41,
+        184
+      ]
+    },
+    "sword_hand": {
+      "rect": [
+        864,
+        372,
+        133,
+        129
+      ],
+      "anchor": [
+        82,
+        72
+      ],
+      "wrist": [
+        24,
+        41
+      ],
+      "scale": 0.18
+    },
+    "off_upper_arm": {
+      "rect": [
+        1223,
+        312,
+        160,
+        240
+      ],
+      "a": [
+        82,
+        35
+      ],
+      "b": [
+        67,
+        213
+      ]
+    },
+    "off_forearm_hand": {
+      "rect": [
+        133,
+        534,
+        105,
+        232
+      ],
+      "a": [
+        44,
+        18
+      ],
+      "b": [
+        52,
+        139
+      ]
+    },
+    "back_thigh": {
+      "rect": [
+        490,
+        536,
+        136,
+        201
+      ],
+      "a": [
+        54,
+        25
+      ],
+      "b": [
+        89,
+        174
+      ]
+    },
+    "back_shin": {
+      "rect": [
+        878,
+        539,
+        77,
+        230
+      ],
+      "a": [
+        36,
+        23
+      ],
+      "b": [
+        51,
+        211
+      ]
+    },
+    "back_boot": {
+      "rect": [
+        1196,
+        628,
+        221,
+        114
+      ],
+      "anchor": [
+        36,
+        16
+      ],
+      "scale": 0.1
+    },
+    "front_thigh": {
+      "rect": [
+        95,
+        769,
+        167,
+        225
+      ],
+      "a": [
+        76,
+        30
+      ],
+      "b": [
+        114,
+        185
+      ]
+    },
+    "front_shin": {
+      "rect": [
+        513,
+        754,
+        88,
+        243
+      ],
+      "a": [
+        38,
+        27
+      ],
+      "b": [
+        43,
+        220
+      ]
+    },
+    "front_boot": {
+      "rect": [
+        730,
+        836,
+        256,
+        142
+      ],
+      "anchor": [
+        60,
+        30
+      ],
+      "scale": 0.1
+    },
+    "saber": {
+      "rect": [
+        955,
+        826,
+        566,
+        98
+      ],
+      "anchor": [
+        52,
+        46
+      ],
+      "tip": [
+        555,
+        12
+      ],
+      "scale": 0.28
+    }
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "count": 4,
+      "seconds": 1.6,
+      "loop": true,
+      "frames": [
+        {
+          "clip": "idle",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/idle_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.4
+        },
+        {
+          "clip": "idle",
+          "normalized_time": 0.25,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/idle_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.4
+        },
+        {
+          "clip": "idle",
+          "normalized_time": 0.5,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/idle_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.4
+        },
+        {
+          "clip": "idle",
+          "normalized_time": 0.75,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "frames/idle_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.4
+        }
+      ],
+      "atlas": "idle_atlas.png",
+      "atlas_size": [
+        1792,
+        320
+      ],
+      "columns": 4
+    },
+    {
+      "id": "walk",
+      "count": 48,
+      "key_pose_count": 8,
+      "seconds": 1.2,
+      "loop": true,
+      "distance": 36,
+      "frames": [
+        {
+          "clip": "walk",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            198,
+            292
+          ],
+          "foot_back": [
+            138,
+            292
+          ],
+          "front_boot_contact": [
+            198,
+            292
+          ],
+          "back_boot_contact": [
+            138,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            198,
+            205.5
+          ],
+          "sword_hand": [
+            198,
+            205.5
+          ],
+          "saber_base": [
+            198,
+            205.5
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.59377935074693
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/walk_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.020833333333333332,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            195.5,
+            292
+          ],
+          "foot_back": [
+            140.5,
+            289.12842377115885
+          ],
+          "front_boot_contact": [
+            195.5,
+            292
+          ],
+          "back_boot_contact": [
+            140.5,
+            289.12842377115885
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "sword_hand": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "saber_base": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "saber_tip": [
+            338.8008885457922,
+            220.00092206787934
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/walk_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.041666666666666664,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            193,
+            292
+          ],
+          "foot_back": [
+            143,
+            286.30598100774455
+          ],
+          "front_boot_contact": [
+            193,
+            292
+          ],
+          "back_boot_contact": [
+            143,
+            286.30598100774455
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "sword_hand": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "saber_base": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "saber_tip": [
+            339.1383719493334,
+            220.30133358804054
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/walk_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.0625,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.5,
+            292
+          ],
+          "foot_back": [
+            145.5,
+            283.580964487968
+          ],
+          "front_boot_contact": [
+            190.5,
+            292
+          ],
+          "back_boot_contact": [
+            145.5,
+            283.580964487968
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "sword_hand": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "saber_base": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "saber_tip": [
+            339.4628359678618,
+            220.49752909545919
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "frames/walk_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.08333333333333333,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            188,
+            292
+          ],
+          "foot_back": [
+            148,
+            281
+          ],
+          "front_boot_contact": [
+            188,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            281
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.5,
+            204.75
+          ],
+          "sword_hand": [
+            199.5,
+            204.75
+          ],
+          "saber_base": [
+            199.5,
+            204.75
+          ],
+          "saber_tip": [
+            339.7689072312929,
+            220.59833316595015
+          ],
+          "opacity": 1,
+          "index": 4,
+          "file": "frames/walk_04.png",
+          "rect": [
+            1792,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.10416666666666667,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            185.5,
+            292
+          ],
+          "foot_back": [
+            150.5,
+            278.60724856180815
+          ],
+          "front_boot_contact": [
+            185.5,
+            292
+          ],
+          "back_boot_contact": [
+            150.5,
+            278.60724856180815
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "sword_hand": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "saber_base": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "saber_tip": [
+            340.05158087276726,
+            220.6178988489919
+          ],
+          "opacity": 1,
+          "index": 5,
+          "file": "frames/walk_05.png",
+          "rect": [
+            2240,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.125,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            183,
+            292
+          ],
+          "foot_back": [
+            153,
+            276.44365081389594
+          ],
+          "front_boot_contact": [
+            183,
+            292
+          ],
+          "back_boot_contact": [
+            153,
+            276.44365081389594
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.12132034355963,
+            204
+          ],
+          "sword_hand": [
+            200.12132034355963,
+            204
+          ],
+          "saber_base": [
+            200.12132034355963,
+            204
+          ],
+          "saber_tip": [
+            340.30629033116844,
+            220.57438353523943
+          ],
+          "opacity": 1,
+          "index": 6,
+          "file": "frames/walk_06.png",
+          "rect": [
+            2688,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.14583333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            180.5,
+            292
+          ],
+          "foot_back": [
+            155.5,
+            274.54622651359284
+          ],
+          "front_boot_contact": [
+            180.5,
+            292
+          ],
+          "back_boot_contact": [
+            155.5,
+            274.54622651359284
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "sword_hand": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "saber_base": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "saber_tip": [
+            340.5289670845858,
+            220.48837798837488
+          ],
+          "opacity": 1,
+          "index": 7,
+          "file": "frames/walk_07.png",
+          "rect": [
+            3136,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.16666666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            178,
+            292
+          ],
+          "foot_back": [
+            158,
+            272.94744111674237
+          ],
+          "front_boot_contact": [
+            178,
+            292
+          ],
+          "back_boot_contact": [
+            158,
+            272.94744111674237
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.59807621135332,
+            203.25
+          ],
+          "sword_hand": [
+            200.59807621135332,
+            203.25
+          ],
+          "saber_base": [
+            200.59807621135332,
+            203.25
+          ],
+          "saber_tip": [
+            340.71609054690265,
+            220.38120131989567
+          ],
+          "opacity": 1,
+          "index": 8,
+          "file": "frames/walk_08.png",
+          "rect": [
+            0,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.1875,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            175.5,
+            292
+          ],
+          "foot_back": [
+            160.5,
+            271.6746502847517
+          ],
+          "front_boot_contact": [
+            175.5,
+            292
+          ],
+          "back_boot_contact": [
+            160.5,
+            271.6746502847517
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "sword_hand": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "saber_base": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "saber_tip": [
+            340.864728614514,
+            220.27318329971587
+          ],
+          "opacity": 1,
+          "index": 9,
+          "file": "frames/walk_09.png",
+          "rect": [
+            448,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.20833333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            173,
+            292
+          ],
+          "foot_back": [
+            163,
+            270.7496318216405
+          ],
+          "front_boot_contact": [
+            173,
+            292
+          ],
+          "back_boot_contact": [
+            163,
+            270.7496318216405
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "sword_hand": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "saber_base": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "saber_tip": [
+            340.9725695056849,
+            220.1820556428214
+          ],
+          "opacity": 1,
+          "index": 10,
+          "file": "frames/walk_10.png",
+          "rect": [
+            896,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.22916666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            170.5,
+            292
+          ],
+          "foot_back": [
+            165.5,
+            270.1882130497762
+          ],
+          "front_boot_contact": [
+            170.5,
+            292
+          ],
+          "back_boot_contact": [
+            165.5,
+            270.1882130497762
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "sword_hand": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "saber_base": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "saber_tip": [
+            341.0379455894334,
+            220.12156578378986
+          ],
+          "opacity": 1,
+          "index": 11,
+          "file": "frames/walk_11.png",
+          "rect": [
+            1344,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.25,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            168,
+            292
+          ],
+          "foot_back": [
+            168,
+            270
+          ],
+          "front_boot_contact": [
+            168,
+            292
+          ],
+          "back_boot_contact": [
+            168,
+            270
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            201,
+            202.5
+          ],
+          "sword_hand": [
+            201,
+            202.5
+          ],
+          "saber_base": [
+            201,
+            202.5
+          ],
+          "saber_tip": [
+            341.0598498599515,
+            220.10041071133955
+          ],
+          "opacity": 1,
+          "index": 12,
+          "file": "frames/walk_12.png",
+          "rect": [
+            1792,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.2708333333333333,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            165.5,
+            292
+          ],
+          "foot_back": [
+            170.5,
+            270.1882130497762
+          ],
+          "front_boot_contact": [
+            165.5,
+            292
+          ],
+          "back_boot_contact": [
+            170.5,
+            270.1882130497762
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "sword_hand": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "saber_base": [
+            200.97433458412144,
+            202.5511112605664
+          ],
+          "saber_tip": [
+            341.0379455894334,
+            220.12156578378986
+          ],
+          "opacity": 1,
+          "index": 13,
+          "file": "frames/walk_13.png",
+          "rect": [
+            2240,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.2916666666666667,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            163,
+            292
+          ],
+          "foot_back": [
+            173,
+            270.7496318216405
+          ],
+          "front_boot_contact": [
+            163,
+            292
+          ],
+          "back_boot_contact": [
+            173,
+            270.7496318216405
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "sword_hand": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "saber_base": [
+            200.8977774788672,
+            202.70096189432334
+          ],
+          "saber_tip": [
+            340.9725695056849,
+            220.1820556428214
+          ],
+          "opacity": 1,
+          "index": 14,
+          "file": "frames/walk_14.png",
+          "rect": [
+            2688,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.3125,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            160.5,
+            292
+          ],
+          "foot_back": [
+            175.5,
+            271.6746502847517
+          ],
+          "front_boot_contact": [
+            160.5,
+            292
+          ],
+          "back_boot_contact": [
+            175.5,
+            271.6746502847517
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "sword_hand": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "saber_base": [
+            200.77163859753387,
+            202.93933982822017
+          ],
+          "saber_tip": [
+            340.864728614514,
+            220.27318329971587
+          ],
+          "opacity": 1,
+          "index": 15,
+          "file": "frames/walk_15.png",
+          "rect": [
+            3136,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.3333333333333333,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            158,
+            292
+          ],
+          "foot_back": [
+            178,
+            272.9474411167423
+          ],
+          "front_boot_contact": [
+            158,
+            292
+          ],
+          "back_boot_contact": [
+            178,
+            272.9474411167423
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.59807621135332,
+            203.25
+          ],
+          "sword_hand": [
+            200.59807621135332,
+            203.25
+          ],
+          "saber_base": [
+            200.59807621135332,
+            203.25
+          ],
+          "saber_tip": [
+            340.71609054690265,
+            220.38120131989567
+          ],
+          "opacity": 1,
+          "index": 16,
+          "file": "frames/walk_16.png",
+          "rect": [
+            0,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.3541666666666667,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            155.5,
+            292
+          ],
+          "foot_back": [
+            180.5,
+            274.54622651359284
+          ],
+          "front_boot_contact": [
+            155.5,
+            292
+          ],
+          "back_boot_contact": [
+            180.5,
+            274.54622651359284
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "sword_hand": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "saber_base": [
+            200.3800600208737,
+            203.61177143234622
+          ],
+          "saber_tip": [
+            340.5289670845858,
+            220.48837798837488
+          ],
+          "opacity": 1,
+          "index": 17,
+          "file": "frames/walk_17.png",
+          "rect": [
+            448,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.375,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            153,
+            292
+          ],
+          "foot_back": [
+            183,
+            276.44365081389594
+          ],
+          "front_boot_contact": [
+            153,
+            292
+          ],
+          "back_boot_contact": [
+            183,
+            276.44365081389594
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            200.12132034355963,
+            204
+          ],
+          "sword_hand": [
+            200.12132034355963,
+            204
+          ],
+          "saber_base": [
+            200.12132034355963,
+            204
+          ],
+          "saber_tip": [
+            340.30629033116844,
+            220.57438353523943
+          ],
+          "opacity": 1,
+          "index": 18,
+          "file": "frames/walk_18.png",
+          "rect": [
+            896,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.3958333333333333,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            150.5,
+            292
+          ],
+          "foot_back": [
+            185.5,
+            278.6072485618081
+          ],
+          "front_boot_contact": [
+            150.5,
+            292
+          ],
+          "back_boot_contact": [
+            185.5,
+            278.6072485618081
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "sword_hand": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "saber_base": [
+            199.82628428702617,
+            204.38822856765378
+          ],
+          "saber_tip": [
+            340.05158087276726,
+            220.6178988489919
+          ],
+          "opacity": 1,
+          "index": 19,
+          "file": "frames/walk_19.png",
+          "rect": [
+            1344,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.4166666666666667,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            148,
+            292
+          ],
+          "foot_back": [
+            188,
+            281
+          ],
+          "front_boot_contact": [
+            148,
+            292
+          ],
+          "back_boot_contact": [
+            188,
+            281
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.5,
+            204.75
+          ],
+          "sword_hand": [
+            199.5,
+            204.75
+          ],
+          "saber_base": [
+            199.5,
+            204.75
+          ],
+          "saber_tip": [
+            339.7689072312929,
+            220.59833316595015
+          ],
+          "opacity": 1,
+          "index": 20,
+          "file": "frames/walk_20.png",
+          "rect": [
+            1792,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.4375,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            145.5,
+            292
+          ],
+          "foot_back": [
+            190.5,
+            283.580964487968
+          ],
+          "front_boot_contact": [
+            145.5,
+            292
+          ],
+          "back_boot_contact": [
+            190.5,
+            283.580964487968
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "sword_hand": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "saber_base": [
+            199.14805029709527,
+            205.06066017177983
+          ],
+          "saber_tip": [
+            339.4628359678618,
+            220.49752909545919
+          ],
+          "opacity": 1,
+          "index": 21,
+          "file": "frames/walk_21.png",
+          "rect": [
+            2240,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.4583333333333333,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            143,
+            292
+          ],
+          "foot_back": [
+            193,
+            286.30598100774455
+          ],
+          "front_boot_contact": [
+            143,
+            292
+          ],
+          "back_boot_contact": [
+            193,
+            286.30598100774455
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "sword_hand": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "saber_base": [
+            198.77645713530757,
+            205.29903810567666
+          ],
+          "saber_tip": [
+            339.1383719493334,
+            220.30133358804054
+          ],
+          "opacity": 1,
+          "index": 22,
+          "file": "frames/walk_22.png",
+          "rect": [
+            2688,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.4791666666666667,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            140.5,
+            292
+          ],
+          "foot_back": [
+            195.5,
+            289.12842377115885
+          ],
+          "front_boot_contact": [
+            140.5,
+            292
+          ],
+          "back_boot_contact": [
+            195.5,
+            289.12842377115885
+          ],
+          "contact_front": true,
+          "contact_back": false,
+          "saber_hand": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "sword_hand": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "saber_base": [
+            198.39157857666015,
+            205.4488887394336
+          ],
+          "saber_tip": [
+            338.8008885457922,
+            220.00092206787934
+          ],
+          "opacity": 1,
+          "index": 23,
+          "file": "frames/walk_23.png",
+          "rect": [
+            3136,
+            640,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.5,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            138,
+            292
+          ],
+          "foot_back": [
+            198,
+            292
+          ],
+          "front_boot_contact": [
+            138,
+            292
+          ],
+          "back_boot_contact": [
+            198,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205.5
+          ],
+          "sword_hand": [
+            198,
+            205.5
+          ],
+          "saber_base": [
+            198,
+            205.5
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.59377935074693
+          ],
+          "opacity": 1,
+          "index": 24,
+          "file": "frames/walk_24.png",
+          "rect": [
+            0,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.5208333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            140.5,
+            289.12842377115885
+          ],
+          "foot_back": [
+            195.49999999999997,
+            292
+          ],
+          "front_boot_contact": [
+            140.5,
+            289.12842377115885
+          ],
+          "back_boot_contact": [
+            195.49999999999997,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "sword_hand": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "saber_base": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "saber_tip": [
+            338.1097115968669,
+            219.0842640395256
+          ],
+          "opacity": 1,
+          "index": 25,
+          "file": "frames/walk_25.png",
+          "rect": [
+            448,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.5416666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            143,
+            286.30598100774455
+          ],
+          "foot_back": [
+            193.00000000000003,
+            292
+          ],
+          "front_boot_contact": [
+            143,
+            286.30598100774455
+          ],
+          "back_boot_contact": [
+            193.00000000000003,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "sword_hand": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "saber_base": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "saber_tip": [
+            337.7678433317258,
+            218.4837112617411
+          ],
+          "opacity": 1,
+          "index": 26,
+          "file": "frames/walk_26.png",
+          "rect": [
+            896,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.5625,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            145.5,
+            283.580964487968
+          ],
+          "foot_back": [
+            190.5,
+            292
+          ],
+          "front_boot_contact": [
+            145.5,
+            283.580964487968
+          ],
+          "back_boot_contact": [
+            190.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "sword_hand": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "saber_base": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "saber_tip": [
+            337.43640405271765,
+            217.81005996805885
+          ],
+          "opacity": 1,
+          "index": 27,
+          "file": "frames/walk_27.png",
+          "rect": [
+            1344,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.5833333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            148,
+            281
+          ],
+          "foot_back": [
+            187.99999999999997,
+            292
+          ],
+          "front_boot_contact": [
+            148,
+            281
+          ],
+          "back_boot_contact": [
+            187.99999999999997,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.5,
+            204.75
+          ],
+          "sword_hand": [
+            196.5,
+            204.75
+          ],
+          "saber_base": [
+            196.5,
+            204.75
+          ],
+          "saber_tip": [
+            337.1212425394956,
+            217.08702341119388
+          ],
+          "opacity": 1,
+          "index": 28,
+          "file": "frames/walk_28.png",
+          "rect": [
+            1792,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.6041666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            150.5,
+            278.60724856180815
+          ],
+          "foot_back": [
+            185.50000000000003,
+            292
+          ],
+          "front_boot_contact": [
+            150.5,
+            278.60724856180815
+          ],
+          "back_boot_contact": [
+            185.50000000000003,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "sword_hand": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "saber_base": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "saber_tip": [
+            336.82798320151346,
+            216.34285266305525
+          ],
+          "opacity": 1,
+          "index": 29,
+          "file": "frames/walk_29.png",
+          "rect": [
+            2240,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.625,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            153,
+            276.44365081389594
+          ],
+          "foot_back": [
+            183,
+            292
+          ],
+          "front_boot_contact": [
+            153,
+            276.44365081389594
+          ],
+          "back_boot_contact": [
+            183,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.87867965644037,
+            204
+          ],
+          "sword_hand": [
+            195.87867965644037,
+            204
+          ],
+          "saber_base": [
+            195.87867965644037,
+            204
+          ],
+          "saber_tip": [
+            336.56191403940545,
+            215.60877097490163
+          ],
+          "opacity": 1,
+          "index": 30,
+          "file": "frames/walk_30.png",
+          "rect": [
+            2688,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.6458333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            155.5,
+            274.54622651359284
+          ],
+          "foot_back": [
+            180.49999999999997,
+            292
+          ],
+          "front_boot_contact": [
+            155.5,
+            274.54622651359284
+          ],
+          "back_boot_contact": [
+            180.49999999999997,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "sword_hand": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "saber_base": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "saber_tip": [
+            336.327877735414,
+            214.91717953522584
+          ],
+          "opacity": 1,
+          "index": 31,
+          "file": "frames/walk_31.png",
+          "rect": [
+            3136,
+            960,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.6666666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            158,
+            272.94744111674237
+          ],
+          "foot_back": [
+            178.00000000000003,
+            292
+          ],
+          "front_boot_contact": [
+            158,
+            272.94744111674237
+          ],
+          "back_boot_contact": [
+            178.00000000000003,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.40192378864668,
+            203.25
+          ],
+          "sword_hand": [
+            195.40192378864668,
+            203.25
+          ],
+          "saber_base": [
+            195.40192378864668,
+            203.25
+          ],
+          "saber_tip": [
+            336.1301689949559,
+            214.29975118058832
+          ],
+          "opacity": 1,
+          "index": 32,
+          "file": "frames/walk_32.png",
+          "rect": [
+            0,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.6875,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            160.5,
+            271.6746502847517
+          ],
+          "foot_back": [
+            175.5,
+            292
+          ],
+          "front_boot_contact": [
+            160.5,
+            271.6746502847517
+          ],
+          "back_boot_contact": [
+            175.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "sword_hand": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "saber_base": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "saber_tip": [
+            335.97244124905285,
+            213.78553677174006
+          ],
+          "opacity": 1,
+          "index": 33,
+          "file": "frames/walk_33.png",
+          "rect": [
+            448,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.7083333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            163,
+            270.7496318216405
+          ],
+          "foot_back": [
+            172.99999999999997,
+            292
+          ],
+          "front_boot_contact": [
+            163,
+            270.7496318216405
+          ],
+          "back_boot_contact": [
+            172.99999999999997,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "sword_hand": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "saber_base": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "saber_tip": [
+            335.8576256689015,
+            213.3992086997169
+          ],
+          "opacity": 1,
+          "index": 34,
+          "file": "frames/walk_34.png",
+          "rect": [
+            896,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.7291666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            165.5,
+            270.1882130497762
+          ],
+          "foot_back": [
+            170.50000000000003,
+            292
+          ],
+          "front_boot_contact": [
+            165.5,
+            270.1882130497762
+          ],
+          "back_boot_contact": [
+            170.50000000000003,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "sword_hand": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "saber_base": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "saber_tip": [
+            335.7878651419196,
+            213.15955734310523
+          ],
+          "opacity": 1,
+          "index": 35,
+          "file": "frames/walk_35.png",
+          "rect": [
+            1344,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.75,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            168,
+            270
+          ],
+          "foot_back": [
+            168,
+            292
+          ],
+          "front_boot_contact": [
+            168,
+            270
+          ],
+          "back_boot_contact": [
+            168,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195,
+            202.5
+          ],
+          "sword_hand": [
+            195,
+            202.5
+          ],
+          "saber_base": [
+            195,
+            202.5
+          ],
+          "saber_tip": [
+            335.76446542468193,
+            213.0783398368324
+          ],
+          "opacity": 1,
+          "index": 36,
+          "file": "frames/walk_36.png",
+          "rect": [
+            1792,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.7708333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            170.5,
+            270.1882130497762
+          ],
+          "foot_back": [
+            165.5,
+            292
+          ],
+          "front_boot_contact": [
+            170.5,
+            270.1882130497762
+          ],
+          "back_boot_contact": [
+            165.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "sword_hand": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "saber_base": [
+            195.02566541587856,
+            202.5511112605664
+          ],
+          "saber_tip": [
+            335.7878651419196,
+            213.15955734310523
+          ],
+          "opacity": 1,
+          "index": 37,
+          "file": "frames/walk_37.png",
+          "rect": [
+            2240,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.7916666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            173,
+            270.7496318216405
+          ],
+          "foot_back": [
+            163,
+            292
+          ],
+          "front_boot_contact": [
+            173,
+            270.7496318216405
+          ],
+          "back_boot_contact": [
+            163,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "sword_hand": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "saber_base": [
+            195.1022225211328,
+            202.70096189432334
+          ],
+          "saber_tip": [
+            335.8576256689015,
+            213.3992086997169
+          ],
+          "opacity": 1,
+          "index": 38,
+          "file": "frames/walk_38.png",
+          "rect": [
+            2688,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.8125,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            175.5,
+            271.6746502847517
+          ],
+          "foot_back": [
+            160.5,
+            292
+          ],
+          "front_boot_contact": [
+            175.5,
+            271.6746502847517
+          ],
+          "back_boot_contact": [
+            160.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "sword_hand": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "saber_base": [
+            195.22836140246613,
+            202.93933982822017
+          ],
+          "saber_tip": [
+            335.97244124905285,
+            213.78553677174006
+          ],
+          "opacity": 1,
+          "index": 39,
+          "file": "frames/walk_39.png",
+          "rect": [
+            3136,
+            1280,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.8333333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            178,
+            272.94744111674237
+          ],
+          "foot_back": [
+            158,
+            292
+          ],
+          "front_boot_contact": [
+            178,
+            272.94744111674237
+          ],
+          "back_boot_contact": [
+            158,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.40192378864668,
+            203.25
+          ],
+          "sword_hand": [
+            195.40192378864668,
+            203.25
+          ],
+          "saber_base": [
+            195.40192378864668,
+            203.25
+          ],
+          "saber_tip": [
+            336.1301689949559,
+            214.29975118058832
+          ],
+          "opacity": 1,
+          "index": 40,
+          "file": "frames/walk_40.png",
+          "rect": [
+            0,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.8541666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            180.5,
+            274.54622651359284
+          ],
+          "foot_back": [
+            155.5,
+            292
+          ],
+          "front_boot_contact": [
+            180.5,
+            274.54622651359284
+          ],
+          "back_boot_contact": [
+            155.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "sword_hand": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "saber_base": [
+            195.6199399791263,
+            203.61177143234622
+          ],
+          "saber_tip": [
+            336.327877735414,
+            214.91717953522584
+          ],
+          "opacity": 1,
+          "index": 41,
+          "file": "frames/walk_41.png",
+          "rect": [
+            448,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.875,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            183,
+            276.44365081389594
+          ],
+          "foot_back": [
+            153,
+            292
+          ],
+          "front_boot_contact": [
+            183,
+            276.44365081389594
+          ],
+          "back_boot_contact": [
+            153,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            195.87867965644037,
+            204
+          ],
+          "sword_hand": [
+            195.87867965644037,
+            204
+          ],
+          "saber_base": [
+            195.87867965644037,
+            204
+          ],
+          "saber_tip": [
+            336.56191403940545,
+            215.60877097490163
+          ],
+          "opacity": 1,
+          "index": 42,
+          "file": "frames/walk_42.png",
+          "rect": [
+            896,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.8958333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            185.5,
+            278.60724856180815
+          ],
+          "foot_back": [
+            150.5,
+            292
+          ],
+          "front_boot_contact": [
+            185.5,
+            278.60724856180815
+          ],
+          "back_boot_contact": [
+            150.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "sword_hand": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "saber_base": [
+            196.17371571297383,
+            204.38822856765378
+          ],
+          "saber_tip": [
+            336.82798320151346,
+            216.34285266305525
+          ],
+          "opacity": 1,
+          "index": 43,
+          "file": "frames/walk_43.png",
+          "rect": [
+            1344,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.9166666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            188,
+            281
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            188,
+            281
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.5,
+            204.75
+          ],
+          "sword_hand": [
+            196.5,
+            204.75
+          ],
+          "saber_base": [
+            196.5,
+            204.75
+          ],
+          "saber_tip": [
+            337.1212425394956,
+            217.08702341119388
+          ],
+          "opacity": 1,
+          "index": 44,
+          "file": "frames/walk_44.png",
+          "rect": [
+            1792,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.9375,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.5,
+            283.580964487968
+          ],
+          "foot_back": [
+            145.5,
+            292
+          ],
+          "front_boot_contact": [
+            190.5,
+            283.580964487968
+          ],
+          "back_boot_contact": [
+            145.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "sword_hand": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "saber_base": [
+            196.85194970290473,
+            205.06066017177983
+          ],
+          "saber_tip": [
+            337.43640405271765,
+            217.81005996805885
+          ],
+          "opacity": 1,
+          "index": 45,
+          "file": "frames/walk_45.png",
+          "rect": [
+            2240,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.9583333333333334,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            193,
+            286.30598100774455
+          ],
+          "foot_back": [
+            143,
+            292
+          ],
+          "front_boot_contact": [
+            193,
+            286.30598100774455
+          ],
+          "back_boot_contact": [
+            143,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "sword_hand": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "saber_base": [
+            197.22354286469243,
+            205.29903810567666
+          ],
+          "saber_tip": [
+            337.7678433317258,
+            218.4837112617411
+          ],
+          "opacity": 1,
+          "index": 46,
+          "file": "frames/walk_46.png",
+          "rect": [
+            2688,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        },
+        {
+          "clip": "walk",
+          "normalized_time": 0.9791666666666666,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            195.5,
+            289.12842377115885
+          ],
+          "foot_back": [
+            140.5,
+            292
+          ],
+          "front_boot_contact": [
+            195.5,
+            289.12842377115885
+          ],
+          "back_boot_contact": [
+            140.5,
+            292
+          ],
+          "contact_front": false,
+          "contact_back": true,
+          "saber_hand": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "sword_hand": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "saber_base": [
+            197.60842142333985,
+            205.4488887394336
+          ],
+          "saber_tip": [
+            338.1097115968669,
+            219.0842640395256
+          ],
+          "opacity": 1,
+          "index": 47,
+          "file": "frames/walk_47.png",
+          "rect": [
+            3136,
+            1600,
+            448,
+            320
+          ],
+          "duration": 0.024999999999999998
+        }
+      ],
+      "atlas": "walk_atlas.png",
+      "atlas_size": [
+        3584,
+        1920
+      ],
+      "columns": 8
+    },
+    {
+      "id": "windup_sweep",
+      "count": 6,
+      "seconds": 0.45,
+      "frames": [
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/windup_sweep_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        },
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 0.2,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            192.904,
+            203.024
+          ],
+          "sword_hand": [
+            192.904,
+            203.024
+          ],
+          "saber_base": [
+            192.904,
+            203.024
+          ],
+          "saber_tip": [
+            333.0772357565585,
+            186.350668673109
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/windup_sweep_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        },
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 0.4,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            180.752,
+            198.312
+          ],
+          "sword_hand": [
+            180.752,
+            198.312
+          ],
+          "saber_base": [
+            180.752,
+            198.312
+          ],
+          "saber_tip": [
+            294.045044044123,
+            114.10260520810989
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/windup_sweep_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        },
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 0.6,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            166.248,
+            192.688
+          ],
+          "sword_hand": [
+            166.248,
+            192.688
+          ],
+          "saber_base": [
+            166.248,
+            192.688
+          ],
+          "saber_tip": [
+            209.31111178439735,
+            58.2554726732979
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "frames/windup_sweep_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        },
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 0.8,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            154.096,
+            187.976
+          ],
+          "sword_hand": [
+            154.096,
+            187.976
+          ],
+          "saber_base": [
+            154.096,
+            187.976
+          ],
+          "saber_tip": [
+            124.55970279797945,
+            49.939254357421476
+          ],
+          "opacity": 1,
+          "index": 4,
+          "file": "frames/windup_sweep_04.png",
+          "rect": [
+            1792,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        },
+        {
+          "clip": "windup_sweep",
+          "normalized_time": 1,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            149,
+            186
+          ],
+          "sword_hand": [
+            149,
+            186
+          ],
+          "saber_base": [
+            149,
+            186
+          ],
+          "saber_tip": [
+            90.2571937117527,
+            57.64183427073502
+          ],
+          "opacity": 1,
+          "index": 5,
+          "file": "frames/windup_sweep_05.png",
+          "rect": [
+            2240,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.075
+        }
+      ],
+      "atlas": "windup_sweep_atlas.png",
+      "atlas_size": [
+        2688,
+        320
+      ],
+      "columns": 6
+    },
+    {
+      "id": "attack_sweep",
+      "count": 3,
+      "seconds": 0.18,
+      "frames": [
+        {
+          "clip": "attack_sweep",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            149,
+            186
+          ],
+          "sword_hand": [
+            149,
+            186
+          ],
+          "saber_base": [
+            149,
+            186
+          ],
+          "saber_tip": [
+            90.2571937117527,
+            57.64183427073502
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/attack_sweep_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        },
+        {
+          "clip": "attack_sweep",
+          "normalized_time": 0.5,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            224,
+            180
+          ],
+          "sword_hand": [
+            224,
+            180
+          ],
+          "saber_base": [
+            224,
+            180
+          ],
+          "saber_tip": [
+            329.6599840125998,
+            86.39175368346466
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/attack_sweep_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        },
+        {
+          "clip": "attack_sweep",
+          "normalized_time": 1,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229,
+            196
+          ],
+          "sword_hand": [
+            229,
+            196
+          ],
+          "saber_base": [
+            229,
+            196
+          ],
+          "saber_tip": [
+            349.3429330506376,
+            269.7842426590513
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/attack_sweep_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        }
+      ],
+      "atlas": "attack_sweep_atlas.png",
+      "atlas_size": [
+        1344,
+        320
+      ],
+      "columns": 3
+    },
+    {
+      "id": "recover",
+      "count": 6,
+      "seconds": 0.55,
+      "frames": [
+        {
+          "clip": "recover",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229,
+            196
+          ],
+          "sword_hand": [
+            229,
+            196
+          ],
+          "saber_base": [
+            229,
+            196
+          ],
+          "saber_tip": [
+            349.34293305063755,
+            269.7842426590513
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/recover_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        },
+        {
+          "clip": "recover",
+          "normalized_time": 0.2,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            225.776,
+            196.936
+          ],
+          "sword_hand": [
+            225.776,
+            196.936
+          ],
+          "saber_base": [
+            225.776,
+            196.936
+          ],
+          "saber_tip": [
+            349.4390093242626,
+            265.00946123760235
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/recover_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        },
+        {
+          "clip": "recover",
+          "normalized_time": 0.4,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            218.088,
+            199.168
+          ],
+          "sword_hand": [
+            218.088,
+            199.168
+          ],
+          "saber_base": [
+            218.088,
+            199.168
+          ],
+          "saber_tip": [
+            348.5629626089976,
+            253.04582597860346
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/recover_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        },
+        {
+          "clip": "recover",
+          "normalized_time": 0.6,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            208.912,
+            201.832
+          ],
+          "sword_hand": [
+            208.912,
+            201.832
+          ],
+          "saber_base": [
+            208.912,
+            201.832
+          ],
+          "saber_tip": [
+            345.38653783564286,
+            237.90465616152613
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "frames/recover_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        },
+        {
+          "clip": "recover",
+          "normalized_time": 0.8,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            201.224,
+            204.064
+          ],
+          "sword_hand": [
+            201.224,
+            204.064
+          ],
+          "saber_base": [
+            201.224,
+            204.064
+          ],
+          "saber_tip": [
+            340.86691159294,
+            224.7132915579769
+          ],
+          "opacity": 1,
+          "index": 4,
+          "file": "frames/recover_04.png",
+          "rect": [
+            1792,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        },
+        {
+          "clip": "recover",
+          "normalized_time": 1,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 5,
+          "file": "frames/recover_05.png",
+          "rect": [
+            2240,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.09166666666666667
+        }
+      ],
+      "atlas": "recover_atlas.png",
+      "atlas_size": [
+        2688,
+        320
+      ],
+      "columns": 6
+    },
+    {
+      "id": "hurt",
+      "count": 3,
+      "seconds": 0.18,
+      "frames": [
+        {
+          "clip": "hurt",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/hurt_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        },
+        {
+          "clip": "hurt",
+          "normalized_time": 0.5,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            185,
+            210
+          ],
+          "sword_hand": [
+            185,
+            210
+          ],
+          "saber_base": [
+            185,
+            210
+          ],
+          "saber_tip": [
+            313.89242362683177,
+            267.5610904309616
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/hurt_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        },
+        {
+          "clip": "hurt",
+          "normalized_time": 1,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/hurt_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.06
+        }
+      ],
+      "atlas": "hurt_atlas.png",
+      "atlas_size": [
+        1344,
+        320
+      ],
+      "columns": 3
+    },
+    {
+      "id": "death",
+      "count": 6,
+      "seconds": 0.3,
+      "frames": [
+        {
+          "clip": "death",
+          "normalized_time": 0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190,
+            292
+          ],
+          "foot_back": [
+            148,
+            292
+          ],
+          "front_boot_contact": [
+            190,
+            292
+          ],
+          "back_boot_contact": [
+            148,
+            292
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            198,
+            205
+          ],
+          "sword_hand": [
+            198,
+            205
+          ],
+          "saber_base": [
+            198,
+            205
+          ],
+          "saber_tip": [
+            338.45604787125563,
+            219.09377935074693
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "frames/death_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        },
+        {
+          "clip": "death",
+          "normalized_time": 0.2,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            221.33826533317304,
+            282.730983156236
+          ],
+          "foot_back": [
+            192.11390995079984,
+            287.2642506421346
+          ],
+          "front_boot_contact": [
+            221.33826533317304,
+            282.730983156236
+          ],
+          "back_boot_contact": [
+            192.11390995079984,
+            287.2642506421346
+          ],
+          "contact_front": false,
+          "contact_back": false,
+          "saber_hand": [
+            201.64000000000001,
+            211.76
+          ],
+          "sword_hand": [
+            201.64000000000001,
+            211.76
+          ],
+          "saber_base": [
+            201.64000000000001,
+            211.76
+          ],
+          "saber_tip": [
+            342.1949277221694,
+            224.8308948819795
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "frames/death_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        },
+        {
+          "clip": "death",
+          "normalized_time": 0.4,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            249.880133615982,
+            257.0044934171901
+          ],
+          "foot_back": [
+            223.09968684389992,
+            253.92527008106654
+          ],
+          "front_boot_contact": [
+            249.880133615982,
+            257.0044934171901
+          ],
+          "back_boot_contact": [
+            223.09968684389992,
+            253.92527008106654
+          ],
+          "contact_front": false,
+          "contact_back": false,
+          "saber_hand": [
+            210.32,
+            227.88
+          ],
+          "sword_hand": [
+            210.32,
+            227.88
+          ],
+          "saber_base": [
+            210.32,
+            227.88
+          ],
+          "saber_tip": [
+            351.0806481008857,
+            238.5090143578143
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "frames/death_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        },
+        {
+          "clip": "death",
+          "normalized_time": 0.6,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            257.14982839571655,
+            268.1135707462331
+          ],
+          "foot_back": [
+            227.86932455400068,
+            264.5134558431242
+          ],
+          "front_boot_contact": [
+            257.14982839571655,
+            268.1135707462331
+          ],
+          "back_boot_contact": [
+            227.86932455400068,
+            264.5134558431242
+          ],
+          "contact_front": false,
+          "contact_back": false,
+          "saber_hand": [
+            220.68,
+            247.12
+          ],
+          "sword_hand": [
+            220.68,
+            247.12
+          ],
+          "saber_base": [
+            220.68,
+            247.12
+          ],
+          "saber_tip": [
+            361.6306510332387,
+            254.8303808794497
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "frames/death_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        },
+        {
+          "clip": "death",
+          "normalized_time": 0.8,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            262.60582839571657,
+            284.9775707462331
+          ],
+          "foot_back": [
+            233.3253245540007,
+            281.37745584312415
+          ],
+          "front_boot_contact": [
+            262.60582839571657,
+            284.9775707462331
+          ],
+          "back_boot_contact": [
+            233.3253245540007,
+            281.37745584312415
+          ],
+          "contact_front": false,
+          "contact_back": false,
+          "saber_hand": [
+            229.36,
+            263.24
+          ],
+          "sword_hand": [
+            229.36,
+            263.24
+          ],
+          "saber_base": [
+            229.36,
+            263.24
+          ],
+          "saber_tip": [
+            370.42325793497855,
+            268.50243867134975
+          ],
+          "opacity": 1,
+          "index": 4,
+          "file": "frames/death_04.png",
+          "rect": [
+            1792,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        },
+        {
+          "clip": "death",
+          "normalized_time": 1,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            264.8938283957166,
+            292.0495707462331
+          ],
+          "foot_back": [
+            235.6133245540007,
+            288.44945584312416
+          ],
+          "front_boot_contact": [
+            264.8938283957166,
+            292.0495707462331
+          ],
+          "back_boot_contact": [
+            235.6133245540007,
+            288.44945584312416
+          ],
+          "contact_front": false,
+          "contact_back": false,
+          "saber_hand": [
+            233,
+            270
+          ],
+          "sword_hand": [
+            233,
+            270
+          ],
+          "saber_base": [
+            233,
+            270
+          ],
+          "saber_tip": [
+            374.09783010313174,
+            274.2353677747942
+          ],
+          "opacity": 0.12000000000000022,
+          "index": 5,
+          "file": "frames/death_05.png",
+          "rect": [
+            2240,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.049999999999999996
+        }
+      ],
+      "atlas": "death_atlas.png",
+      "atlas_size": [
+        2688,
+        320
+      ],
+      "columns": 6
+    }
+  ],
+  "gameplay_authority": "existing actor state_time and actual travelled X; this exporter never calls damage or mutates hitboxes"
+}

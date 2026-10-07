@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WorldEnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/resources/world_enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"runic_champion"
+display_name = "Phù Trận Hộ Pháp"
+moveset = 3
+maximum_hp = 160.0
+shield_hp = 75.0
+body_size = Vector2(48, 75)
+visual_height = 90.0
+patrol_speed = 25.0
+chase_speed = 45.0
+attack_range = 340.0
+windup = 0.60
+active = 0.16
+recovery = 0.7
+cooldown = 2.1
+attack_damage = 18.0
+

@@ -1,0 +1,6 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="PackedScene" path="res://scenes/enemies/base_enemy.tscn" id="1"]
+[ext_resource type="Resource" path="res://data/enemies/runic_champion.tres" id="2"]
+[node name="RunicChampion" instance=ExtResource("1")]
+definition = ExtResource("2")
+

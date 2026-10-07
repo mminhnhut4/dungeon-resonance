@@ -1,0 +1,177 @@
+[gd_scene load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/actors/player/build_player_motor.gd" id="2_motor"]
+[ext_resource type="Script" path="res://scripts/state_machine/state_machine.gd" id="3_fsm"]
+[ext_resource type="Script" path="res://scripts/state_machine/state.gd" id="4_state"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/weapon.tscn" id="5_weapon"]
+[ext_resource type="Script" path="res://scripts/combat/health_component.gd" id="6_health"]
+[ext_resource type="Script" path="res://scripts/combat/element_status_controller.gd" id="7_status"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="8_hurtbox"]
+[ext_resource type="Script" path="res://scripts/combat/damage_resolver.gd" id="9_damage"]
+[ext_resource type="Script" path="res://scripts/spells/catalyst.gd" id="10_catalyst"]
+[ext_resource type="Script" path="res://scripts/spells/resonance_controller.gd" id="11_resonance"]
+[ext_resource type="Resource" path="res://data/catalysts/starter_catalyst.tres" id="12_definition"]
+[ext_resource type="Texture2D" path="res://assets/presentation/player.png" id="13_texture"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_locomotion_state.gd" id="14_locomotion"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_dash_state.gd" id="15_dash"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_attack_state.gd" id="16_attack"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_aim.gd" id="17_aim"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_cast_state.gd" id="18_cast"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player_visual_rig.tscn" id="19_rig"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/player_concept_full.png" id="20_concept"]
+
+[ext_resource type="Script" path="res://scripts/presentation/player_camera.gd" id="21_camera"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/player_swordsman.png" id="22_swordsman"]
+[ext_resource type="Resource" path="res://data/characters/starter_swordsman.tres" id="23_modular"]
+[ext_resource type="Script" path="res://scripts/actors/player/hit_reaction_component.gd" id="24_reaction"]
+[ext_resource type="Script" path="res://scripts/actors/player/player_hurt_state.gd" id="25_hurt"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_body"]
+radius = 10.0
+height = 36.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
+size = Vector2(20, 32)
+
+[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("motor", "locomotion_state_machine", "action_state_machine", "equipped_weapon", "aim", "resonance_controller", "health", "hurtbox", "body_sprite")]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_player")
+motor = NodePath("Motor")
+locomotion_state_machine = NodePath("LocomotionStateMachine")
+action_state_machine = NodePath("ActionStateMachine")
+equipped_weapon = NodePath("Combat/WeaponSocket/Weapon")
+aim = NodePath("Combat/Aim")
+resonance_controller = NodePath("Spells/ResonanceController")
+health = NodePath("Health")
+hurtbox = NodePath("Hurtbox")
+body_sprite = NodePath("Visuals/Skeleton2D/Root/Hip/Torso/BodySprite")
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, -18)
+shape = SubResource("CapsuleShape2D_body")
+
+[node name="Visuals" parent="." instance=ExtResource("19_rig")]
+fallback_body_texture = ExtResource("13_texture")
+concept_body_texture = ExtResource("20_concept")
+swordsman_body_texture = ExtResource("22_swordsman")
+modular_skin = ExtResource("23_modular")
+concept_height = 52.5
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -40)
+zoom = Vector2(1.35, 1.35)
+limit_left = 32
+limit_right = 1248
+limit_top = 0
+limit_bottom = 720
+script = ExtResource("21_camera")
+
+[node name="Motor" type="Node" parent="." node_paths=PackedStringArray("body")]
+script = ExtResource("2_motor")
+body = NodePath("..")
+
+[node name="LocomotionStateMachine" type="Node" parent="." node_paths=PackedStringArray("initial_state")]
+script = ExtResource("3_fsm")
+initial_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="LocomotionStateMachine"]
+script = ExtResource("14_locomotion")
+state_id = &"idle"
+
+[node name="Run" type="Node" parent="LocomotionStateMachine"]
+script = ExtResource("14_locomotion")
+state_id = &"run"
+
+[node name="Jump" type="Node" parent="LocomotionStateMachine"]
+script = ExtResource("14_locomotion")
+state_id = &"jump"
+
+[node name="Fall" type="Node" parent="LocomotionStateMachine"]
+script = ExtResource("14_locomotion")
+state_id = &"fall"
+
+[node name="ActionStateMachine" type="Node" parent="." node_paths=PackedStringArray("initial_state")]
+script = ExtResource("3_fsm")
+initial_state = NodePath("Ready")
+
+[node name="Ready" type="Node" parent="ActionStateMachine"]
+script = ExtResource("4_state")
+state_id = &"ready"
+
+[node name="Attack" type="Node" parent="ActionStateMachine"]
+script = ExtResource("16_attack")
+state_id = &"attack"
+
+[node name="CastSpell" type="Node" parent="ActionStateMachine"]
+script = ExtResource("18_cast")
+state_id = &"cast_spell"
+
+[node name="Dash" type="Node" parent="ActionStateMachine"]
+script = ExtResource("15_dash")
+state_id = &"dash"
+
+[node name="Hurt" type="Node" parent="ActionStateMachine"]
+script = ExtResource("25_hurt")
+state_id = &"hurt"
+
+[node name="Dead" type="Node" parent="ActionStateMachine"]
+script = ExtResource("4_state")
+state_id = &"dead"
+
+[node name="HitReaction" type="Node" parent="."]
+script = ExtResource("24_reaction")
+
+[node name="Combat" type="Node2D" parent="."]
+
+[node name="Aim" type="Node2D" parent="Combat"]
+position = Vector2(0, -22)
+script = ExtResource("17_aim")
+
+[node name="WeaponSocket" type="Node2D" parent="Combat"]
+position = Vector2(0, -22)
+
+[node name="Weapon" parent="Combat/WeaponSocket" instance=ExtResource("5_weapon")]
+
+[node name="DamageResolver" type="Node" parent="Combat" node_paths=PackedStringArray("health", "status_controller")]
+script = ExtResource("9_damage")
+health = NodePath("../../Health")
+status_controller = NodePath("../../StatusController")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("6_health")
+
+[node name="StatusController" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("7_status")
+health = NodePath("../Health")
+
+[node name="Hurtbox" type="Area2D" parent="." node_paths=PackedStringArray("health", "damage_resolver", "actor_body")]
+position = Vector2(0, -18)
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+monitorable = true
+script = ExtResource("8_hurtbox")
+health = NodePath("../Health")
+damage_resolver = NodePath("../Combat/DamageResolver")
+actor_body = NodePath("..")
+team_id = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("RectangleShape2D_hurt")
+
+[node name="Spells" type="Node" parent="."]
+
+[node name="CatalystA" type="Node" parent="Spells"]
+script = ExtResource("10_catalyst")
+definition = ExtResource("12_definition")
+
+[node name="CatalystB" type="Node" parent="Spells"]
+script = ExtResource("10_catalyst")
+definition = ExtResource("12_definition")
+
+[node name="ResonanceController" type="Node" parent="Spells" node_paths=PackedStringArray("catalyst_a", "catalyst_b")]
+script = ExtResource("11_resonance")
+catalyst_a = NodePath("../CatalystA")
+catalyst_b = NodePath("../CatalystB")

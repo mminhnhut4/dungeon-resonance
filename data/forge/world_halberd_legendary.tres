@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForgeRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/resources/forge_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://data/equipment/world_halberd.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = &"world_halberd_legendary"
+display_name = "Kích Phá Trận"
+equipment = ExtResource("2")
+quality = 4
+coin_cost = 120
+material_ids = Array[StringName]([&"metal", &"dust", &"enhancement_stone_5", &"origin_divine_stone"])
+material_counts = Array[int]([36, 24, 8, 1])
+success_chance = 1.0
+

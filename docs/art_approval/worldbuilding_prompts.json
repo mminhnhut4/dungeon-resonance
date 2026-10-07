@@ -1,0 +1,17 @@
+[
+  {
+    "key": "npc",
+    "prompt": "Use the supplied Kael sprite and sanctuary screenshot as STYLE REFERENCES only. Produce an art approval sheet, THREE full-body characters arranged left-to-right in generously separated vertical columns on a TRUE TRANSPARENT background. Matching hand-painted 2D cel-shaded cổ phong fantasy, adult proportions, crisp dark outlines, restrained jade/teal/cream/rust palette. Orthographic 3/4 side view suited to side-scroller, facing left. 1) Thiết Lão, elderly broad-shouldered blacksmith, grey hair/beard, weathered face, simple charcoal cloth sleeves rolled up, brown leather apron, small smith hammer in one hand, no giant weapon; warm practical demeanor. 2) Thanh Vy, adult female herbalist and rune healer, pale muted sage/cream practical robe with modest violet cord, tied-back dark hair, small ceramic medicine bowl and herb pouch, calm grounded face, no floating scrolls or aura. 3) Vô Danh, injured adult wandering swordsman, faded navy/rust travel clothes, bandaged knee, resting on wooden cane, modest sheathed worn sword, resolute expression; different face and costume from Kael. Feet fully visible and grounded on same baseline, normal non-chibi proportions. No environment/floor/shadow boxes, no lettering, NO Chinese/Han or any legible text. Clothing embroidery consists only abstract worn geometric marks. No glow on ordinary equipment. Not a finished sprite animation; one clean idle pose per character for approval.",
+    "refs": [
+      "D:/hầm ngục/assets/sprites/npc/kael_side_v2.png",
+      "D:/hầm ngục/docs/verification/prologue_training_yard.png"
+    ]
+  },
+  {
+    "key": "monsters",
+    "prompt": "Create ONE concept approval atlas of FOUR distinct enemies for a hand-painted 2D side-scrolling cổ phong dungeon game, exactly 2 columns x 2 rows with transparent generous padding. Adult-scale proportions, strong dark ink outlines, textured painterly cel shading matching jade ancient-temple setting. Top-left Cổ Thi Binh: corrupted skeletal tomb guard in torn bronze/charcoal armor, rusted long saber pointing sideways, slumped slow menacing silhouette, faded abstract seals on armor, no real writing. Top-right Huyết Dực Minh Điêu: sinister mutated cave bird/bat hybrid, ragged dark plum-red membrane wings, jade venom at small beak, airborne side view, readable wing silhouette. Bottom-left Tàn Hồn Kiếm Linh: ghostly abandoned swordsman spirit, dim translucent violet ribbons forming torso/arms, one spectral straight sword in side-thrust pose, darker visible core silhouette, no all-screen neon aura. Bottom-right Phù Trận Hộ Pháp: imposing ancient bronze armored guardian, about 1.5x usual humanoid height, cracked protective jade chest plate and a few hovering geometric seal fragments, patterned with fictional circles/triangles, no talisman text. Each entire silhouette contained in its quadrant, no overlap or crop, true alpha transparency; no ground, labels, UI, numbers, Chinese/Han symbols or legible text. These are art candidates for user approval, combat telegraphs/VFX added by engine later.",
+    "refs": [
+      "D:/hầm ngục/docs/verification/prologue_training_yard.png"
+    ]
+  }
+]

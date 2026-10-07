@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"neurotoxin"
+display_name = "Xung Điện Độc Tố"
+recipe_rune_ids = Array[StringName]([&"poison", &"lightning"])
+behavior_id = &"neurotoxin"
+base_damage = 17.0
+cooldown_seconds = 1.1
+interrupt_seconds = 0.4
+poison_stacks = 1

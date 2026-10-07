@@ -1,0 +1,80 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/phantom_camera/scripts/phantom_camera_host/phantom_camera_host.gd" id="1_0py7b"]
+[ext_resource type="Script" path="res://addons/phantom_camera/scripts/phantom_camera/phantom_camera_2d.gd" id="2_b25qh"]
+[ext_resource type="Script" path="res://addons/phantom_camera/scripts/resources/tween_resource.gd" id="3_lviom"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/shapes/shape.gd" id="4_q0u3k"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/shapes/point.gd" id="5_j0jn5"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/shapes/point_array.gd" id="6_e72cc"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/shapes/mesh.gd" id="7_8i53d"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/shapes/mesh_cache.gd" id="8_u1p1u"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/materials/edge_material_metadata.gd" id="9_105nj"]
+[ext_resource type="Script" path="res://addons/rmsmartshape/materials/shape_material.gd" id="10_1q3vl"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/beehave_tree.gd" id="11_jam8q"]
+[ext_resource type="Script" path="res://addons/beehave/nodes/leaves/action.gd" id="12_tkdjr"]
+
+[sub_resource type="Resource" id="Resource_0risy"]
+script = ExtResource("3_lviom")
+duration = 0.0
+
+[sub_resource type="Resource" id="Resource_jdptp"]
+script = ExtResource("5_j0jn5")
+position = Vector2(0, 180)
+
+[sub_resource type="Resource" id="Resource_0seit"]
+script = ExtResource("5_j0jn5")
+position = Vector2(180, 180)
+
+[sub_resource type="Resource" id="Resource_5grpg"]
+script = ExtResource("5_j0jn5")
+position = Vector2(180, 260)
+
+[sub_resource type="Resource" id="Resource_okcfe"]
+script = ExtResource("5_j0jn5")
+position = Vector2(0, 260)
+
+[sub_resource type="Resource" id="Resource_7bogx"]
+script = ExtResource("6_e72cc")
+_points = {
+0: SubResource("Resource_jdptp"),
+1: SubResource("Resource_0seit"),
+2: SubResource("Resource_5grpg"),
+3: SubResource("Resource_okcfe")
+}
+_point_order = PackedInt32Array(0, 1, 2, 3)
+_next_key = 4
+
+[sub_resource type="Resource" id="Resource_304u0"]
+script = ExtResource("8_u1p1u")
+
+[sub_resource type="Resource" id="Resource_601qy"]
+script = ExtResource("10_1q3vl")
+
+[node name="AddonLifecycleWorld" type="Node2D" unique_id=1098160027]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1334866853]
+
+[node name="PhantomCameraHost" type="Node" parent="Camera2D" unique_id=1607907437]
+script = ExtResource("1_0py7b")
+
+[node name="PhantomCamera2D" type="Node2D" parent="." unique_id=396057846]
+position = Vector2(100, 80)
+script = ExtResource("2_b25qh")
+priority = 10
+tween_resource = SubResource("Resource_0risy")
+tween_on_load = false
+
+[node name="SmartShape" type="Node2D" parent="." unique_id=637560719]
+script = ExtResource("4_q0u3k")
+_points = SubResource("Resource_7bogx")
+_mesh_cache = SubResource("Resource_304u0")
+shape_material = SubResource("Resource_601qy")
+
+[node name="BeehaveTree" type="Node" parent="." unique_id=1724420749 node_paths=PackedStringArray("blackboard")]
+script = ExtResource("11_jam8q")
+enabled = false
+process_thread = 2
+blackboard = NodePath("@Node@2")
+
+[node name="ActionLeaf" type="Node" parent="BeehaveTree" unique_id=2084277513]
+script = ExtResource("12_tkdjr")

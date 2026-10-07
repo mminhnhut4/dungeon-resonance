@@ -1,0 +1,357 @@
+{
+  "pack": "Dungeon Resonance pilgrimage environment v1",
+  "date_utc": "2026-10-02",
+  "status": "original art assets plus concept; not implemented gameplay",
+  "reference_checkpoint_library_file_id": "libfile_7f68ee74ff248191beccc2e90712cab7",
+  "assets": [
+    {
+      "file": "pilgrimage_far_background.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "e319e0fa41cc551695c394b1fd2e72884b7c506875d368a6fa04cd1abae8bda6",
+      "bytes": 2304930,
+      "source_unchanged": true
+    },
+    {
+      "file": "pilgrimage_midground_grove_ruin.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "9fdba67f3095832c6ec3062bfc5cf9a56449b0ff68abf89bc6b96c0148245ffe",
+      "bytes": 2037808,
+      "source_unchanged": true,
+      "alpha_range": [
+        0,
+        254
+      ],
+      "alpha_zero_fraction": 0.655326
+    },
+    {
+      "file": "pilgrimage_props_final.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "103653e24bb9a3b3aa7dda23b1ea028c3f6a70b58a4e768b6b1e3f960c6f50d0",
+      "bytes": 2119844,
+      "source_unchanged": true,
+      "alpha_range": [
+        0,
+        254
+      ],
+      "alpha_zero_fraction": 0.687195
+    },
+    {
+      "file": "pilgrimage_terrain_material.png",
+      "size_px": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "47cb10b75adec8cec6e466666872bcda341cdb54c015126dc48e42c1786299d8",
+      "bytes": 3632597,
+      "source_unchanged": true
+    },
+    {
+      "file": "CONCEPT_ONLY_pilgrimage_scene.png",
+      "size_px": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "sha256": "8433c2255db27f061c8de091106587cf628fdf5dc288df96acdee8d66c208692",
+      "bytes": 2769097,
+      "source_unchanged": true
+    }
+  ],
+  "props": [
+    {
+      "name": "pine",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        40,
+        60,
+        520,
+        540
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        82,
+        80,
+        552,
+        580
+      ],
+      "foot_pixel_source": [
+        282,
+        576
+      ],
+      "foot_pixel_local": [
+        242,
+        516
+      ],
+      "recommended_world_height": 300,
+      "recommended_uniform_scale": 0.6,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    },
+    {
+      "name": "shrine",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        585,
+        125,
+        445,
+        475
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        602,
+        146,
+        1015,
+        576
+      ],
+      "foot_pixel_source": [
+        812,
+        572
+      ],
+      "foot_pixel_local": [
+        227,
+        447
+      ],
+      "recommended_world_height": 160,
+      "recommended_uniform_scale": 0.372093,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    },
+    {
+      "name": "lantern",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        1125,
+        100,
+        320,
+        505
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        1154,
+        123,
+        1425,
+        577
+      ],
+      "foot_pixel_source": [
+        1267,
+        573
+      ],
+      "foot_pixel_local": [
+        142,
+        473
+      ],
+      "recommended_world_height": 130,
+      "recommended_uniform_scale": 0.286344,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    },
+    {
+      "name": "rocks",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        25,
+        670,
+        530,
+        300
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        47,
+        700,
+        536,
+        947
+      ],
+      "foot_pixel_source": [
+        286,
+        943
+      ],
+      "foot_pixel_local": [
+        261,
+        273
+      ],
+      "recommended_world_height": 60,
+      "recommended_uniform_scale": 0.242915,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    },
+    {
+      "name": "bench",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        585,
+        755,
+        430,
+        215
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        595,
+        795,
+        1003,
+        944
+      ],
+      "foot_pixel_source": [
+        800,
+        939
+      ],
+      "foot_pixel_local": [
+        215,
+        184
+      ],
+      "recommended_world_height": 42,
+      "recommended_uniform_scale": 0.281879,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    },
+    {
+      "name": "bridge_dressing",
+      "texture": "pilgrimage_props_final.png",
+      "region_rect_px": [
+        1060,
+        670,
+        465,
+        300
+      ],
+      "opaque_bounds_px_at_alpha_gt_200": [
+        1076,
+        686,
+        1512,
+        944
+      ],
+      "foot_pixel_source": [
+        1295,
+        940
+      ],
+      "foot_pixel_local": [
+        235,
+        270
+      ],
+      "recommended_world_height": 78,
+      "recommended_uniform_scale": 0.302326,
+      "centered": false,
+      "region_filter_clip_enabled": true,
+      "collision": false,
+      "z_index": -1
+    }
+  ],
+  "midground_regions": [
+    {
+      "name": "grove",
+      "region_rect_px": [
+        0,
+        60,
+        625,
+        870
+      ],
+      "foot_pixel_source": [
+        270,
+        899
+      ],
+      "foot_pixel_local": [
+        270,
+        839
+      ]
+    },
+    {
+      "name": "ruin",
+      "region_rect_px": [
+        740,
+        340,
+        796,
+        600
+      ],
+      "foot_pixel_source": [
+        1120,
+        897
+      ],
+      "foot_pixel_local": [
+        380,
+        557
+      ]
+    }
+  ],
+  "layers": {
+    "far": {
+      "z_index": -20,
+      "motion_scale": [
+        0.12,
+        0.06
+      ],
+      "repeat": false,
+      "seamless_verified": false
+    },
+    "mid": {
+      "z_index": -15,
+      "motion_scale": [
+        0.38,
+        0.18
+      ],
+      "repeat": false,
+      "alpha_cleanup_optional": true
+    },
+    "terrain": {
+      "z_index": -2,
+      "cap_region_px": [
+        0,
+        0,
+        1536,
+        100
+      ],
+      "body_region_px": [
+        0,
+        100,
+        1536,
+        924
+      ],
+      "preserve_collision": true,
+      "seamless_verified": false
+    },
+    "props": {
+      "z_index": -1,
+      "parallax": false,
+      "alpha_cleanup_optional": true
+    }
+  },
+  "render_alpha_cleanup": {
+    "shader": "pilgrimage_alpha_cleanup.gdshader",
+    "alpha_low": 0.3,
+    "alpha_high": 0.88,
+    "originals_preserved": true,
+    "gpu_qa_4_7_2": "not run"
+  },
+  "concept": {
+    "file": "CONCEPT_ONLY_pilgrimage_scene.png",
+    "classification": "art concept only",
+    "not_screenshot": true,
+    "pixel_exact_collision_match": false,
+    "not_npc_implementation": true
+  },
+  "import_recommendations": {
+    "filter": "linear",
+    "mipmaps": "enabled for downscaled props and scenery",
+    "atlas_grid": "do not use fixed hframes/vframes; use measured regions",
+    "texture_repeat": "disabled unless independently verified",
+    "foot_placement": "Sprite2D centered=false; offset=-foot_pixel_local; parent.position=(x,floor_y(x))"
+  },
+  "memory_estimate_uncompressed_rgba_mib": 30,
+  "memory_with_mipmaps_mib_approx": 40,
+  "license_provenance": "Original assets generated with built-in image_gen; source reference is user-owned game checkpoint; no external game art copied."
+}

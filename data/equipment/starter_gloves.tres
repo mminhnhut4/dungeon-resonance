@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://cybjbabvbhlbh"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_m7vj0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/glove.tres" id="glove"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"glove_left"
+bone_slot = &"hand_left"
+texture = ExtResource("glove")
+pivot_pixels = Vector2(72.5, 21.4)
+display_scale = Vector2(0.027586, 0.024766)
+draw_order = -1
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_1"]
+script = ExtResource("Part")
+id = &"glove_right"
+bone_slot = &"hand_right"
+texture = ExtResource("glove")
+pivot_pixels = Vector2(72.5, 21.4)
+display_scale = Vector2(0.027586, 0.024766)
+draw_order = 4
+
+[resource]
+script = ExtResource("1")
+id = &"starter_gloves"
+item_name = "Găng Tay Lữ Hành"
+description = "Găng da thô và băng quấn cổ tay đơn giản. Tăng 3 giáp và 2 sát thương; không tạo hạt sáng."
+slot_type = 6
+icon_texture = ExtResource("glove")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0"), SubResource("Part_1")])
+bonus_armor = 3.0
+bonus_atk = 2.0

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForgeRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/resources/forge_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://data/equipment/world_spear.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = &"world_spear_divine"
+display_name = "Thương Xuyên Vân"
+equipment = ExtResource("2")
+quality = 5
+coin_cost = 160
+material_ids = Array[StringName]([&"metal", &"dust", &"enhancement_stone_6", &"origin_divine_stone"])
+material_counts = Array[int]([48, 32, 10, 2])
+success_chance = 0.5
+

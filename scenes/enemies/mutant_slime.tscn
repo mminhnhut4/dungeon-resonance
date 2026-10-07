@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/slime_enemy.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/enemies/mutant_slime.gd" id="2"]
+
+[node name="MutantSlime" instance=ExtResource("1")]
+script = ExtResource("2")
+scale = Vector2(2, 2)
+aggro_radius = 300.0
+attack_range = 65.0
+is_elite = true
+contact_damage_enabled = true
+
+[node name="Health" parent="." index="7"]
+maximum_health = 120.0
+
+[node name="Stats" parent="." index="3"]
+offset_left = -45.0
+offset_right = 135.0
+offset_top = -42.0
+scale = Vector2(0.5, 0.5)
+text = "120 HP · MUTANT"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"superconduct"
+display_name = "Siêu Dẫn"
+recipe_rune_ids = Array[StringName]([&"ice", &"lightning"])
+behavior_id = &"superconduct"
+base_damage = 16.0
+cooldown_seconds = 1.1
+armor_break_seconds = 5.0

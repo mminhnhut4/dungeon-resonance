@@ -1,0 +1,9 @@
+[gd_scene load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/hub/game_flow.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/hub/exterior_hub_room.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/world_campaign.tscn" id="3"]
+[node name="PrologueGameFlow" type="Node2D"]
+script = ExtResource("1")
+hub_scene = ExtResource("2")
+campaign_scene = ExtResource("3")
+world_building_enabled = true

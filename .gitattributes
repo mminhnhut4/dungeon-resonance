@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Archived source/import metadata is verified byte-for-byte by asset pipeline tests.
+docs/verification/asset_pipeline_sources/** -text

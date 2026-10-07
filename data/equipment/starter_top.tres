@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://kakurn1ytmhs"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_yopn6"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/belt.tres" id="belt"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/sleeve_fore.tres" id="sleeve_fore"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/sleeve_upper.tres" id="sleeve_upper"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/top.tres" id="top"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"tunic"
+bone_slot = &"torso"
+texture = ExtResource("top")
+pivot_pixels = Vector2(109.51, 200.64)
+display_scale = Vector2(0.055794, 0.060606)
+draw_order = 1
+
+[sub_resource type="Resource" id="Part_1"]
+script = ExtResource("Part")
+id = &"sash"
+bone_slot = &"hip"
+texture = ExtResource("belt")
+pivot_pixels = Vector2(92.82, 28.92)
+display_scale = Vector2(0.054299, 0.049793)
+draw_order = 5
+
+[sub_resource type="Resource" id="Part_2"]
+script = ExtResource("Part")
+id = &"sleeve_upper_left"
+bone_slot = &"upper_arm_left"
+texture = ExtResource("sleeve_upper")
+pivot_pixels = Vector2(85, 23.28)
+display_scale = Vector2(0.029412, 0.035052)
+draw_order = -2
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_3"]
+script = ExtResource("Part")
+id = &"sleeve_fore_left"
+bone_slot = &"forearm_left"
+texture = ExtResource("sleeve_fore")
+pivot_pixels = Vector2(72.5, 23.04)
+display_scale = Vector2(0.029655, 0.041667)
+draw_order = -2
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_4"]
+script = ExtResource("Part")
+id = &"sleeve_upper_right"
+bone_slot = &"upper_arm_right"
+texture = ExtResource("sleeve_upper")
+pivot_pixels = Vector2(85, 23.28)
+display_scale = Vector2(0.029412, 0.035052)
+draw_order = 3
+
+[sub_resource type="Resource" id="Part_5"]
+script = ExtResource("Part")
+id = &"sleeve_fore_right"
+bone_slot = &"forearm_right"
+texture = ExtResource("sleeve_fore")
+pivot_pixels = Vector2(72.5, 23.04)
+display_scale = Vector2(0.029655, 0.041667)
+draw_order = 3
+
+[resource]
+script = ExtResource("1")
+id = &"starter_top"
+item_name = "Áo Lữ Hành"
+description = "Áo vải giản dị của kiếm sĩ mới lên đường. Tăng 10 HP tối đa và 5 giáp, không có hào quang."
+slot_type = 1
+icon_texture = ExtResource("top")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0"), SubResource("Part_1"), SubResource("Part_2"), SubResource("Part_3"), SubResource("Part_4"), SubResource("Part_5")])
+bonus_hp = 10.0
+bonus_armor = 5.0

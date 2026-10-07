@@ -1,0 +1,102 @@
+PASS import (exit 0)
+PASS addons (exit 0)
+RESULT: 15 checks, 0 failures
+PASS addon_entrypoints (exit 0)
+RESULT: 8 checks, 0 failures
+PASS addon_editor_scene (exit 0)
+PASS addon_lifecycle (exit 0)
+RESULT: 79 checks, 0 failures
+PASS validate (exit 0)
+VALIDATE scripts=208 failures=0
+VALIDATE scenes=34 failures=0
+PASS player_rig_editor (exit 0)
+PASS main_scene (exit 0)
+PASS resonance (exit 0)
+RESULT: 20 checks, 0 failures
+PASS content_data (exit 0)
+RESULT: 179 checks, 0 failures
+PASS asset_pipeline (exit 0)
+RESULT: 79 checks, 0 failures
+PASS audio_quit (exit 0)
+RESULT: 5 checks, 0 failures
+PASS antique_icon_catalog_audit (exit 0)
+RESULT AntiqueIconCatalog entries=59 pending=11 counts={ "material": 17, "consumable": 4, "equipment": 19, "rune": 5, "legacy_weapon_runtime": 9, "catalyst": 1, "relic": 4 }
+PASS movement_60 (exit 0)
+RESULT: 55 checks, 0 failures
+PASS combat_60 (exit 0)
+RESULT: 100 checks, 0 failures
+PASS milestone_60 (exit 0)
+STRESS retained memory samples (bytes): [276633094, 276633182, 276633182]
+STRESS objects baseline=4316 final=4316 resources baseline=447 final=447
+RESULT: 69 checks, 0 failures
+PASS alpha_60 (exit 0)
+STRESS alpha loot objects 4636 -> 4636, resources 452 -> 452
+RESULT: 80 checks, 0 failures
+PASS gear_60 (exit 0)
+RESULT: 35 checks, 0 failures
+PASS storyteller_60 (exit 0)
+RESULT: 29 checks, 0 failures
+PASS conditions_60 (exit 0)
+RESULT: 29 checks, 0 failures
+PASS crafting_60 (exit 0)
+RESULT: 32 checks, 0 failures
+PASS sanctuary_60 (exit 0)
+STRESS sanctuary objects 2605 -> 2605, resources 520 -> 520
+RESULT: 28 checks, 0 failures
+PASS weapon_content_60 (exit 0)
+RESULT: 26 checks, 0 failures
+PASS spell_matrix_60 (exit 0)
+RESULT: 64 checks, 0 failures
+PASS relics_60 (exit 0)
+RESULT: 23 checks, 0 failures
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CAMPAIGN TEST: 60 physics ticks/s
+PASS: Campaign begins at the locked Slime foyer
+PASS: Foyer cannot be skipped before clearing enemies
+PASS: Foyer clear unlocks the next stage
+PASS: Exit enters a separate exploration stage 1.5
+PASS: Stage transition preserves HP and the equipped weapon
+PASS: Stage transition preserves unique item identity and exact rune loadout
+PASS: Passive relic slots persist between stages
+PASS: Exploration room contains a guarded relic chest without combat waves
+PASS: Secret chest can be opened after its barriers are cleared
+PASS: Secret reward spawns a collectible relic resource
+PASS: Secret chest cannot duplicate its loot
+PASS: Exploration exit enters the mutant elite arena
+PASS: Elite room instantiates two distinct mutant enemies
+PASS: Mutant owns doubled geometry and starts with one hundred twenty HP
+PASS: Mutant can emit a finite elemental projectile
+PASS: Poison mutant projectile resolves Player damage and poison
+PASS: Two mutant waves clear the room and award finite elite souls
+PASS: Elite exit enters the complete two-phase Golem fight
+PASS: Campaign boss starts phase two and summons two adds exactly once
+PASS: Boss defeat opens rewards and victory portal, preserving souls
+PASS: Victory portal completes the campaign loop
+PASS: Standalone test F8 loads the boss campaign
+PASS: Standalone F8 retains HP and the existing inventory ledger
+PASS: Standalone F8 retains exact rune and relic loadout
+PASS: Campaign teardown frees room hazards and loot
+PASS: Physical F8 jumps to Boss while retaining HP
+STRESS content campaign objects 2221 -> 2221, resources 467 -> 467
+PASS: Repeated content campaigns retain no growing object population
+PASS: Repeated content campaigns release item and spell runtime resources
+PASS: Content room transitions release all spells and pickups
+PASS: System teardown restores global time and pause
+PASS: System teardown releases incident and trap visuals
+RESULT: 31 checks, 0 failures
+ERROR: Condition "slot >= slot_max" is true. Returning: nullptr
+   at: get_instance (./core/object/object.h:912)
+   GDScript backtrace (most recent call first):
+       [0] record (res://scripts/actors/enemies/enemy_hit_aggro.gd:26)
+       [1] _on_hit (res://scripts/actors/enemies/boss_golem.gd:200)
+       [2] take_damage (res://scripts/combat/hurtbox.gd:45)
+       [3] test_system (res://tests/campaign_test.gd:73)
+       [4] _step (res://tests/survival_test_base.gd:85)
+Exception: C:\Users\Admin\AppData\Local\Temp\DungeonTeamPackageQA_20261008\Dungeon-Resonance\tests\run_tests.ps1:59
+Line |
+  59 |          throw "$Name failed (exit $exitStatus)"
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | campaign_60 failed (exit 0)
+
+

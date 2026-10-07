@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WorldEnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/resources/world_enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"sword_wraith"
+display_name = "Tàn Hồn Kiếm Linh"
+moveset = 2
+maximum_hp = 80.0
+body_size = Vector2(30, 48)
+visual_height = 60.0
+patrol_speed = 45.0
+chase_speed = 100.0
+attack_range = 230.0
+windup = 0.6
+active = 0.30
+recovery = 0.45
+cooldown = 1.2
+attack_damage = 20.0
+flying = true
+

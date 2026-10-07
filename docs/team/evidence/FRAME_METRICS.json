@@ -1,0 +1,247 @@
+{
+  "baseline_gpu_r2": {
+    "normal": {
+      "frames": 672,
+      "p50_ms": 8.0305,
+      "p95_ms": 8.88735,
+      "p99_ms": 38.16136999999998,
+      "max_ms": 41.387,
+      "over25ms": 21,
+      "hitstop_frames": 62
+    },
+    "no_hitstop": {
+      "frames": 740,
+      "p50_ms": 8.0175,
+      "p95_ms": 8.89565,
+      "p99_ms": 41.60077,
+      "max_ms": 42.695,
+      "over25ms": 24,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 766,
+      "p50_ms": 8.227,
+      "p95_ms": 8.895,
+      "p99_ms": 41.045,
+      "max_ms": 42.752,
+      "over25ms": 12,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 23,
+      "mean_ms": 25.088043478260868,
+      "min_ms": 20.559,
+      "max_ms": 29.421
+    }
+  },
+  "candidate_gpu_r2": {
+    "normal": {
+      "frames": 704,
+      "p50_ms": 8.229,
+      "p95_ms": 8.8,
+      "p99_ms": 23.528740000000003,
+      "max_ms": 27.769,
+      "over25ms": 6,
+      "hitstop_frames": 82
+    },
+    "no_hitstop": {
+      "frames": 786,
+      "p50_ms": 8.023,
+      "p95_ms": 8.8015,
+      "p99_ms": 28.395499999999995,
+      "max_ms": 33.225,
+      "over25ms": 11,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 796,
+      "p50_ms": 8.312000000000001,
+      "p95_ms": 8.79275,
+      "p99_ms": 9.261899999999992,
+      "max_ms": 13.22,
+      "over25ms": 0,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 24,
+      "mean_ms": 14.774666666666667,
+      "min_ms": 12.851,
+      "max_ms": 18.544
+    }
+  },
+  "candidate_rich_r3": {
+    "normal": {
+      "frames": 707,
+      "p50_ms": 8.228,
+      "p95_ms": 8.7837,
+      "p99_ms": 23.69801999999999,
+      "max_ms": 27.978,
+      "over25ms": 6,
+      "hitstop_frames": 82
+    },
+    "no_hitstop": {
+      "frames": 786,
+      "p50_ms": 8.0165,
+      "p95_ms": 8.786750000000001,
+      "p99_ms": 29.20845,
+      "max_ms": 32.692,
+      "over25ms": 11,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 796,
+      "p50_ms": 8.3385,
+      "p95_ms": 8.966249999999999,
+      "p99_ms": 9.4712,
+      "max_ms": 13.171,
+      "over25ms": 0,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 24,
+      "mean_ms": 15.275083333333333,
+      "min_ms": 12.972,
+      "max_ms": 18.843
+    }
+  },
+  "main_rich_r1": {
+    "normal": {
+      "frames": 709,
+      "p50_ms": 8.229,
+      "p95_ms": 8.790199999999999,
+      "p99_ms": 23.52247999999998,
+      "max_ms": 27.399,
+      "over25ms": 6,
+      "hitstop_frames": 82
+    },
+    "no_hitstop": {
+      "frames": 788,
+      "p50_ms": 8.034500000000001,
+      "p95_ms": 8.87265,
+      "p99_ms": 28.04063,
+      "max_ms": 30.531,
+      "over25ms": 11,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 796,
+      "p50_ms": 8.329,
+      "p95_ms": 8.82475,
+      "p99_ms": 9.288249999999989,
+      "max_ms": 13.362,
+      "over25ms": 0,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 23,
+      "mean_ms": 14.826565217391304,
+      "min_ms": 13.339,
+      "max_ms": 16.888
+    }
+  },
+  "main_rich_r2": {
+    "normal": {
+      "frames": 708,
+      "p50_ms": 8.229,
+      "p95_ms": 8.83515,
+      "p99_ms": 24.010469999999938,
+      "max_ms": 28.826,
+      "over25ms": 7,
+      "hitstop_frames": 82
+    },
+    "no_hitstop": {
+      "frames": 787,
+      "p50_ms": 8.035,
+      "p95_ms": 8.7904,
+      "p99_ms": 28.793139999999994,
+      "max_ms": 31.024,
+      "over25ms": 11,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 796,
+      "p50_ms": 8.333,
+      "p95_ms": 8.77925,
+      "p99_ms": 9.252599999999997,
+      "max_ms": 12.903,
+      "over25ms": 0,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 23,
+      "mean_ms": 15.01882608695652,
+      "min_ms": 12.637,
+      "max_ms": 17.603
+    }
+  },
+  "main_rich_r3": {
+    "normal": {
+      "frames": 709,
+      "p50_ms": 8.23,
+      "p95_ms": 8.8254,
+      "p99_ms": 23.431159999999995,
+      "max_ms": 27.527,
+      "over25ms": 4,
+      "hitstop_frames": 84
+    },
+    "no_hitstop": {
+      "frames": 788,
+      "p50_ms": 8.021,
+      "p95_ms": 8.7813,
+      "p99_ms": 27.870019999999997,
+      "max_ms": 29.909,
+      "over25ms": 11,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 796,
+      "p50_ms": 8.3305,
+      "p95_ms": 8.911249999999999,
+      "p99_ms": 9.333199999999993,
+      "max_ms": 13.1,
+      "over25ms": 0,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 24,
+      "mean_ms": 14.718458333333334,
+      "min_ms": 13.263,
+      "max_ms": 16.505
+    }
+  },
+  "baseline_extended_r1": {
+    "normal": {
+      "frames": 674,
+      "p50_ms": 8.0845,
+      "p95_ms": 8.8568,
+      "p99_ms": 37.57764,
+      "max_ms": 38.35,
+      "over25ms": 21,
+      "hitstop_frames": 62
+    },
+    "no_hitstop": {
+      "frames": 748,
+      "p50_ms": 8.0125,
+      "p95_ms": 8.882299999999999,
+      "p99_ms": 40.77568999999999,
+      "max_ms": 44.783,
+      "over25ms": 24,
+      "hitstop_frames": 0
+    },
+    "no_mastery_commit": {
+      "frames": 770,
+      "p50_ms": 8.231,
+      "p95_ms": 8.95965,
+      "p99_ms": 39.14613,
+      "max_ms": 41.824,
+      "over25ms": 12,
+      "hitstop_frames": 96
+    },
+    "mastery": {
+      "count": 23,
+      "mean_ms": 25.677608695652175,
+      "min_ms": 20.416,
+      "max_ms": 31.384
+    }
+  }
+}

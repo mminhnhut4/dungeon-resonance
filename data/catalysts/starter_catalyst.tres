@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CatalystData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/CatalystData.gd" id="1_catalyst"]
+
+[resource]
+script = ExtResource("1_catalyst")
+id = &"starter_catalyst"
+display_name = "Starter Catalyst"
+initial_slots = 3
+maximum_slots = 3

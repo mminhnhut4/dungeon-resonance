@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://d0n0d2r7s87t0"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_i84wb"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/pants_shin.tres" id="pants_shin"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/pants_thigh.tres" id="pants_thigh"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"trouser_upper_left"
+bone_slot = &"thigh_left"
+texture = ExtResource("pants_thigh")
+pivot_pixels = Vector2(94, 26.1)
+display_scale = Vector2(0.037234, 0.03908)
+draw_order = -1
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_1"]
+script = ExtResource("Part")
+id = &"trouser_lower_left"
+bone_slot = &"shin_left"
+texture = ExtResource("pants_shin")
+pivot_pixels = Vector2(72.5, 30.96)
+display_scale = Vector2(0.04, 0.037984)
+draw_order = -1
+tint = Color(0.78, 0.83, 0.84, 1)
+
+[sub_resource type="Resource" id="Part_2"]
+script = ExtResource("Part")
+id = &"trouser_upper_right"
+bone_slot = &"thigh_right"
+texture = ExtResource("pants_thigh")
+pivot_pixels = Vector2(94, 26.1)
+display_scale = Vector2(0.037234, 0.03908)
+draw_order = 1
+
+[sub_resource type="Resource" id="Part_3"]
+script = ExtResource("Part")
+id = &"trouser_lower_right"
+bone_slot = &"shin_right"
+texture = ExtResource("pants_shin")
+pivot_pixels = Vector2(72.5, 30.96)
+display_scale = Vector2(0.04, 0.037984)
+draw_order = 1
+
+[resource]
+script = ExtResource("1")
+id = &"starter_pants"
+item_name = "Quần Lữ Hành"
+description = "Quần vải gọn cho chạy và nhảy. Tăng 5 HP tối đa và 3 giáp, có thể thay riêng với áo."
+slot_type = 4
+icon_texture = ExtResource("pants_thigh")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0"), SubResource("Part_1"), SubResource("Part_2"), SubResource("Part_3")])
+bonus_hp = 5.0
+bonus_armor = 3.0

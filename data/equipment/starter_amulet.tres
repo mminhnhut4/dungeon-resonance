@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=3 uid="uid://bkccdhed7101t"]
+
+[ext_resource type="Script" uid="uid://dygm8urmbjrjt" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Script" uid="uid://beuvv3pqbk8d5" path="res://scripts/definitions/RuneData.gd" id="2_1q3kq"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player/modular/atlas/amulet.tres" id="amulet"]
+[ext_resource type="Script" uid="uid://d01dc5qg3emn1" path="res://scripts/resources/modular_character_part.gd" id="Part"]
+
+[sub_resource type="Resource" id="Part_0"]
+script = ExtResource("Part")
+id = &"amulet"
+bone_slot = &"torso"
+texture = ExtResource("amulet")
+pivot_pixels = Vector2(85, 359.6)
+display_scale = Vector2(0.020588, 0.022177)
+draw_order = 5
+
+[resource]
+script = ExtResource("1")
+id = &"starter_amulet"
+item_name = "Dây Chuyền Bình An"
+description = "Dây vải buộc một mặt nhỏ đơn giản. Bộ khởi đầu Thường, không phát sáng và chưa cộng chỉ số."
+slot_type = 3
+icon_texture = ExtResource("amulet")
+visual_parts = Array[ExtResource("Part")]([SubResource("Part_0")])

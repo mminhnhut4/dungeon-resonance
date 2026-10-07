@@ -1,0 +1,109 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/debug_hud.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.06, 0.09, 0.15, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.38, 0.5, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="DebugHUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1")
+
+[node name="Panel" type="Panel" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -380.0
+offset_top = 18.0
+offset_right = -20.0
+offset_bottom = 230.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("panel")
+
+[node name="HealthBar" type="ProgressBar" parent="Panel"]
+offset_left = 16.0
+offset_top = 44.0
+offset_right = 344.0
+offset_bottom = 58.0
+value = 100.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="HealthText" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 340.0
+offset_bottom = 38.0
+theme_override_font_sizes/font_size = 20
+text = "HP 100 / 100"
+mouse_filter = 2
+
+[node name="Slots" type="HBoxContainer" parent="Panel"]
+offset_left = 16.0
+offset_top = 72.0
+offset_right = 344.0
+offset_bottom = 102.0
+theme_override_constants/separation = 8
+mouse_filter = 2
+
+[node name="Slot1" type="Label" parent="Panel/Slots"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Ô 1 · Trống"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Slot2" type="Label" parent="Panel/Slots"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Ô 2 · Trống"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Slot3" type="Label" parent="Panel/Slots"]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Ô 3 · Trống"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Recipe" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 112.0
+offset_right = 344.0
+offset_bottom = 140.0
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+text = "Phép cơ bản"
+mouse_filter = 2
+
+[node name="Cooldown" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 144.0
+offset_right = 344.0
+offset_bottom = 166.0
+theme_override_font_sizes/font_size = 15
+text = "Sẵn sàng · Chuột phải / I"
+mouse_filter = 2
+
+[node name="Presets" type="Label" parent="Panel"]
+offset_left = 16.0
+offset_top = 174.0
+offset_right = 348.0
+offset_bottom = 206.0
+theme_override_font_sizes/font_size = 13
+text = "1: Hỏa + Phong    2: Hỏa + Lôi\n3: Phong + Lôi     4: Tháo bùa / Phép cơ bản"
+mouse_filter = 2

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"overload"
+display_name = "Quá Tải Điện Hỏa"
+recipe_rune_ids = Array[StringName]([&"fire", &"lightning"])
+behavior_id = &"overload"
+energy_cost = 0.0
+cooldown_seconds = 0.95
+base_damage = 12.0
+explosion_damage = 30.0
+stun_seconds = 0.5
+

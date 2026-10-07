@@ -1,0 +1,100 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+[ext_resource type="Script" path="res://scripts/definitions/weapon_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(44, 36)
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"world_twinblades_0"
+windup_seconds = 0.0450
+active_seconds = 0.055
+recovery_seconds = 0.0750
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(36, 0)
+reach = 55
+sweep_angle_degrees = 85
+motion = &"slash"
+stagger_force = 9
+damage_multiplier = 1.00
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(44, 36)
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"world_twinblades_1"
+windup_seconds = 0.0495
+active_seconds = 0.055
+recovery_seconds = 0.0750
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(36, 0)
+reach = 55
+sweep_angle_degrees = 85
+motion = &"slash"
+stagger_force = 9
+damage_multiplier = 1.22
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape2"]
+size = Vector2(44, 36)
+[sub_resource type="Resource" id="step2"]
+script = ExtResource("2")
+id = &"world_twinblades_2"
+windup_seconds = 0.0540
+active_seconds = 0.055
+recovery_seconds = 0.0750
+hitbox_shape = SubResource("shape2")
+hitbox_offset = Vector2(36, 0)
+reach = 55
+sweep_angle_degrees = 85
+motion = &"slash"
+stagger_force = 9
+damage_multiplier = 1.44
+knockback = Vector2(150, -55)
+super_armor = false
+lunge_speed = 0
+lunge_seconds = 0
+pull_force = 0
+
+[sub_resource type="RectangleShape2D" id="shape3"]
+size = Vector2(44, 36)
+[sub_resource type="Resource" id="step3"]
+script = ExtResource("2")
+id = &"world_twinblades_3"
+windup_seconds = 0.0585
+active_seconds = 0.055
+recovery_seconds = 0.0915
+hitbox_shape = SubResource("shape3")
+hitbox_offset = Vector2(36, 0)
+reach = 63
+sweep_angle_degrees = 95
+motion = &"slash"
+stagger_force = 13.5
+damage_multiplier = 1.66
+knockback = Vector2(210, -55)
+super_armor = false
+lunge_speed = 275
+lunge_seconds = 0.075
+pull_force = 0
+
+[resource]
+script = ExtResource("1")
+id = &"world_twinblades"
+display_name = "Song Đao Liên Ảnh"
+base_damage = 13
+visual_profile = &"dual"
+attack_kind = &"melee"
+visual_archetype = "swordsman"
+critical_chance = 0.2
+combo_window_seconds = 0.24
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1"), SubResource("step2"), SubResource("step3")])
+

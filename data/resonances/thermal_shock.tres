@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"thermal_shock"
+display_name = "Sốc Nhiệt"
+recipe_rune_ids = Array[StringName]([&"ice", &"fire"])
+behavior_id = &"thermal_shock"
+base_damage = 20.0
+cooldown_seconds = 1.1
+thermal_shock = true

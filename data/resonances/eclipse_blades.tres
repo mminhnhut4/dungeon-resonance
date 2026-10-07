@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ResonanceDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/definitions/resonance_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"eclipse_blades"
+display_name = "Thực Thần Vạn Lôi"
+recipe_rune_ids = Array[StringName]([&"fire", &"fire", &"wind", &"lightning", &"lightning"])
+behavior_id = &"charged_slash"
+base_damage = 24.0
+explosion_damage = 42.0
+cooldown_seconds = 1.6
+windup_seconds = 0.18
+recovery_seconds = 0.18
+projectile_speed = 560.0
+

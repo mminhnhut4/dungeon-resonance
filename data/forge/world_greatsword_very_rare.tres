@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForgeRecipe" load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/resources/forge_recipe.gd" id="1"]
+[ext_resource type="Resource" path="res://data/equipment/world_greatsword.tres" id="2"]
+[resource]
+script = ExtResource("1")
+id = &"world_greatsword_very_rare"
+display_name = "Đại Kiếm Trấn Sơn"
+equipment = ExtResource("2")
+quality = 2
+coin_cost = 40
+material_ids = Array[StringName]([&"metal", &"dust", &"enhancement_stone_2"])
+material_counts = Array[int]([12, 8, 4])
+success_chance = 1.0
+

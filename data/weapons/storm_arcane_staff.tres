@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://cfrjpo837tqj6"]
+
+[ext_resource type="Script" uid="uid://b38b3pmy1qkt0" path="res://scripts/definitions/WeaponData.gd" id="1"]
+[ext_resource type="Script" uid="uid://dle20g3ircy5p" path="res://scripts/definitions/attack_step_definition.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="shape0"]
+size = Vector2(50, 20)
+
+[sub_resource type="Resource" id="step0"]
+script = ExtResource("2")
+id = &"storm_arcane_staff_0"
+windup_seconds = 0.15
+active_seconds = 0.06
+hitbox_shape = SubResource("shape0")
+hitbox_offset = Vector2(33, 0)
+knockback = Vector2(100, -35)
+motion = &"thrust"
+stagger_force = 9.0
+
+[sub_resource type="RectangleShape2D" id="shape1"]
+size = Vector2(50, 20)
+
+[sub_resource type="Resource" id="step1"]
+script = ExtResource("2")
+id = &"storm_arcane_staff_1"
+windup_seconds = 0.15
+active_seconds = 0.06
+hitbox_shape = SubResource("shape1")
+hitbox_offset = Vector2(33, 0)
+damage_multiplier = 1.25
+knockback = Vector2(100, -35)
+motion = &"thrust"
+stagger_force = 9.0
+
+[resource]
+script = ExtResource("1")
+id = &"storm_arcane_staff"
+display_name = "Lạc Lôi Trượng"
+attack_kind = &"ranged"
+base_damage = 19.0
+combo_steps = Array[ExtResource("2")]([SubResource("step0"), SubResource("step1")])
+combo_window_seconds = 0.24
+critical_chance = 0.1
+projectile_pattern = &"arcane_wave"
+projectile_speed = 400.0
+projectile_lifetime = 0.9
+projectile_targets = 2

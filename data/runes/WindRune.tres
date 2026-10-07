@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RuneData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/definitions/RuneData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"wind"
+display_name = "Phong"
+display_color = Color(0.45, 1, 0.8, 1)
+projectile_speed_multiplier = 1.35
+knockback_multiplier = 1.4
+maximum_pierced_targets = 3
+

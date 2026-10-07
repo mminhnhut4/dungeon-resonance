@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon.gd" id="1_weapon"]
+[ext_resource type="Script" path="res://scripts/combat/hitbox.gd" id="2_hitbox"]
+[ext_resource type="Resource" path="res://data/weapons/training_sword.tres" id="3_definition"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hit"]
+size = Vector2(36, 24)
+
+[node name="Weapon" type="Node2D" node_paths=PackedStringArray("hitbox")]
+script = ExtResource("1_weapon")
+definition = ExtResource("3_definition")
+hitbox = NodePath("Hitbox")
+
+[node name="Hitbox" type="Area2D" parent="." node_paths=PackedStringArray("collision_shape")]
+position = Vector2(36, 0)
+collision_layer = 0
+collision_mask = 16
+monitoring = false
+monitorable = false
+script = ExtResource("2_hitbox")
+collision_shape = NodePath("CollisionShape2D")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("RectangleShape2D_hit")
+disabled = true

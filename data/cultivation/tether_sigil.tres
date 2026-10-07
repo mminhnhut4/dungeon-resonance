@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CultivationStyleData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cultivation/cultivation_style_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"tether_sigil"
+display_name = "Tỏa Linh Ấn"
+energy_cost = 18.0
+cooldown = 5.0
+windup = 0.30
+active = 0.06
+recovery = 0.25
+damage = 4.0
+radius = 72.0
+tint = Color(1.0, 0.78, 0.3, 1.0)
+maximum_targets = 3
+slow_multiplier = 0.55
+slow_seconds = 0.7

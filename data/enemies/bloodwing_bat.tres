@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WorldEnemyData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/resources/world_enemy_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"bloodwing_bat"
+display_name = "Huyết Dực Minh Điêu"
+moveset = 1
+maximum_hp = 70.0
+body_size = Vector2(36, 30)
+visual_height = 36.0
+patrol_speed = 42.0
+chase_speed = 90.0
+aggro_radius = 520.0
+attack_range = 450.0
+windup = 0.35
+active = 0.38
+recovery = 0.55
+cooldown = 1.2
+attack_damage = 16.0
+flying = true
+

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EquipmentData" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/resources/equipment_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/weapons/regions/world_chain.tres" id="2"]
+[ext_resource type="Resource" path="res://data/weapons/world_chain.tres" id="3"]
+[resource]
+script = ExtResource("1")
+id = &"world_chain"
+item_name = "Roi Xích Câu Hồn"
+description = "Quất thẳng tầm dài, móc kéo rồi kết thúc bằng quét rộng."
+icon_texture = ExtResource("2")
+world_sprite_texture = ExtResource("2")
+moveset = ExtResource("3")
+hand_origin = Vector2(68, 146)
+displayed_weapon_length = 65.0
+
