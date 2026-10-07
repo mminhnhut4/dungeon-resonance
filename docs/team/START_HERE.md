@@ -29,10 +29,10 @@ Vòng chơi: căn cứ → chọn trang bị/bùa → khám phá/chiến đấu 
 
 Mục tiêu run 15–20 phút, NPC/khám phá và đột phá mở động tác là định hướng đã chọn. Thời lượng này **chưa được chứng minh bằng playtest tự nhiên**. Nhiều ý tưởng trong roadmap cũ đã được triển khai một phần, vì vậy xem trạng thái/code hiện hành trước khi nhận task. Không mặc định mở tầng/boss mới từ một tài liệu thiết kế.
 
-Bản hiện hành đã ghép sửa combat/bùa/Golem và có kiểm tra tập trung. Còn khựng liên quan save đồng bộ, hai lỗi layout800×600 và native crash lịch sử chưa kết luận; full strict mới trên checkpoint này chưa chạy. Xem [QA](QA_AND_HANDOFF.md) để phân biệt bằng chứng cũ và kiểm tra đóng gói mới.
+Bản hiện hành đã ghép sửa combat/bùa/Golem và có kiểm tra tập trung. Còn khựng liên quan save đồng bộ, hai lỗi layout800×600 và native crash lịch sử chưa kết luận; Strict mặc định trên ZIP mới đã qua 25 gate rồi dừng ở campaign_60 vì fixture dùng source_id giả; các gate sau chưa chạy. Kết quả và raw log nằm trong [PACKAGING_VERIFICATION](PACKAGING_VERIFICATION.json). Xem [QA](QA_AND_HANDOFF.md) để phân biệt bằng chứng cũ và kiểm tra đóng gói mới.
 
 ## Nguồn, quyền sử dụng, dữ liệu
 
 Gói giữ source gameplay, asset runtime, addons với license upstream, `.gd.uid`, `.import`, tài liệu và nguồn/provenance art cần cho asset test. `.godot`, save cá nhân, engine, game export và đa số log/ảnh QA lịch sử không nằm trong ZIP. Các link tới evidence ngoài máy trong báo cáo cũ có thể không mở được ở máy thành viên; evidence combat chọn lọc có trong [evidence](evidence/README.md).
 
-Repo công khai không tự cấp một license chung cho code/art dự án. Giữ license của addon/font và nguồn asset; nhóm dùng repo để cộng tác, không tự đổi giấy phép hoặc xuất bản game từ một PR nội dung. ZIP có `TEAM_SOURCE_MANIFEST.json` để đối chiếu SHA256 từng file và receipt đóng gói ở cạnh ZIP.
+Repo private không tự cấp một license chung cho code/art dự án. Giữ license của addon/font và nguồn asset; nhóm dùng repo để cộng tác, không tự đổi giấy phép hoặc xuất bản game từ một PR nội dung. ZIP có `TEAM_SOURCE_MANIFEST.json` để đối chiếu SHA256 từng file và receipt đóng gói ở cạnh ZIP.
