@@ -24,6 +24,7 @@ var _location_key: String = ""
 var style_binding: Node
 
 func initialize(permanent: SanctuaryProfile, owner_node: Node, seed_override: int = -1) -> bool:
+	initialized=false; error=""
 	profile=permanent; flow=owner_node
 	if profile.read_only:
 		error="profile_quarantined"; return false
@@ -41,6 +42,8 @@ func initialize(permanent: SanctuaryProfile, owner_node: Node, seed_override: in
 			error="invalid_tuning_or_bank"; return false
 		if not profile.commit_cultivation(Model.initial_proposal(progress,profile.material_stash,profile.souls,profile.boss_proofs)):
 			error=profile.last_commit.get("error","initialization_failed"); return false
+	if not profile.compact_cultivation_receipts():
+		error=profile.last_commit.get("error","cultivation_compaction_failed"); return false
 	initialized=Model.valid(profile.cultivation_progress,profile.material_stash)
 	if not initialized: error="invalid_cultivation"
 	profile.changed.connect(_profile_changed)

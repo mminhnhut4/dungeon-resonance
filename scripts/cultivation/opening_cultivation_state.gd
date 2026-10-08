@@ -5,6 +5,8 @@ extends RefCounted
 ## trusted adapter inputs; this model has no IO, scene or life authority.
 
 const SCHEMA_VERSION: int = 1
+const COMPACT_SCHEMA_VERSION: int = 2
+const RECENT_RECEIPTS: int = 8
 const LIMIT: int = 1000000000
 const BANK_LIMIT: int = 999999
 const MAX_RECEIPTS: int = 1024
@@ -51,11 +53,16 @@ static func _new_actor(actor_id: String) -> Dictionary:
 		"last_train_tick": 0, "enrolled": actor_id == PLAYER, "sessions_left": 0}
 
 static func valid(progress: Variant, materials: Variant) -> bool:
-	if not _keys(progress, PROGRESS_KEYS) or not _integer(progress.get("schema_version"), 1, 1): return false
+	if not progress is Dictionary or not _integer(progress.get("schema_version"), 1, COMPACT_SCHEMA_VERSION): return false
+	var compact: bool = int(progress["schema_version"]) == COMPACT_SCHEMA_VERSION
+	var keys: Array[String] = PROGRESS_KEYS.duplicate()
+	if compact: keys.append("receipt_floor")
+	if not _keys(progress, keys): return false
 	if not _valid_config(progress.get("config")) or not _valid_materials(materials): return false
 	for field: String in ["seed", "gameplay_tick"]:
 		if not _integer(progress.get(field), 0, LIMIT): return false
-	if not _integer(progress.get("revision"), 0, MAX_RECEIPTS) or not _integer(progress.get("next_event"), 1, MAX_RECEIPTS + 1): return false
+	var ceiling: int = LIMIT if compact else MAX_RECEIPTS
+	if not _integer(progress.get("revision"), 0, ceiling) or not _integer(progress.get("next_event"), 1, ceiling + 1): return false
 	if progress["next_event"] != progress["revision"] + 1: return false
 	var actors: Variant = progress.get("actors")
 	if not actors is Dictionary or not actors.has(PLAYER) or actors.size() < 1 or actors.size() > 2: return false
@@ -63,15 +70,32 @@ static func valid(progress: Variant, materials: Variant) -> bool:
 		if actor_id not in [PLAYER, NPC] or not _valid_actor(actors[actor_id], str(actor_id), progress): return false
 	if not _valid_origins(progress, materials): return false
 	var receipts: Variant = progress.get("receipts")
-	if not receipts is Array or receipts.size() != int(progress["revision"]): return false
+	var receipt_floor: int = maxi(0, int(progress["revision"]) - RECENT_RECEIPTS) if compact else 0
+	if compact and not _integer(progress.get("receipt_floor"), receipt_floor, receipt_floor): return false
+	if not receipts is Array or receipts.size() != int(progress["revision"]) - receipt_floor: return false
 	var event_ids: Dictionary = {}
 	for index: int in receipts.size():
 		var receipt: Variant = receipts[index]
 		if not _keys(receipt, ["id", "kind", "arguments_sha256", "revision"]): return false
 		if not _event_id(receipt.get("id")) or event_ids.has(receipt["id"]) or receipt.get("kind") not in COMMANDS: return false
-		if not _hex_digest(receipt.get("arguments_sha256")) or not _integer(receipt.get("revision"), index + 1, index + 1): return false
+		var sequence: int = receipt_floor + index + 1
+		if not _hex_digest(receipt.get("arguments_sha256")) or not _integer(receipt.get("revision"), sequence, sequence): return false
+		if compact and str(receipt["id"]).begins_with("cult_") and receipt["id"] != "cult_%d" % sequence: return false
 		event_ids[receipt["id"]] = true
 	return true
+
+static func compact_progress(progress: Dictionary, materials: Dictionary) -> Dictionary:
+	# Only history representation changes: earned counters and command sequence
+	# are unchanged. Old arbitrary IDs cannot be issued by the compact adapter.
+	if not valid(progress, materials): return {}
+	if int(progress["schema_version"]) == COMPACT_SCHEMA_VERSION: return _normalize(progress)
+	for receipt: Dictionary in progress["receipts"]:
+		if str(receipt["id"]).begins_with("cult_") and receipt["id"] != "cult_%d" % int(receipt["revision"]): return {}
+	var result: Dictionary = _normalize(progress)
+	result["schema_version"] = COMPACT_SCHEMA_VERSION
+	result["receipt_floor"] = maxi(0, int(result["revision"]) - RECENT_RECEIPTS)
+	result["receipts"] = result["receipts"].slice(int(result["receipt_floor"]))
+	return result if valid(result, materials) else {}
 
 static func _valid_config(config: Variant) -> bool:
 	if not _keys(config, CONFIG_KEYS) or not _integer(config.get("schema_version"), 1, 1) or config.get("tuning_status") != "proposal_not_final": return false
@@ -181,7 +205,13 @@ static func propose(progress: Variant, materials: Variant, souls: Variant, proof
 		if receipt["id"] != event_id: continue
 		if receipt["kind"] != kind or receipt["arguments_sha256"] != arguments_hash: return _failure("event_conflict")
 		return _proposal_result(progress,materials,int(souls),true,source_hash,event,args)
-	if progress["receipts"].size() >= MAX_RECEIPTS: return _failure("receipt_capacity_requires_review")
+	var compact: bool = int(progress["schema_version"]) == COMPACT_SCHEMA_VERSION
+	if compact:
+		# A missing old receipt is NEVER a fresh command. The monotonic sequence
+		# makes evicted history fail closed across reloads without a growing log.
+		if event_id != "cult_%d" % int(progress["next_event"]): return _failure("event_outside_current_sequence")
+		if int(progress["revision"]) >= LIMIT: return _failure("event_sequence_exhausted")
+	elif progress["receipts"].size() >= MAX_RECEIPTS: return _failure("receipt_capacity_requires_review")
 	var next: Dictionary = _normalize(progress)
 	var bank: Dictionary = _normalize(materials)
 	var request: Dictionary = _normalize(args)
@@ -203,6 +233,9 @@ static func propose(progress: Variant, materials: Variant, souls: Variant, proof
 	next["revision"] += 1
 	next["next_event"] += 1
 	next["receipts"].append({"id": event_id, "kind": kind, "arguments_sha256": arguments_hash, "revision": next["revision"]})
+	if compact:
+		if next["receipts"].size() > RECENT_RECEIPTS: next["receipts"].pop_front()
+		next["receipt_floor"] = maxi(0, int(next["revision"]) - RECENT_RECEIPTS)
 	if not valid(next, bank) or not _integer(next_souls, 0, BANK_LIMIT): return _failure("proposal_invariant_failed")
 	return _proposal_result(next,bank,next_souls,false,source_hash,event,args)
 

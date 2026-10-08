@@ -85,7 +85,7 @@ func _run() -> void:
 	_select_while_hidden(box, &"upgrade_max_hp")
 	_check(upgrades_requested.is_empty() and profile.souls == early_souls, "Hidden service cannot spend Souls or publish an upgrade before the final page")
 	await _reveal_services(box)
-	_check(box.choice_list.visible and box.choice_list.get_child_count() == 6 and box.choice_list.has_node("Choice_courier_open"), "Final healer page exposes three permanent services, consumables, courier and goodbye")
+	_check(box.choice_list.visible and box.choice_list.get_child_count() == WorldProgressionCatalog.UPGRADES.size()+4 and box.choice_list.has_node("Choice_courier_open") and box.choice_list.has_node("Choice_rune_learning"), "Final healer page exposes every permanent service, consumables, rune learning, courier and goodbye")
 	_check((box.choice_list.get_node("Choice_upgrade_max_hp") as Button).text.contains("+0 → +10 HP"), "Upgrade choice renders the quoted benefit and cost as Vietnamese text")
 	var hp_quote: Dictionary = hub.economy.call(&"quote_upgrade", &"max_hp")
 	var souls_before: int = profile.souls
@@ -178,12 +178,15 @@ func _run() -> void:
 		hub.station_scroll.ensure_control_visible(starter_button)
 		await _step(3)
 		await _mouse(MOUSE_BUTTON_LEFT, starter_button.get_global_rect().get_center())
+	_check(hub.gear.inventory.items.size() == item_count and profile.coins == coin_before,"Selecting a starter sword only opens purchase confirmation")
+	await _confirm_shop(hub)
 	_check(hub.gear.inventory.items.size() == item_count + 1 and profile.coins == coin_before - int(starter_quote["coin_cost"]) and hub.gear.inventory.items.values().any(func(item: GearItem) -> bool: return item.definition_id == GearInventory.COMMON_SWORD.id and item.quality == GearItem.Quality.COMMON and item.source == &"merchant"), "Actual Kael mouse purchase commits one Common starter sword and its quoted price")
 	_check(hub.station_content.get_node_or_null("BuyWeapon_world_saber_0") is Button and hub.station_content.get_node_or_null("BuyWeapon_world_saber_1") is Button and hub.station_content.get_node_or_null("BuyWeapon_world_saber_2") == null, "Kael offers learned Common/Rare family tiers while higher grades stay at the smith")
 	coin_before = profile.coins
 	item_count = hub.gear.inventory.items.size()
 	(hub.station_content.get_node("BuyWeapon_world_saber_1") as Button).pressed.emit()
 	await _step(2)
+	await _confirm_shop(hub)
 	_check(hub.gear.inventory.items.size() == item_count + 1 and profile.coins == coin_before - 40, "Actual Kael purchase commits one Rare UID and its quoted price")
 	hub.close_station()
 	hub.open_npc(NpcCatalog.HEALER)
@@ -197,6 +200,8 @@ func _run() -> void:
 	_check(potion_button != null and not potion_button.disabled and hub.current_station == &"healer_consumables", "Actual healer choice opens an enabled potion control")
 	if potion_button != null: potion_button.pressed.emit()
 	await _step(2)
+	_check(hub.gear.inventory.consumables[&"potion"] == potions_before and profile.coins == coin_before,"Potion selection does not spend before confirmation")
+	await _confirm_shop(hub)
 	_check(hub.gear.inventory.consumables[&"potion"] == potions_before + 1 and profile.coins == coin_before - 10 and hub.player.health.current_health == current_health, "Actual healer purchase stores one potion without immediately healing")
 	var linen_before: int = profile.material_stash[&"linen_fiber"]
 	var bandages_before: int = hub.gear.inventory.consumables[&"bandage"]
@@ -317,6 +322,19 @@ func _select(box: DialogueBox, id: StringName) -> void:
 	await _step(3)
 	_check(box.body_scroll.get_global_rect().encloses(button.get_global_rect()), "Service %s is reachable by real mouse input" % id)
 	await _mouse(MOUSE_BUTTON_LEFT, button.get_global_rect().get_center())
+	if box.pending_choice == id:
+		_check(box.confirmation.visible and not box.confirmation_text.text.is_empty(),"Service confirmation shows its cost before commit")
+		box.body_scroll.ensure_control_visible(box.confirm_button)
+		await _step(3)
+		await _mouse(MOUSE_BUTTON_LEFT,box.confirm_button.get_global_rect().get_center())
+
+func _confirm_shop(hub: PrologueHub) -> void:
+	var button: Button = hub.station_content.get_node_or_null("ConfirmPurchase") as Button
+	_check(button != null,"Purchase requires its explicit confirmation control")
+	if button == null: return
+	hub.station_scroll.ensure_control_visible(button)
+	await _step(3)
+	await _mouse(MOUSE_BUTTON_LEFT,button.get_global_rect().get_center())
 
 func _key(code: int) -> void:
 	var event := InputEventKey.new()

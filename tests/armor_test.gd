@@ -62,7 +62,7 @@ func test_system() -> void:
 	var screen: InventoryScreen = level.gear.modal as InventoryScreen
 	screen.open()
 	screen._show_tooltip(original[EquipmentData.SlotType.GLOVES])
-	_check("Giáp: +3" in screen.tooltip_body.text and "Sát thương: +2" in screen.tooltip_body.text, "Glove tooltip displays both confirmed defense and attack bonuses")
+	_check("Giáp: +3" in screen.tooltip_body.text and "Sát thương trang bị: +2" in screen.tooltip_body.text, "Glove tooltip displays both confirmed defense and equipment attack bonuses")
 	screen.close()
 	inventory.unequip_equipment(EquipmentData.SlotType.WEAPON)
 	player.equipped_weapon.start_combo()

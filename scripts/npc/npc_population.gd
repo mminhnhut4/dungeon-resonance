@@ -56,8 +56,9 @@ func _region_changed(_region: StringName) -> void:
 	state.save()
 	if state.read_only or not hub.outside or not is_instance_valid(hub.exterior) or hub.exterior.route_id != ExteriorRouteCatalog.MAIN: return
 	for id: String in NpcPilotCatalog.IDS:
-		if state.records[id]["room"] != String(hub.exterior.room_id) or state.records[id]["mode"] == "dead": continue
-		var actor := NpcPilotActor.new()
+		if state.records[id]["room"] != String(hub.exterior.room_id) or state.records[id]["mode"] in ["dead", "recovering"]: continue
+		var actor: NpcPilotActor = preload("res://scripts/npc/cultivator_actor.gd").new() if id in NpcPilotCatalog.CULTIVATOR_IDS else NpcPilotActor.new()
+		if id in NpcPilotCatalog.CULTIVATOR_IDS: actor.set("player",hub.player)
 		actor.name = id.to_pascal_case()
 		actor.stable_id = id
 		actor.npc_id = StringName(id)
@@ -71,10 +72,20 @@ func _region_changed(_region: StringName) -> void:
 func clear_actors() -> void:
 	for actor: NpcPilotActor in actors.values():
 		if is_instance_valid(actor):
+			state.set_local_control(actor.stable_id,false)
 			get_node("/root/AudioManager").stop_owner(actor)
 			if actor.get_parent() != null: actor.get_parent().remove_child(actor)
 			actor.queue_free()
 	actors.clear()
+
+func _remove_withdrawn_actor(id: String) -> void:
+	state.set_local_control(id,false)
+	var actor: NpcPilotActor = actors.get(id)
+	actors.erase(id)
+	if not is_instance_valid(actor): return
+	get_node("/root/AudioManager").stop_owner(actor)
+	if actor.get_parent() != null: actor.get_parent().remove_child(actor)
+	actor.queue_free()
 
 func _forward_cue(id: String, cue: StringName, at: Vector2, owner_node: Node) -> void:
 	cue_requested.emit(id, cue, at, owner_node)
@@ -84,7 +95,7 @@ func nearest_id(distance: float) -> String:
 	var best: String = ""
 	for id: String in actors:
 		var actor: NpcPilotActor = actors[id]
-		if not is_instance_valid(actor) or state.records[id]["mode"] == "dead": continue
+		if not is_instance_valid(actor) or state.records[id]["mode"] in ["dead", "recovering"]: continue
 		var next: float = hub.player.global_position.distance_to(actor.global_position)
 		if next < distance:
 			distance = next
@@ -94,7 +105,7 @@ func nearest_id(distance: float) -> String:
 func interact(id: String) -> bool:
 	if state.read_only or not actors.has(id) or not hub._can_travel() or id != nearest_id(PrologueHub.INTERACTION_RANGE): return false
 	var mode: String = state.records[id]["mode"]
-	if mode == "dead": return false
+	if mode in ["dead", "recovering"]: return false
 	if mode != "downed" and not state.begin_talk(id): return false
 	talking_id = id
 	pending_token = state.decision_token(id)
@@ -113,12 +124,8 @@ func _open_dialogue(downed: bool, error: String = "") -> void:
 	var choices: Array[Dictionary] = []
 	_offered_extension_choices.clear()
 	if downed:
-		lines = ["%s đang trọng thương và còn sống. Giết sẽ kết thúc mạng sống vĩnh viễn; người này sẽ không trở lại khi bạn đổi vùng hoặc tải lại. Tha cho cơ hội hồi phục, không xóa nỗi sợ hay bảo đảm tình bạn." % spec["name"]]
-		if kill_confirmation:
-			lines = ["Xác nhận xử tử %s? Đây là quyết định không thể đảo ngược trong hồ sơ đã lưu. Không có phần thưởng cho hành quyết. Bạn vẫn có thể tha hoặc lui lại." % spec["name"]]
-			choices = [{"id":&"pilot_cancel_kill", "text":"Lui lại"}, {"id":&"pilot_confirm_kill", "text":"Xác nhận · Giết vĩnh viễn"}]
-		else:
-			choices = [{"id":&"pilot_spare", "text":"Tha · Cho cơ hội dưỡng thương"}, {"id":&"pilot_ask_kill", "text":"Giết… · Xem cảnh báo và xác nhận"}]
+		lines = ["%s đang trọng thương và sẽ rút về dưỡng thương. Người này trở lại sau một chuyến hầm ngục của bạn, vẫn nhớ việc đã xảy ra. Dừng tay không xóa nỗi sợ hoặc tạo món nợ với người gây thương tích." % spec["name"]]
+		choices = [{"id":&"pilot_withdraw", "text":"Để người này rút về dưỡng thương"}]
 	else:
 		var record: Dictionary = state.records[id]
 		lines = [spec["goal"], "Ta chưa nhận lời đi hầm ngục. Một lần chào hỏi không đủ thành người đồng hành. Tin cậy %d · Thiện duyên %d · Sợ hãi %d." % [record["trust"],record["debt"],record["fear"]]]
@@ -136,7 +143,9 @@ func _open_dialogue(downed: bool, error: String = "") -> void:
 			else:
 				lines.append("Nếu nhường 2 Sợi Vải Lanh trong kho, ta có thể chuẩn bị đồ cho công việc và chỉ lối đi ở đây. Cũng số vải ấy, ngươi có thể giữ để chế 1 băng gạc cho mình. Việc giúp chỉ được ghi nhận một lần; không mua được tình bạn.")
 			choices = [{"id":&"pilot_greet", "text":"Hỏi thăm", "enabled":not record["greeted"]}, {"id":&"pilot_help", "text":"Nhường 2 Sợi Vải Lanh từ kho", "enabled":hub.economy.quote_social_help(state,id)["can_help"], "requires_confirmation":true, "confirm_text":"Dùng 2 Sợi Vải Lanh trong kho giúp người này? Bạn sẽ còn ít vật liệu chế băng gạc hơn. Không có cam kết đồng hành."}, {"id":&"pilot_leave", "text":"Giữ vật liệu · Để người này tiếp tục công việc"}]
-	if not downed: _compose_living_extensions(id,lines,choices)
+	if not downed:
+		if id in NpcPilotCatalog.CULTIVATOR_IDS: lines.append_array(CultivatorCatalog.dialogue_lines(id))
+		_compose_living_extensions(id,lines,choices)
 	if not error.is_empty(): lines.insert(0, error)
 	hub.dialogue.open(spec["name"], lines, choices)
 
@@ -154,6 +163,15 @@ func _finish_closed_dialogue() -> void:
 	state.save()
 
 func _choice_selected(choice: StringName) -> void:
+	# Old saved UI callbacks cannot bypass the nonlethal life owner.
+	if choice in [&"pilot_ask_kill", &"pilot_cancel_kill", &"pilot_confirm_kill"]: return
+	if not talking_id.is_empty() and state.records[talking_id]["mode"] in ["dead", "recovering"]:
+		_offered_extension_choices.clear()
+		# A stale modal callback reconciles its own room representation immediately;
+		# cleanup must not depend on the next population process tick being enabled.
+		_remove_withdrawn_actor(talking_id)
+		hub.dialogue.close()
+		return
 	# A delayed living choice cannot outrank a new authoritative downed episode.
 	if not talking_id.is_empty() and state.records[talking_id]["mode"] == "downed" and pending_token.is_empty():
 		pending_token = state.decision_token(talking_id)
@@ -172,11 +190,6 @@ func _choice_selected(choice: StringName) -> void:
 			_open_dialogue(false,str(response.get("message","")))
 		return
 	if talking_id.is_empty() or not String(choice).begins_with("pilot_"): return
-	if choice in [&"pilot_ask_kill", &"pilot_cancel_kill"]:
-		kill_confirmation = choice == &"pilot_ask_kill"
-		_relock()
-		_open_dialogue(true)
-		return
 	var success: bool = true
 	if choice == &"pilot_greet": success = state.greet(talking_id)
 	elif choice == &"pilot_help":
@@ -185,19 +198,12 @@ func _choice_selected(choice: StringName) -> void:
 			_relock()
 			_open_dialogue(false,"Đã lưu việc nhường vải. Người này ghi nhận; lựa chọn tiếp theo vẫn thuộc về bạn.")
 			return
-	elif choice == &"pilot_spare": success = state.decide(talking_id, pending_token, false)
-	elif choice == &"pilot_confirm_kill" and kill_confirmation: success = state.decide(talking_id, pending_token, true, true)
+	elif choice in [&"pilot_withdraw", &"pilot_spare"]: success = state.decide(talking_id, pending_token, false)
 	if not success:
 		_relock()
 		_open_dialogue(not pending_token.is_empty(), "Chưa lưu được quyết định. Trạng thái trước lựa chọn được giữ; hãy thử lại hoặc đóng để lui lại.")
 		return
-	if state.records[talking_id]["mode"] == "dead":
-		var actor: NpcPilotActor = actors.get(talking_id)
-		actors.erase(talking_id)
-		if is_instance_valid(actor):
-			get_node("/root/AudioManager").stop_owner(actor)
-			actor.get_parent().remove_child(actor)
-			actor.queue_free()
+	if state.records[talking_id]["mode"] in ["dead", "recovering"]: _remove_withdrawn_actor(talking_id)
 
 func _relock() -> void:
 	hub.player.suspend_controls(true)
@@ -209,6 +215,12 @@ func _process(delta: float) -> void:
 		if not actors.is_empty(): clear_actors()
 		if is_instance_valid(hub.prompt): hub.prompt.text = "Không thể khôi phục trạng thái cư dân từ hồ sơ này."
 		return
+	for id: String in actors.keys():
+		if state.records[id]["mode"] in ["dead", "recovering"]:
+			if id == talking_id and hub.dialogue.is_open:
+				_offered_extension_choices.clear()
+				hub.dialogue.close()
+			_remove_withdrawn_actor(id)
 	var playing: bool = hub.player.controls_enabled and not hub.station_open and not hub.dialogue.is_open and not hub.gear.modal.is_open and not get_tree().paused
 	if playing:
 		accumulator = minf(accumulator + delta, NpcWorldState.STEP * 8)
@@ -237,7 +249,7 @@ func _exit_tree() -> void:
 func _checkpoint_cultivation_rest(id: String, mode: String) -> void:
 	# This is the actual life owner, not the cultivation adapter. Checkpoint
 	# only the sponsored exemplar entering rest; no copied life/death ledger.
-	if id=="pilot_gatherer" and mode=="rest" and hub.cultivation_session!=null and hub.profile.cultivation_progress.get("actors",{}).get(id,{}).get("enrolled",false): state.save()
+	if not state.emitting_recovery and id=="pilot_gatherer" and mode=="rest" and hub.cultivation_session!=null and hub.profile.cultivation_progress.get("actors",{}).get(id,{}).get("enrolled",false): state.save()
 
 func _courier_content(id: String, record: Dictionary) -> Dictionary:
 	if id != "pilot_pilgrim" or hub.courier == null or record["mode"] != "talk" or not record["death"].is_empty(): return {}

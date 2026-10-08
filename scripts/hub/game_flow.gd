@@ -4,6 +4,9 @@ extends Node2D
 
 var cultivation_session: Node
 var social_runtime: RefCounted
+## Keep the same NPC writer across a disposable expedition. Ordinary Hub
+## rebuilds and road transitions are not recovery boundaries.
+var npc_life: NpcWorldState
 var profile: SanctuaryProfile
 var active_scene: Node2D
 var returning: bool = false
@@ -28,6 +31,8 @@ signal return_save_changed
 func _remember_hub() -> void:
 	if active_scene is PrologueHub:
 		hub_session_state[&"inventory"] = (active_scene as PrologueHub).gear.inventory
+	if active_scene is ExteriorHub and is_instance_valid(active_scene.npc_population):
+		npc_life = active_scene.npc_population.state
 
 
 func _take_prepared_inventory() -> GearInventory:
@@ -144,6 +149,12 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 				return _wait_for_return_save(&"write_failed", from_defeat)
 			if bank_inventory: run_inventory.run_coins = 0
 			profile.changed.emit()
+		# Commit recovery before transferring the carried item UIDs. On failure
+		# the existing return retry retains the run; already banked coins are zero.
+		# Quarantined NPC data must not block the independent dungeon return.
+		if world_building_enabled and npc_life != null and not npc_life.read_only:
+			if not npc_life.recover_after_expedition():
+				return _wait_for_return_save(&"npc_recovery_failed", from_defeat)
 		if bank_inventory:
 			hub_session_state[&"inventory"] = HubPreparation.clone_inventory(run_inventory)
 			HubPreparation.clear_carried(run_inventory)
@@ -167,6 +178,7 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 	hub.run_requested.connect(start_run)
 	hub.campaign_requested.connect(start_campaign)
 	active_scene = hub
+	_remember_hub()
 	if depth_expansion_enabled and world_building_enabled and hub is PrologueHub:
 		var guide := preload("res://scripts/npc/depth_guide.gd").new()
 		guide.name = "DepthGuide"
@@ -220,9 +232,10 @@ func _on_run_died() -> void:
 	return_remaining = 1.2
 
 
-func start_depth_campaign() -> bool:
+func start_depth_campaign(initial_floor: int = 1) -> bool:
 	if not depth_expansion_enabled or _return_busy or active_scene is DungeonRun or depth_progress == null: return false
-	if not depth_progress.unlocked() or not depth_progress.available() or not depth_progress.state()["accepted"]: return false
+	# Revalidate before clearing/moving even one prepared UID out of the Hub.
+	if not depth_progress.can_start_floor(initial_floor): return false
 	var scene: PackedScene = load("res://scenes/rooms/depth_campaign.tscn") as PackedScene
 	if scene == null: return false
 	var prepared: GearInventory = _take_prepared_inventory()
@@ -233,6 +246,7 @@ func start_depth_campaign() -> bool:
 	campaign.world_building_enabled = world_building_enabled
 	campaign.starting_inventory = prepared
 	campaign.set("depth_progress_committer", depth_progress.record)
+	campaign.set("initial_floor", initial_floor)
 	add_child(campaign)
 	campaign.content.qa_tools_enabled = qa_tools_enabled
 	active_scene = campaign
@@ -247,10 +261,11 @@ func start_depth_campaign() -> bool:
 	return true
 
 
-func _on_depth_campaign_requested(guide: Node) -> void:
-	if start_depth_campaign(): return
+func _on_depth_campaign_requested(floor_number: int, guide: Node) -> void:
+	if start_depth_campaign(floor_number): return
 	if is_instance_valid(guide) and guide.open():
 		guide.notice.text = "Chưa xuống được tầng sâu. Hãy thử lại sau khi lưu trang bị; hành trang và tiến độ được giữ."
+		guide.refresh()
 
 
 func start_campaign() -> void:

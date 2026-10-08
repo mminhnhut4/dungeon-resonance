@@ -120,28 +120,28 @@ func _terminal_states() -> void:
 		state.records[ID] = alive.duplicate(true)
 		if mode == "talk": state.begin_talk(ID)
 		else: state.records[ID]["mode"] = mode
-		state.records[ID]["remaining"] = 80 if mode == "recovering" else 0
+		state.records[ID]["remaining"] = 0
 		if mode in ["downed", "recovering"]:
 			state.records[ID]["hp"] = 1.0
 			state.records[ID]["episode"] = 1
 		_check(NpcState.valid(state.snapshot()), "Fixture %s conforms to the real NPC life schema" % mode)
 		_check(adapter.capture(ID, false).is_empty() and not adapter.matches(fence), "Unsaved %s blocks progression despite an alive durable primary" % mode)
 	state.records[ID] = alive.duplicate(true)
-	# A fixture-only, schema-valid unsaved tombstone tests the live guard directly.
-	state.records[ID]["hp"] = 0.0
-	state.records[ID]["mode"] = "dead"
+	# A valid unsaved withdrawal tests the live guard without mutating disk.
+	state.records[ID]["hp"] = 1.0
+	state.records[ID]["mode"] = "recovering"
+	state.records[ID]["remaining"] = 0
 	state.records[ID]["episode"] = 1
-	state.records[ID]["death"] = {"event_id": ID + ":1", "killer_id": "player", "tick": state.tick, "room": state.records[ID]["room"], "context": "explicit_execution"}
-	_check(NpcState.valid(state.snapshot()), "Unsaved death fixture has a valid authoritative tombstone")
-	_check(adapter.capture(ID, false).is_empty() and not adapter.matches(fence), "An unsaved live death takes precedence over an alive primary")
-	_check(Adapter.durable_status(fence) == {"ok": true, "eligible": true, "unchanged": true}, "Cold disk-only status cannot invent knowledge of an unsaved live death")
+	_check(NpcState.valid(state.snapshot()), "Unsaved withdrawal fixture is valid nonlethal life authority")
+	_check(adapter.capture(ID, false).is_empty() and not adapter.matches(fence), "An unsaved live withdrawal takes precedence over an eligible primary")
+	_check(Adapter.durable_status(fence) == {"ok": true, "eligible": true, "unchanged": true}, "Cold disk-only status cannot invent knowledge of unsaved withdrawal")
 	_check(_raw(state.save_path) == bytes_before and state.save_calls == calls_before, "Adapter does not commit the fixture's unsaved terminal states")
-	_check(state.save(), "Fixture life owner persists its schema-valid confirmed tombstone")
+	_check(state.save(), "Fixture life owner persists its schema-valid withdrawal")
 	var dead_bytes: PackedByteArray = _raw(state.save_path)
 	var dead_calls: int = state.save_calls
-	_check(Adapter.durable_status(fence) == {"ok": true, "eligible": false, "unchanged": false}, "Persisted death is valid authority with denied advancement, not corrupt-save quarantine")
-	_check(adapter.capture(ID, false).is_empty() and not adapter.matches(fence), "Persisted dead NPC can neither capture nor match an old alive fence")
-	_check(_raw(state.save_path) == dead_bytes and state.save_calls == dead_calls and state.records[ID]["mode"] == "dead", "Reading a dead authority never resurrects, saves or modifies it")
+	_check(Adapter.durable_status(fence) == {"ok": true, "eligible": false, "unchanged": false}, "Persisted withdrawal is valid authority with denied advancement, not corrupt-save quarantine")
+	_check(adapter.capture(ID, false).is_empty() and not adapter.matches(fence), "Withdrawn NPC can neither capture nor match an old eligible fence")
+	_check(_raw(state.save_path) == dead_bytes and state.save_calls == dead_calls and state.records[ID]["mode"] == "recovering", "Reading withdrawn authority never heals, saves or modifies it")
 
 func _authority_faults() -> void:
 	for fault: String in ["future", "corrupt", "missing"]:

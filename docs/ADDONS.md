@@ -69,3 +69,6 @@ Wizard giữ nguyên source nhưng không nằm trong `editor_plugins/enabled`, 
 
 & 'D:\dowload\Godot_v4.7.2-stable_win64_console.exe' --headless --path 'D:\hầm ngục' --script res://tests/addon_cleanup_lifecycle.gd --verbose
 ```
+## Cập nhật 08/10/2026 — không đồng nhất lỗi retention cũ với crash mới
+
+Gate strictR3 của candidate sect-path-repair lúc09:56UTC có `addon_entrypoints` in8/8 nhưng exit0xC0000005; `player_rig_editor` cũng crash sau unload addon và lưuEditorSettings. Đây vẫn là FAILED. Dấu vết mới cùng đường cleanup native lịch sử, chưa xác định nguyên nhân; không dùng kết quả cleanup/retention sạch ở mốc cũ để khẳng định không thể crash. Không tắt plugin hoặc đổi runner sangGameplayOnly. Xem [audit native](NATIVE_CRASH_AUDIT_20261008.md) và [báo cáo phiên](SECT_PATH_REPAIR_20261008.md) cho trạng thái gate và quyết định ghép mới nhất.

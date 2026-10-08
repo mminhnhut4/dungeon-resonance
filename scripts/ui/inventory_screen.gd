@@ -27,6 +27,8 @@ var tracker_label: Label
 var selected_equipment_slot: int = 0
 var _tooltip_anchor: Vector2
 var _tooltip_control: WeakRef
+var _pointer_position: Vector2
+var _pointer_known: bool = false
 var bag_grid: GridContainer
 var rune_column: Control
 var _progress_world: WeakRef
@@ -100,7 +102,9 @@ func _ready() -> void:
 		var button: Button = _item_button(Vector2(110, 55))
 		button.add_theme_constant_override("icon_max_width", 38)
 		button.gui_input.connect(_equipment_input.bind(slot))
-		button.mouse_entered.connect(_equipment_hover.bind(slot))
+		# Godot updates GUI hover before _input sees the same mouse event.
+		# Defer only hover so guards/anchors read that event's viewport position.
+		button.mouse_entered.connect(_equipment_hover.bind(slot), CONNECT_DEFERRED)
 		button.focus_entered.connect(_equipment_focus.bind(slot))
 		button.pressed.connect(_equipment_focus.bind(slot))
 		cell.add_child(button)
@@ -121,7 +125,7 @@ func _ready() -> void:
 		button.add_theme_constant_override("icon_max_width", 32)
 		button.gui_input.connect(_bag_input.bind(index))
 		button.pressed.connect(_equip_bag.bind(index))
-		button.mouse_entered.connect(_bag_hover.bind(index))
+		button.mouse_entered.connect(_bag_hover.bind(index), CONNECT_DEFERRED)
 		button.focus_entered.connect(_bag_focus.bind(index))
 		grid.add_child(button)
 		bag_buttons.append(button)
@@ -179,9 +183,16 @@ func _ready() -> void:
 	add_child(map_button)
 	_resize()
 	panel.minimum_size_changed.connect(_schedule_layout)
-	get_viewport().size_changed.connect(_resize)
+	get_viewport().size_changed.connect(_viewport_resized)
 	refresh()
 	_bind_progress.call_deferred()
+
+
+func _viewport_resized() -> void:
+	# A pointer-anchored card refers to the old layout. Drop it before controls
+	# move, otherwise its old surface can mask every item in the new layout.
+	_hide_tooltip()
+	_resize()
 
 
 func _resize() -> void:
@@ -323,7 +334,9 @@ func _fill_button(button: Button, uid: int, empty_text: String) -> void:
 	button.icon = null
 	button.text = empty_text
 	button.add_theme_color_override("font_color", DungeonUI.MUTED)
-	button.tooltip_text = empty_text
+	# The scrollable card owns item help. A delayed native tooltip from an
+	# underlying click-through cell would cover the card's combat numbers.
+	button.tooltip_text = ""
 	if item == null:
 		return
 	var display: String = _item_name(item)
@@ -331,7 +344,6 @@ func _fill_button(button: Button, uid: int, empty_text: String) -> void:
 	if not item.can_equip(): button.text += " · Hỏng" if item.broken else " · Phôi"
 	button.icon = ItemArtCatalog.gear_icon(item)
 	button.add_theme_color_override("font_color", DungeonUI.TEXT)
-	button.tooltip_text = "%s · %s" % [display, GearItem.NAMES[item.quality]]
 
 
 func _item_name(item: GearItem) -> String:
@@ -380,6 +392,8 @@ func _unequip_selected() -> void:
 
 func _build_tooltip() -> void:
 	tooltip = PanelContainer.new()
+	# Keep the existing click-through contract; hover callbacks below protect
+	# the current card while its wheel input owns the pointer surface.
 	tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tooltip.theme = DungeonUI.make_theme()
 	add_child(tooltip)
@@ -402,16 +416,31 @@ func _build_tooltip() -> void:
 
 
 func _bag_hover(index: int) -> void:
+	var pointer: Vector2 = _current_pointer()
+	if not _hover_target_contains(bag_buttons[index], pointer): return
+	if tooltip.visible and tooltip.get_global_rect().has_point(pointer): return
 	_tooltip_control = null
-	_tooltip_anchor = get_viewport().get_mouse_position() + Vector2(18, 18)
+	_tooltip_anchor = pointer + Vector2(18, 18)
 	var offset: int = page * 20 + index
 	_show_tooltip(bag_uids[offset] if offset < bag_uids.size() else 0)
 
 
 func _equipment_hover(slot: int) -> void:
+	var pointer: Vector2 = _current_pointer()
+	if not _hover_target_contains(equipment_buttons[slot], pointer): return
+	if tooltip.visible and tooltip.get_global_rect().has_point(pointer): return
 	_tooltip_control = null
-	_tooltip_anchor = get_viewport().get_mouse_position() + Vector2(18, 18)
+	_tooltip_anchor = pointer + Vector2(18, 18)
 	_show_tooltip(inventory.equipped_weapon_uid if slot == 0 else inventory.equipment_uids[slot])
+
+
+func _current_pointer() -> Vector2:
+	return _pointer_position if _pointer_known else get_viewport().get_mouse_position()
+
+
+func _hover_target_contains(target: Control, pointer: Vector2) -> bool:
+	# Ignore queued hover after a move, scroll, tab change, or modal close.
+	return is_open and tabs.current_tab == 0 and target.is_visible_in_tree() and target.get_global_rect().has_point(pointer) and content_scroll.get_global_rect().has_point(pointer)
 
 
 func _show_tooltip(uid: int) -> void:
@@ -438,9 +467,13 @@ func _show_tooltip(uid: int) -> void:
 		var percent: bool = item.affix_id in [&"stride", &"precision"]
 		details += "%s: +%s%s\n" % [LootAffixCatalog.NAMES[item.affix_id], String.num(affix * 100.0 if percent else affix, 1), "%" if percent else ""]
 	if data != null:
-		for pair: Array in [["HP", data.bonus_hp], ["Giáp", data.bonus_armor], ["Năng lượng", data.bonus_mana], ["Sát thương", data.bonus_atk], ["Tốc chạy %", data.bonus_speed * 100.0], ["Chí mạng %", data.bonus_crit * 100.0]]:
-			if not is_zero_approx(float(pair[1])):
-				details += "%s: %s%s\n" % [pair[0], "+" if float(pair[1]) > 0 else "", String.num(float(pair[1]), 2)]
+		details += "CHỈ SỐ MÓN ĐỒ · gồm dòng phụ\n"
+		var totals: Dictionary = _comparison_values(item)
+		for stat: String in ["HP", "Giáp", "Năng lượng", "Sát thương trang bị", "Tốc chạy %", "Chí mạng %"]:
+			var value: float = totals[stat]
+			details += "%s: %s%s\n" % [stat, "+" if value > 0 else "", String.num(value, 2)]
+		details += "HP / Năng lượng tăng mức tối đa; không tự hồi đầy. Tốc chạy và chí mạng tính theo điểm phần trăm.\n"
+	details += _weapon_details(item)
 	tooltip_body.text = "%s\n%s%s\n\n%s" % [SLOT_NAMES[inventory.equipment_slot(uid)], details if details != "" else "Không cộng chỉ số trang bị.\n", data.description if data != null else "", _comparison_text(item)]
 	tooltip.show()
 	_place_tooltip.call_deferred()
@@ -524,6 +557,11 @@ func _map_context() -> Dictionary:
 
 
 func _input(event: InputEvent) -> void:
+	# GUI hover and wheel must use the same viewport event coordinates, including
+	# forwarded input; polling the OS pointer can disagree with that event.
+	if event is InputEventMouse:
+		_pointer_position = event.position
+		_pointer_known = true
 	if (event is InputEventKey and (event.physical_keycode == KEY_M or event.keycode == KEY_M)) or (event is InputEventJoypadButton and event.button_index == JOY_BUTTON_BACK):
 		var latch: String = "key" if event is InputEventKey else "joy:%d" % event.device
 		if not event.is_pressed(): _map_held.erase(latch)
@@ -602,11 +640,11 @@ func _comparison_text(item: GearItem) -> String:
 	for stat: String in incoming:
 		var change: float = float(incoming[stat]) - float(current.get(stat, 0.0))
 		if not is_zero_approx(change):
-			lines.append("%s: %s%s (%s)" % [stat, "+" if change > 0 else "", String.num(change, 2), "tăng" if change > 0 else "giảm"])
+			lines.append("%s: %s → %s (%s%s · %s)" % [stat, String.num(current.get(stat, 0.0), 2), String.num(incoming[stat], 2), "+" if change > 0 else "", String.num(change, 2), "tăng" if change > 0 else "giảm"])
 	if lines.size() == 1: lines.append("Không đổi các chỉ số được so sánh.")
 	if item.kind == &"weapon":
 		lines.append("Sát thương vũ khí so sánh riêng phần nền; bonus các món khác giữ nguyên.")
-		lines.append("Ô bùa thêm %d · Proc phẩm cấp %s%%" % [item.bonus_slots(), String.num(item.proc_chance() * 100, 1)])
+		lines.append("Ô bùa trên vũ khí: %d → %d" % [mini(3,1 + (worn.bonus_slots() if worn != null else 0)),mini(3,1+item.bonus_slots())])
 	lines.append("Click / Enter / A · Trang bị. Cuộn chuột để xem thêm.")
 	return "\n".join(lines)
 
@@ -631,8 +669,37 @@ func _comparison_values(item: GearItem) -> Dictionary:
 		var moveset: WeaponDefinition = data.moveset if data != null else null
 		var path: String = "res://data/weapons/%s.tres" % item.definition_id
 		if moveset == null and ResourceLoader.exists(path): moveset = load(path) as WeaponDefinition
-		if moveset != null: result["Sát thương vũ khí"] = moveset.base_damage * item.damage_factor()
+		if moveset != null:
+			result["Sát thương vũ khí"] = moveset.base_damage * item.damage_factor()
+			result["Chí mạng %"] += moveset.critical_chance * 100.0
 	return result
+
+
+func _weapon_details(item: GearItem) -> String:
+	if item.kind != &"weapon": return ""
+	var data: EquipmentData = item.equipment_definition
+	var moveset: WeaponDefinition = data.moveset if data != null else null
+	var path: String = "res://data/weapons/%s.tres" % item.definition_id
+	if moveset == null and ResourceLoader.exists(path): moveset = load(path) as WeaponDefinition
+	if moveset == null: return ""
+	var text: String = "\nBỘ ĐÒN · %s\nSát thương gốc %.2f × hệ số món %.3f = %.2f\nÔ bùa vũ khí: %d (1 cơ bản + %d phẩm cấp)\n" % [moveset.display_name,moveset.base_damage,item.damage_factor(),moveset.base_damage*item.damage_factor(),mini(3,1+item.bonus_slots()),item.bonus_slots()]
+	if not item.can_equip(): return text + "Chỉ số tiềm năng; món hỏng/phôi chưa áp dụng khi chiến đấu.\n"
+	var attack: float = data.bonus_atk if data != null else 0.0
+	var critical: float = moveset.critical_chance + (data.bonus_crit if data != null else 0.0) + item.affix_bonus(&"precision")
+	for slot: int in range(1, inventory.equipment_uids.size()):
+		var worn: GearItem = inventory.items.get(inventory.equipment_uids[slot])
+		if worn == null or not worn.can_equip(): continue
+		if worn.equipment_definition != null:
+			attack += worn.equipment_definition.bonus_atk
+			critical += worn.equipment_definition.bonus_crit
+		critical += worn.affix_bonus(&"precision")
+	var base_hit: float = moveset.base_damage * (item.damage_factor() + attack / maxf(1.0,moveset.base_damage))
+	text += "Khi mặc với bộ hiện tại: +%.2f sát thương trang bị.\nChí mạng: %.1f%% · sát thương ×%.2f khi chí mạng.\n" % [attack,clampf(critical,0,1)*100.0,moveset.critical_multiplier]
+	for index: int in moveset.combo_steps.size():
+		var step: AttackStepDefinition = moveset.combo_steps[index]
+		text += "Đòn %d: %.2f sát thương · %.2f giây\n  Báo đòn %.2f / ra đòn %.2f / hồi %.2f\n" % [index+1,base_hit*step.damage_multiplier,step.windup_seconds+step.active_seconds+step.recovery_seconds,step.windup_seconds,step.active_seconds,step.recovery_seconds]
+	text += "Số đòn trên tính trước giáp mục tiêu, chí mạng, bùa và hiệu ứng tạm thời; không cộng các đạn/phát phụ thành một đòn.\n"
+	return text
 
 
 func _build_tracker() -> void:

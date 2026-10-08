@@ -192,9 +192,9 @@ func _run() -> void:
 	_check(flow.profile.cultivation_progress["actors"]["pilot_gatherer"]["energy"]==8,"Talk during a modal discards seven partial NPC pulses before returning to rest")
 	life_state.records["pilot_gatherer"]["hp"]=1.0; life_state.records["pilot_gatherer"]["mode"]="downed"; life_state.records["pilot_gatherer"]["episode"]=1
 	_check(not session.start_training("pilot_gatherer"),"Unsaved downed live NPC blocks training despite alive primary")
-	life_state.records["pilot_gatherer"]["mode"]="dead"; life_state.records["pilot_gatherer"]["hp"]=0.0
-	life_state.records["pilot_gatherer"]["death"]={"event_id":"pilot_gatherer:1","killer_id":"player","tick":life_state.tick,"room":"o01_p04","context":"explicit_execution"}
-	_check(life_state.save() and not session.start_training("pilot_gatherer"),"Confirmed dead NPC never advances or respawns through cultivation")
+	life_state.records["pilot_gatherer"]["mode"]="recovering"; life_state.records["pilot_gatherer"]["hp"]=1.0
+	life_state.records["pilot_gatherer"]["remaining"]=0
+	_check(life_state.save() and not session.start_training("pilot_gatherer"),"Withdrawn NPC never advances or heals through cultivation")
 	var persisted := SanctuaryProfile.new(); persisted.save_path=fixture_path
 	_check(persisted.load_profile() and persisted.cultivation_progress["actors"]["player"]["stage"]==3 and persisted.cultivation_progress["actors"]["pilot_gatherer"]["energy"]==8,"Cold common profile retains completed player and one NPC example")
 	_check(hub.player.get_instance_id()==player_id,"Opening loop reuses the existing player and world architecture")

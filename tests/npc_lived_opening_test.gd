@@ -68,10 +68,12 @@ func _migrate_and_resume() -> void:
 	legacy["npc_schema"] = 1
 	legacy["tick"] = 90
 	legacy["records"].erase("pilot_bridge_keeper")
+	for new_id: String in NpcPilotCatalog.CULTIVATOR_IDS: legacy["records"].erase(new_id)
 	for id: String in NpcPilotCatalog.LEGACY_IDS:
 		var record: Dictionary = legacy["records"][id]
 		record.erase("schedule_index")
 		record.erase("interrupted")
+		record.erase("legacy_death")
 		if id == "pilot_traveler":
 			record["x"] = 700.0
 			record["target"] = 870.0
@@ -88,19 +90,18 @@ func _migrate_and_resume() -> void:
 	file.store_string(JSON.stringify(legacy))
 	file.close()
 	var original_bytes: String = FileAccess.get_file_as_string(state.save_path)
-	_check(state.load_state() and not state.read_only and state.records.size() == 6,"Validated v1 gets exactly one new bridge identity in memory")
+	_check(state.load_state() and not state.read_only and state.records.size() == 8,"Validated v1 durably adds bridge and two cultivator identities exactly once")
 	var migrated: Dictionary = state.records["pilot_traveler"].duplicate(true)
-	migrated.erase("schedule_index")
-	migrated.erase("interrupted")
-	_check(migrated == old,"Migration preserves every old death, affinity, coordinate and episode scalar")
-	_check(FileAccess.get_file_as_string(state.save_path) == original_bytes,"Read migration does not replace the old sidecar")
-	_check(state.save() and NpcWorldState.valid(state.snapshot()),"Explicit save commits schema two through existing transaction writer")
-	_check(FileAccess.get_file_as_string(state.save_path + ".bak") == original_bytes,"Migration transaction retains the validated original backup")
+	_check(migrated["legacy_death"] == old["death"] and ["trust","fear","debt","greeted","x","target","episode","room"].all(func(field: String) -> bool: return migrated[field] == old[field]),"Migration preserves every old historical death, relation, coordinate and episode")
+	_check(migrated["mode"] == "recovering" and migrated["hp"] == 1 and migrated["death"].is_empty(),"New policy withdraws the same old identity without erasing its history")
+	_check(FileAccess.get_file_as_string(state.save_path + ".bak") == original_bytes and FileAccess.get_file_as_string(state.save_path + ".pre_nonlethal_v1.json") == original_bytes,"Migration retains both rotating and immutable original-byte backups")
+	_check(state.save() and NpcWorldState.valid(state.snapshot()) and state.snapshot()["npc_schema"] == 3,"Subsequent save uses schema3 through the existing owner writer")
+	_check(FileAccess.get_file_as_string(state.save_path + ".pre_nonlethal_v1.json") == original_bytes,"Ordinary backup rotation never replaces the immutable migration source")
 	var loaded := NpcWorldState.new()
 	loaded.save_path = state.save_path
-	_check(loaded.load_state() and loaded.snapshot() == state.snapshot(),"New schedule cursors and old tombstone survive cold reload")
+	_check(loaded.load_state() and loaded.snapshot() == state.snapshot(),"New schedule cursors and archived tombstone survive cold reload")
 	for _index: int in 100: loaded.advance_ticks(8)
-	_check(loaded.records["pilot_traveler"]["death"] == old["death"] and loaded.records["pilot_traveler"]["hp"] == 0,"Migrated death cannot move, recover or respawn")
+	_check(loaded.records["pilot_traveler"]["legacy_death"] == old["death"] and loaded.records["pilot_traveler"]["hp"] == 1 and loaded.records["pilot_traveler"]["mode"] == "recovering","Migrated history remains exact while elapsed time cannot heal the resident")
 	var id: String = "pilot_bridge_keeper"
 	var before: Dictionary = state.records[id].duplicate(true)
 	_check(state.begin_talk(id) and state.save(),"Save can capture a bridge resident interrupted mid-walk")
@@ -110,16 +111,16 @@ func _migrate_and_resume() -> void:
 	state.end_talk(id)
 	state.receive_hit(id,1.0,0.0)
 	var token: String = state.decision_token(id)
-	_check(not state.decide(id,token,true) and state.decide(id,token,true,true),"New generic resident retains required explicit execution confirmation")
+	_check(not state.decide(id,token,true) and not state.decide(id,token,true,true) and state.records[id]["mode"] == "recovering","No legacy execution confirmation can finish the new injury")
 	loaded = NpcWorldState.new()
 	loaded.save_path = state.save_path
-	_check(loaded.load_state() and loaded.records[id]["mode"] == "dead" and loaded.records["pilot_traveler"]["mode"] == "dead","Both new and legacy stable identities keep permanent deaths")
+	_check(loaded.load_state() and loaded.records[id]["mode"] == "recovering" and loaded.records["pilot_traveler"]["mode"] == "recovering","New and legacy injuries both wait for an expedition return")
 	var malformed: Dictionary = state.snapshot()
 	malformed["records"]["pilot_pilgrim"]["schedule_index"] = 99
 	_check(not NpcWorldState.valid(malformed),"Unknown schedule cursor cannot reach actors or replace a save")
 	malformed = state.snapshot()
 	malformed["records"].erase("pilot_bridge_keeper")
-	_check(not NpcWorldState.valid(malformed),"Missing v2 record is quarantined instead of recreating a potentially dead resident")
+	_check(not NpcWorldState.valid(malformed),"Missing current record is quarantined instead of recreating a resident")
 
 func _presentation_and_cleanup() -> void:
 	var flow := preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
@@ -136,7 +137,9 @@ func _presentation_and_cleanup() -> void:
 	var cues: Array[StringName] = []
 	population.cue_requested.connect(func(_id: String,_cue: StringName,_at: Vector2,_owner: Node) -> void: cues.append(_cue))
 	await _close_hit_flee(hub,population)
-	for id: String in NpcPilotCatalog.IDS:
+	# Retain all six civilian motion/no-retaliation contracts. Cultivators have
+	# their own real combat suite, rather than inheriting a civilian-only claim.
+	for id: String in NpcPilotCatalog.SCHEMA_TWO_IDS:
 		var spec: Dictionary = NpcPilotCatalog.definition(id)
 		_check(hub.enter_exterior(StringName(spec["room"]),&"main",&"west",false),"Ordinary travel enters resident room %s" % id)
 		await _step(3)
@@ -211,7 +214,8 @@ func _presentation_and_cleanup() -> void:
 		for room: StringName in [&"o01_p01",&"o01_p02",&"o01_p03"]:
 			hub.enter_exterior(room,&"main",&"west",false)
 			await _step(3)
-			_check(get_nodes_in_group(&"npc_pilot_actor").size() == 1,"Repeat visit keeps one actor for %s" % room)
+			var expected: int = 2 if room in [&"o01_p01",&"o01_p02"] else 1
+			_check(get_nodes_in_group(&"npc_pilot_actor").size() == expected and population.actors.size() == expected,"Repeat visit keeps the exact authored actor count for %s" % room)
 		hub.enter_exterior(&"o01_p02",&"guard_corridor",&"west",false)
 		await _step(3)
 		_check(population.actors.is_empty() and get_nodes_in_group(&"npc_pilot_actor").is_empty(),"Corridor never gets a duplicate bridge resident")

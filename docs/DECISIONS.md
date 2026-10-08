@@ -141,3 +141,13 @@ Hậu kiểm cùng ngày: body rig cuối dùng MeshInstance2D/ArrayMesh tĩnh, 
 ## Phạm vi tiếp tục ngày2026-10-08
 
 Người dùng mở rộng sang năm tầng xuống sâu, boss tầng5 hai phase, animation quái theo tầng và NPC nhiệm vụ rõ hơn; phạm vi này thay giới hạn tạm không mở tầng ở yêu cầu trước. Giữ tu tiên/gear-driven classes/bùa primary/khám phá theo nhiệm vụ. DepthCampaign subclass và DepthProgress extension dùng authority SanctuaryProfile hiện có, không thêm save writer. Presentation mới đọc FSM/committed snapshot/hitbox, không điều khiển damage. Chỉ root ghép sau private gates, backup+exact hash guard; không push/upload. Bản candidate và evidence/giới hạn được ghi tại CONTINUATION_20261008.md.
+
+## 2026-10-08 — phản hồi chơi thật, nhân quả và hướng dẫn tiến triển
+
+Chỉ dẫn mới của người dùng thay luật NPC bị giết vĩnh viễn trong pilot cũ: mọi NPC chỉ trọng thương/rút lui; quay lại sau khi hoàn tất hoặc trở về từ một chuyến hầm ngục, giữ ký ức. Người tại chỗ biết và tự vệ ngay; môn phái biết qua nhân chứng/báo tin/bằng chứng, không tự biết mọi vụ. Tự vệ trước người chủ động truy sát không tăng truy nã; đánh người đã rút lui là vụ gây hấn mới. Thuê đúng1đệ tử/1chuyến, phí LinhThạch cố định trả trước, không chia loot; chưa chốt giá cân bằng. Runtime slice đang thử chỉ có2tu sĩ+nonlethal/recovery; witness/wanted/hire còn thiết kế.
+
+User yêu cầu ưu tiên lag/FPS, xác nhận mua đồ, thêm maxHP/maxmana bằng TànHồn, cách học bùa và hướng dẫn TrúcCơ/nhiệm vụ/trang bị cụ thể. Giữ gear-driven class, ghép bùa là tấn công chính, mở khám phá theo nhiệm vụ. Máu tối đa đã có, bổ sung mana tối đa riêng; không đổi chi phí nhánh cũ. Giá/gate mới học bùa trong bản thử là prototype để chơi thử, không gọi là cân bằng cuối.
+
+Candidate sửa performance giữ từng hit được ghi qua cùng sealed writer; rút gọn representation lịch sử cultivation sang schema2 với watermark và bounded recent receipts, không xóa mastery/tuvi/origins, không tạo writer phụ hay loại bỏ kiểm tra seal. Backup byte-exact trước migration. Testlogic/CPU là bằng chứng kỹ thuật, không thay phép đo native và trải nghiệm.
+
+Ngày08/10 lúc khoảng09:00UTC, người dùng gia hạn tới18:00VN (11:00UTC) và yêu cầu nếu còn thời gian mở sâu hơn, map rộng/lâu hơn, quái/skill/animation riêng. Trước hết bổ sung chọn lại tầng Depth đã hoàn tất từ căn cứ; giữ unlock/accept/cleared hiện có, không mở tầng chưa xong qua UI hoặc API. Hướng mở rộng được ghi riêng, không tính như đã triển khai.

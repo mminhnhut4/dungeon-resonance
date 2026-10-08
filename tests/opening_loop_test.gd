@@ -167,6 +167,11 @@ func _test_opening() -> void:
 		hub.dialogue.body_scroll.ensure_control_visible(hp_button)
 		await _step(3)
 		await _dialogue_mouse(hp_button.get_global_rect().get_center())
+	_check(hub.dialogue.pending_choice == &"upgrade_max_hp" and hub.dialogue.confirmation.visible and bank.souls == 25 and bank.permanent_upgrades[&"max_hp"] == 0 and is_equal_approx(hub.player.health.maximum_health,before_hp), "HP selection displays confirmation without spending or granting maximum health")
+	if hub.dialogue.pending_choice == &"upgrade_max_hp":
+		hub.dialogue.body_scroll.ensure_control_visible(hub.dialogue.confirm_button)
+		await _step(3)
+		await _dialogue_mouse(hub.dialogue.confirm_button.get_global_rect().get_center())
 	_check(bank.souls == 5 and bank.permanent_upgrades[&"max_hp"] == 1 and is_equal_approx(hub.player.health.maximum_health, before_hp + 10), "Thanh Vy's existing first HP upgrade consumes 20 Souls and adds ten maximum HP")
 	hub.dialogue.close()
 	_check(bank.opening_objectives()["complete"] and _reader(bank).opening_objectives()["complete"], "All six real opening milestones survive reload")

@@ -1,7 +1,7 @@
 class_name DepthGuide
 extends Node2D
 ## Hub-owned guide: concrete next action and five-floor progress, no new save owner.
-signal expedition_requested
+signal expedition_requested(floor_number: int)
 const Progress = preload("res://scripts/runtime/depth_progress.gd")
 const Catalog = preload("res://data/depth_floor_catalog.gd")
 const PORTRAIT: Texture2D = preload("res://assets/sprites/npc/depth_v1/lac_an.png")
@@ -18,6 +18,8 @@ var back: Button
 var floor_scroll: ScrollContainer
 var floor_column: VBoxContainer
 var floor_rows: Array[Label] = []
+var floor_choice: OptionButton
+var selected_floor: int = 1
 var opened: bool = false
 var previous_controls: bool = true
 var previous_launcher: bool = true
@@ -96,25 +98,47 @@ func refresh() -> void:
 	var state: Dictionary = progress.state()
 	var unlocked: bool = progress.unlocked()
 	heading.text = "LẠC ẤN · NGŨ TẦNG PHONG ẤN"
-	objective.text = "Hạ Golem Cổ Bảo trong hầm ngục mở đầu, quay về gặp Lạc Ấn tại sân căn cứ." if not unlocked else "Nhận bản đồ từ Lạc Ấn, xuống năm tầng. Dọn quái để mở cửa E; có thể quay về sau mỗi tầng đã dọn." if not state["accepted"] else "Đã nhận hành trình · Dọn từng tầng, nhặt thưởng, hạ Huyền Uyên Chấp Ấn ở tầng 5 rồi quay về." if not state["boss_defeated"] else "Đã phá Ngũ Tầng Phong Ấn. Bạn có thể quay lại để luyện cách đánh và tìm hốc thưởng."
+	objective.text = "Hạ Golem Cổ Bảo trong hầm ngục mở đầu, quay về gặp Lạc Ấn tại sân căn cứ." if not unlocked else "Nhận bản đồ từ Lạc Ấn, xuống năm tầng. Dọn quái để mở cửa E; có thể quay về sau mỗi tầng đã dọn." if not state["accepted"] else "Chọn lại tầng đã hoàn tất. Muốn mở tầng mới, dọn tầng đang đi rồi qua lối E bên phải; chọn tầng không cấp thưởng." if not state["boss_defeated"] else "Đã phá Ngũ Tầng Phong Ấn. Chọn một tầng đã hoàn tất để bắt đầu chuyến mới với trang bị đang chuẩn bị."
 	for index: int in 5:
 		var complete: bool = int(state["cleared"]) > index
 		floor_rows[index].text = "%s %d · %s\n%s" % ["✓" if complete else "→" if int(state["cleared"]) == index else "○", index + 1, Catalog.FLOORS[index]["name"], Catalog.FLOORS[index]["tactic"]]
 		floor_rows[index].modulate = Color(.65, .83, .72) if complete else Color(1, .91, .72) if int(state["cleared"]) == index else Color(.78, .82, .88)
-	action.text = "Hạ Golem để mở hành trình" if not unlocked else "Nhận bản đồ · Lưu nhiệm vụ" if not state["accepted"] else "Xuống tầng 1 · Mang trang bị đang chuẩn bị"
-	action.disabled = not unlocked or not progress.available()
+	if not progress.can_start_floor(selected_floor): selected_floor = 1
+	floor_choice.clear()
+	for number: int in range(1,clampi(int(state["cleared"]),1,Catalog.FLOOR_COUNT)+1):
+		floor_choice.add_item("Tầng %d · %s" % [number,Catalog.FLOORS[number-1]["name"]],number)
+	floor_choice.select(selected_floor-1)
+	floor_choice.visible = unlocked and state["accepted"]
+	floor_choice.disabled = not progress.can_start_floor(selected_floor)
+	action.text = "Hạ Golem để mở hành trình" if not unlocked else "Nhận bản đồ · Lưu nhiệm vụ" if not state["accepted"] else "Xuống tầng %d · Mang trang bị đang chuẩn bị" % selected_floor
+	action.disabled = not unlocked or not progress.available() or (state["accepted"] and not progress.can_start_floor(selected_floor))
 	_resize()
 
+func _select_floor(index: int) -> void:
+	if not opened or index < 0 or index >= floor_choice.item_count: return
+	var requested: int = floor_choice.get_item_id(index)
+	if not progress.can_start_floor(requested):
+		notice.text = "Tầng này chưa được hoàn tất hoặc hồ sơ chưa sẵn sàng. Hãy kiểm tra tiến độ."
+		refresh()
+		return
+	selected_floor = requested
+	notice.text = "Đổi điểm bắt đầu; quái và rương của chuyến mới vẫn phải tự vượt qua."
+	refresh()
+
 func _act() -> void:
-	if not progress.unlocked(): return
+	if not opened or not progress.unlocked(): return
 	if not progress.state()["accepted"]:
 		if not progress.accept():
 			notice.text = "Chưa lưu được nhiệm vụ. Tiến độ và đồ của bạn được giữ; có thể thử lại."
 		else: notice.text = "Đã lưu bản đồ. Chuẩn bị bùa và trang bị rồi chọn xuống tầng."
 		refresh()
 	else:
+		if not progress.can_start_floor(selected_floor):
+			notice.text = "Chưa thể xuống tầng đã chọn. Tiến độ và trang bị vẫn được giữ."
+			refresh()
+			return
 		close()
-		expedition_requested.emit()
+		expedition_requested.emit(selected_floor)
 
 func _build_panel() -> void:
 	var canvas := CanvasLayer.new()
@@ -144,6 +168,12 @@ func _build_panel() -> void:
 	floor_column.add_theme_constant_override("separation", 12)
 	floor_scroll.add_child(floor_column)
 	for index: int in 5: floor_rows.append(_label(floor_column, 15))
+	floor_choice = OptionButton.new()
+	floor_choice.name = "CompletedFloorChoice"
+	floor_choice.clip_text = true
+	floor_choice.item_selected.connect(_select_floor)
+	floor_choice.tooltip_text = "Chỉ chọn tầng đã hoàn tất; lần đầu bắt đầu ở tầng 1."
+	panel.add_child(floor_choice)
 	notice = _label(panel, 15)
 	action = Button.new()
 	action.custom_minimum_size.y = 38
@@ -176,12 +206,15 @@ func _resize() -> void:
 	objective.position = Vector2(20, 60)
 	objective.size = Vector2(width, 66)
 	var action_y: float = panel.size.y - 98.0
+	var choice_y: float = action_y - (44.0 if floor_choice.visible else 0.0)
+	floor_choice.position = Vector2(20,choice_y)
+	floor_choice.size = Vector2(width,34)
 	var notice_height: float = 48.0 if not notice.text.is_empty() else 0.0
 	notice.visible = notice_height > 0.0
-	notice.position = Vector2(20, action_y - notice_height - 10.0)
+	notice.position = Vector2(20, choice_y - notice_height - 10.0)
 	notice.size = Vector2(width, notice_height)
 	floor_scroll.position = Vector2(20, 136)
-	floor_scroll.size = Vector2(width, maxf(48.0, action_y - notice_height - 20.0 - 136.0))
+	floor_scroll.size = Vector2(width, maxf(48.0, choice_y - notice_height - 20.0 - 136.0))
 	floor_column.custom_minimum_size.x = width - 16.0
 	floor_column.size.x = width - 16.0
 	for row: Label in floor_rows: row.size.x = width - 16.0

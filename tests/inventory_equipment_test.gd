@@ -36,6 +36,9 @@ func test_system() -> void:
 	_check(root.get_visible_rect().encloses(screen.panel.get_global_rect()) and screen.panel.get_global_rect().encloses(screen.bag_buttons[19].get_global_rect()), "Inventory panel and last bag cell fit entirely inside the actual viewport")
 	screen._show_tooltip(spare.uid)
 	_check(screen.tooltip.visible and "Kiếm Sắt Lữ Hành" in screen.tooltip_name.text and "Thường" in screen.tooltip_name.text, "Hover tooltip identifies the owned Common sword")
+	_check("Sát thương gốc 10.00" in screen.tooltip_body.text and "Đòn 1: 10.00" in screen.tooltip_body.text and "Báo đòn" in screen.tooltip_body.text, "Starter readout includes concrete weapon damage, combo and timing")
+	_check("HP: 0" in screen.tooltip_body.text and "Giáp: 0" in screen.tooltip_body.text and "Năng lượng: 0" in screen.tooltip_body.text, "Zero item bonuses remain explicit instead of looking like missing data")
+	_check("Ô bùa vũ khí: 1" in screen.tooltip_body.text and not "Proc phẩm cấp" in screen.tooltip_body.text, "Weapon readout shows its active socket capacity without claiming an unwired weapon proc")
 	var hits: int = level.dummy_a.hit_count
 	await _click(screen.bag_buttons[screen.bag_uids.find(spare.uid)], MOUSE_BUTTON_LEFT)
 	_check(inventory.equipped_weapon_uid == spare.uid and inventory.equipment_bag_uids().has(original_uid), "Actual left click swaps owned swords and returns the previous UID to the bag")

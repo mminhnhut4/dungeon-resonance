@@ -101,11 +101,9 @@ func _life(profile: SanctuaryProfile) -> NpcWorldState:
 	var state := NpcWorldState.new()
 	state.save_path = profile.save_path + ".npc_v1.json"
 	_check(state.save(), "Existing NPC life owner creates only its fixture sidecar")
-	# The authority, rather than a profile transport fixture, owns this explicit
-	# confirmed death. Subsequent core saves must preserve the durable tombstone.
+	# The actual life authority owns withdrawal. Core saves must preserve it.
 	state.receive_hit("pilot_traveler", 1.0, 0.0)
-	var token: String = state.decision_token("pilot_traveler")
-	_check(not token.is_empty() and state.decide("pilot_traveler", token, true, true) and NpcWorldState.valid(state.snapshot()) and state.records["pilot_traveler"]["mode"] == "dead", "Actual NPC owner persists an explicit confirmed-death tombstone")
+	_check(not state.decide("pilot_traveler", "pilot_traveler:1", true, true) and NpcWorldState.valid(state.snapshot()) and state.records["pilot_traveler"]["mode"] == "recovering" and state.records["pilot_traveler"]["death"].is_empty(), "Actual NPC owner persists nonlethal withdrawal and refuses execution")
 	return state
 
 func _blocked(profile: SanctuaryProfile, label: String) -> void:

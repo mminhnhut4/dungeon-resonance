@@ -37,7 +37,7 @@ func _walk(x: float) -> void:
 	var action: StringName=&"move_right" if x>run.player.position.x else &"move_left"
 	var direction: float=1.0 if action==&"move_right" else -1.0
 	Input.action_press(action)
-	for _index: int in hz*5:
+	for _index: int in hz*10:
 		await _step(1)
 		if direction*(run.player.position.x-x)>=0: break
 	Input.action_release(action); await _step(ceili(hz*.18))
@@ -62,8 +62,9 @@ func _geometry(number: int) -> void:
 	_check(run.room is DungeonRoom and run.room.get("surfaces").size()==Catalog.floor_data(number)["shelves"].size()+1,"Depth%d has its own authored surfaces" % number)
 	_check(run.room.get("raster_bound")==true,"Depth%d binds generated raster in actual room" % number)
 	_check(run.room.arrow.visible and run.room.arrow.text.contains("PHONG ẤN"),"Depth%d gate hint remains visible outside debug overlay" % number)
-	await _walk(1120)
-	_check(actor.position.x>=1110 and actor.motor.is_grounded() and absf(actor.position.y-640)<2,"Depth%d player walks combat spine east without jump" % number)
+	var east_spine: float=Catalog.seal_point(number).x-70.0
+	await _walk(east_spine)
+	_check(actor.position.x>=east_spine-10 and actor.motor.is_grounded() and absf(actor.position.y-640)<2,"Depth%d player walks combat spine east without jump" % number)
 	await _walk(180)
 	_check(actor.position.x<=190 and actor.motor.is_grounded(),"Depth%d player walks combat spine west without jump" % number)
 	var shelves: Array=Catalog.floor_data(number)["shelves"]
@@ -158,7 +159,7 @@ func _run() -> void:
 				_check(soul.get_parent()==run._pending_pickup_root and int(run.pending_reward_state()["pickup_count"])==1,"Pickup survives outside disposable floor loot owner")
 				_check(run.retry_pending_rewards() and bank.souls==5 and not run.has_pending_rewards(),"Retry collects inherited soul once through existing writer")
 				_check(not soul.collect() and bank.souls==5,"Repeated permanent pickup cannot duplicate soul")
-			await _walk(1230)
+			await _walk(Catalog.exit_point(number).x)
 			_check(run.can_choose_floor_exit(),"Depth%d cleared exit reachable through real walking" % number)
 			_check(run.floor_exit.open(),"Depth%d uses existing E-choice owner" % number)
 			await _step(3)

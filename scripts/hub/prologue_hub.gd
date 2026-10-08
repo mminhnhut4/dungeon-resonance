@@ -30,6 +30,7 @@ var presentation: SlicePresentation
 var safety: SafeHubComponent
 var condition: BodyConditionComponent
 var economy: EconomySession
+var rune_learning: RuneLearningService
 var courier: CourierOpportunity
 var dummy: TrainingDummy
 var training_slime: HubTrainingSlime
@@ -60,6 +61,9 @@ var current_npc: StringName = &""
 var _dialogue_previous_controls: bool = true
 var station_notice: String = ""
 var _pending_sale_uid: int = 0
+var _pending_purchase: Dictionary = {}
+var _purchase_serial: int = 0
+var _upgrade_offers: Dictionary = {}
 var forge_rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -114,6 +118,8 @@ func _ready() -> void:
 	player.add_child(condition)
 	economy = EconomySession.new()
 	economy.initialize(profile, gear.inventory)
+	rune_learning = RuneLearningService.new()
+	rune_learning.initialize(economy)
 	if world_building_enabled:
 		courier = OpeningCourierRuntime.new()
 		courier.initialize(profile, profile)
@@ -212,6 +218,7 @@ func _economy_quote(method: StringName, id: StringName) -> Dictionary:
 
 func _npc_choices(id: StringName, courier_detail: bool = false) -> Array[Dictionary]:
 	var choices: Array[Dictionary] = []
+	_upgrade_offers.clear()
 	if courier_detail and courier != null and id == NpcCatalog.HEALER:
 		choices.append_array(courier.choices(&"healer"))
 		choices.append({"id": &"goodbye", "text": "Để sau · Tiếp tục hành trình"})
@@ -223,16 +230,19 @@ func _npc_choices(id: StringName, courier_detail: bool = false) -> Array[Diction
 			choices.append({"id": &"smith_enhance", "text": "Cường hóa trang bị · +0 đến +12 · Thành công 100%"})
 			choices.append({"id": &"smith_stones", "text": "Ghép Đá Cường Hóa · 5 viên cùng cấp thành 1 viên cấp sau"})
 		NpcCatalog.HEALER:
-			var names: Dictionary[StringName, String] = {&"max_hp": "Tịnh hóa thể chất · Máu tối đa", &"mana_regen": "Điều tức · Hồi năng lượng", &"rune_capacity": "Khai mạch · Ô bùa Catalyst"}
-			for upgrade_id: StringName in names:
+			var names: Dictionary[StringName, String] = {&"max_hp": "Tịnh hóa thể chất · Máu tối đa", &"max_mana": "Dưỡng thần · Mana tối đa", &"mana_regen": "Điều tức · Hồi năng lượng", &"rune_capacity": "Khai mạch · Ô bùa Catalyst"}
+			for upgrade_id: StringName in WorldProgressionCatalog.UPGRADES:
 				var quote: Dictionary = _economy_quote(&"quote_upgrade", upgrade_id)
+				var upgrade_name: String = names.get(upgrade_id,String(upgrade_id))
 				var value: float = float(quote.get("value", 0))
-				var next_value: float = value + float(WorldProgressionCatalog.VALUES[upgrade_id])
-				var text: String = "%s · +%.0f → +%.0f %s · %d Tàn Hồn" % [names[upgrade_id], value, next_value, quote.get("unit", ""), quote.get("cost", 0)]
+				var next_value: float = value + float(WorldProgressionCatalog.VALUES.get(upgrade_id,0))
+				var text: String = "%s · +%.0f → +%.0f %s · %d Tàn Hồn" % [upgrade_name, value, next_value, quote.get("unit", ""), quote.get("cost", 0)]
 				text += " · Đang có %d Tàn Hồn · Thiếu %d" % [profile.souls, maxi(0, int(quote.get("cost", 0)) - profile.souls)]
-				if quote.get("level", 0) >= quote.get("max_level", 0): text = "%s · Đã đạt giới hạn" % names[upgrade_id]
-				choices.append({"id": StringName("upgrade_" + String(upgrade_id)), "text": text, "enabled": quote.get("can_buy", false)})
+				if quote.get("level", 0) >= quote.get("max_level", 0): text = "%s · Đã đạt giới hạn" % upgrade_name
+				_upgrade_offers[upgrade_id] = {"level":quote.get("level",0),"cost":quote.get("cost",0)}
+				choices.append({"id": StringName("upgrade_" + String(upgrade_id)), "text": text, "enabled": quote.get("can_buy", false), "requires_confirmation":true, "confirm_text":"%s\nGiá: %d Tàn Hồn. Sau khi mua còn %d Tàn Hồn.\nXác nhận tịnh hóa?" % [upgrade_name,int(quote.get("cost",0)),maxi(0,profile.souls-int(quote.get("cost",0)))]})
 			choices.append({"id": &"healer_consumables", "text": "Mua thuốc và chế thuốc, băng gạc, thuốc giải độc"})
+			choices.append({"id": &"rune_learning", "text": "Học & chế bùa · Học vĩnh viễn, nhận 1 bùa Thường"})
 			if courier != null: choices.append({"id": &"courier_open", "text": "Hỏi việc đưa vật tư · Phiếu tiếp tế tùy chọn"})
 		NpcCatalog.WANDERER:
 			var quote: Dictionary = _economy_quote(&"quote_bounty", &"golem_hunt")
@@ -270,10 +280,16 @@ func _dialogue_choice(id: StringName) -> void:
 	elif id in [&"smith_enhance", &"smith_stones"]:
 		smith_requested.emit(self)
 		open_station(id)
-	elif id == &"healer_consumables":
+	elif id in [&"healer_consumables", &"rune_learning"]:
 		open_station(id)
 	elif String(id).begins_with("upgrade_"):
 		var upgrade_id := StringName(String(id).trim_prefix("upgrade_"))
+		var offered: Dictionary = _upgrade_offers.get(upgrade_id,{})
+		_upgrade_offers.clear()
+		var current: Dictionary = _economy_quote(&"quote_upgrade",upgrade_id)
+		if offered.is_empty() or not current.get("can_buy",false) or current.get("level") != offered.get("level") or current.get("cost") != offered.get("cost") or profile.read_only:
+			open_npc(NpcCatalog.HEALER,"Điều kiện hoặc giá đã thay đổi. Chưa trừ Tàn Hồn; hãy chọn lại nâng cấp.")
+			return
 		permanent_upgrade_requested.emit(upgrade_id, self)
 		var success: bool = economy.has_method(&"buy_upgrade") and bool(economy.call(&"buy_upgrade", upgrade_id))
 		open_npc(NpcCatalog.HEALER, "Tịnh hóa hoàn tất. Tiến triển được giữ sau khi chết." if success else "Chưa thể tịnh hóa: kiểm tra Tàn Hồn hoặc trạng thái lưu dữ liệu.")
@@ -501,6 +517,7 @@ func open_station(id: StringName) -> void:
 	current_station = id
 	station_notice = ""
 	_pending_sale_uid = 0
+	_pending_purchase.clear()
 	_previous_controls = player.controls_enabled
 	player.suspend_controls(true)
 	TimeScaleClaims.acquire(self, 0.1)
@@ -514,6 +531,7 @@ func close_station() -> void:
 		return
 	station_open = false
 	_pending_sale_uid = 0
+	_pending_purchase.clear()
 	current_station = &""
 	TimeScaleClaims.release(self)
 	player.suspend_controls(not _previous_controls)
@@ -526,6 +544,11 @@ func _refresh_station() -> void:
 	for node: Node in station_content.get_children():
 		station_content.remove_child(node)
 		node.queue_free()
+	if not _pending_purchase.is_empty():
+		_build_purchase_confirmation()
+		station_scroll.scroll_vertical = 0
+		_resize_station_panel.call_deferred()
+		return
 	match current_station:
 		&"training":
 			_label(station_content, Vector2.ZERO, "SÂN LUYỆN · Không thể chết tại căn cứ\nMộc nhân đo sát thương; Slime cắn nhẹ để thử Hurt.")
@@ -565,6 +588,8 @@ func _refresh_station() -> void:
 			_build_stone_menu()
 		&"healer_consumables":
 			_build_consumable_menu()
+		&"rune_learning":
+			_build_rune_learning_menu()
 	if station_notice != "": _label(station_content, Vector2.ZERO, station_notice)
 	station_scroll.scroll_vertical = 0
 	_resize_station_panel.call_deferred()
@@ -767,9 +792,7 @@ func _build_trader_stock() -> void:
 			if String(shop_id).begins_with("world_") and not profile.learned_blueprints.has(shop_id): button.tooltip_text += "\nChưa học dòng vũ khí này. Khám phá hầm ngục để tìm bản chế tạo."
 
 func _buy_weapon(id: StringName, quality: int) -> void:
-	var success: bool = bool(economy.call(&"buy_weapon", id, quality))
-	station_notice = "Mua thành công. Vũ khí đã vào hành trang." if success else "Chưa thể mua: kiểm tra dòng đã học, Linh Thạch, chỗ trống và trạng thái lưu dữ liệu."
-	_refresh_station()
+	_request_purchase(&"equipment",id,quality)
 
 func _build_consumable_menu() -> void:
 	_label(station_content, Vector2.ZERO, "THANH VY · THUỐC VÀ BĂNG GẠC\nMua bằng Linh Thạch hoặc dùng nguyên liệu trong kho căn cứ. Thuốc được cất vào túi, không tự uống khi mua/chế.")
@@ -786,8 +809,115 @@ func _build_consumable_menu() -> void:
 		craft.disabled = not bool(quote.get("can_craft", false))
 
 func _buy_consumable(id: StringName) -> void:
-	var success: bool = bool(economy.call(&"buy_consumable", id))
-	station_notice = "Mua thuốc thành công. Thuốc đã vào túi tiêu hao." if success else "Chưa thể mua thuốc: kiểm tra Linh Thạch, giới hạn túi và trạng thái lưu dữ liệu."
+	_request_purchase(&"consumable",id)
+
+func _build_rune_learning_menu() -> void:
+	_label(station_content,Vector2.ZERO,"THANH VY · HỌC & CHẾ BÙA\nHọc một lần để nhớ vĩnh viễn và nhận 1 bùa Thường. Bùa nhặt được vẫn ghép được ngay.\nSau khi học, chế thêm bằng nguyên liệu trong kho. Mở Hành trang → chọn trang bị → ghép vào ô bùa.")
+	for id: StringName in RuneLearningService.IDS:
+		var quote: Dictionary = rune_learning.quote(id)
+		var learned: bool = bool(quote.get("learned",false))
+		var action: StringName = &"rune_craft" if learned else &"rune_learn"
+		var cost: String = "Chế 1 bùa Thường · %s trong kho\n%s" % [_materials_text(quote["craft_materials"]),_rune_material_snapshot(quote["craft_materials"])] if learned else "Học · %d Tàn Hồn · Đang có %d\nTặng 1 bùa Thường; sau đó có thể chế thêm." % [int(quote["cost"]),profile.souls]
+		var hint: String = str(quote.get("lock_hint",""))
+		var button: Button = _item_card(ItemArtCatalog.RUNE_ICONS.get(id) as Texture2D,"Bùa %s · %s" % [quote["name"],"Đã học" if learned else "Chưa học"],hint if not hint.is_empty() else "Cách học được giữ sau khi chết. Bùa là vật phẩm riêng để ghép vào trang bị.",cost,"Chế 1" if learned else "Học",_request_rune_purchase.bind(action,id))
+		button.name = "RuneService_"+String(id)
+		button.disabled = not bool(quote.get("can_craft" if learned else "can_learn",false))
+
+func _rune_material_snapshot(costs: Dictionary) -> String:
+	var fragments: Array[String] = []
+	for id: StringName in costs:
+		fragments.append("%s %d/%d" % [MaterialCatalog.DISPLAY_NAMES.get(id,String(id)),int(profile.material_stash.get(id,0)),int(costs[id])])
+	return "Trong kho: "+", ".join(fragments)
+
+func _request_rune_purchase(kind: StringName, id: StringName) -> void:
+	if not station_open or current_station != &"rune_learning" or not _pending_purchase.is_empty() or kind not in [&"rune_learn",&"rune_craft"]: return
+	var quote: Dictionary = rune_learning.quote(id)
+	if not quote.get("can_learn" if kind == &"rune_learn" else "can_craft",false): return
+	_purchase_serial += 1
+	_pending_purchase = {"token":_purchase_serial,"kind":kind,"id":id,"quality":0,"station":current_station,"cost":int(quote["cost"]),"materials":quote["craft_materials"].duplicate(true),"learned":quote["learned"]}
+	station_notice = ""
+	_refresh_station()
+
+func _purchase_quote(kind: StringName, id: StringName, quality: int) -> Dictionary:
+	return economy.quote_buy(id,quality) if kind == &"equipment" else economy.quote_buy_consumable(id) if kind == &"consumable" else {}
+
+func _request_purchase(kind: StringName, id: StringName, quality: int = 0) -> void:
+	var required_station: StringName = &"merchant" if kind == &"equipment" else &"healer_consumables"
+	if not station_open or current_station != required_station or not _pending_purchase.is_empty() or profile.read_only or profile.hub_inventory_quarantined: return
+	var quote: Dictionary = _purchase_quote(kind,id,quality)
+	if not quote.get("can_buy",false): return
+	_purchase_serial += 1
+	_pending_purchase = {"token":_purchase_serial,"kind":kind,"id":id,"quality":quality,"station":current_station,"cost":int(quote["coin_cost"])}
+	station_notice = ""
+	_refresh_station()
+
+func _build_purchase_confirmation() -> void:
+	station_content.columns = 1
+	_label(station_content,Vector2.ZERO,"XÁC NHẬN MUA\nKiểm tra món đồ và giá trước khi thanh toán.")
+	var kind: StringName = _pending_purchase["kind"]
+	var id: StringName = _pending_purchase["id"]
+	var quality: int = int(_pending_purchase["quality"])
+	var cost: int = int(_pending_purchase["cost"])
+	var token: int = int(_pending_purchase["token"])
+	var item_name: String = "Thuốc Hồi Máu"
+	var icon: Texture2D = ItemArtCatalog.icon(id)
+	var detail: String = AntiqueSkin.item_description(id)
+	var price_text: String = "Số lượng 1 · Giá %d Linh Thạch\nĐang có %d · Sau khi mua còn %d Linh Thạch" % [cost,profile.coins,maxi(0,profile.coins-cost)]
+	var confirm_text: String = "Xác nhận mua · %d Linh Thạch" % cost
+	if kind == &"equipment":
+		var data: EquipmentData = load("res://data/equipment/%s.tres" % id) as EquipmentData
+		item_name = data.item_name
+		icon = _equipment_icon(data)
+		detail = "%s · %s" % [GearItem.NAMES[quality],data.description]
+	elif kind in [&"rune_learn",&"rune_craft"]:
+		icon = ItemArtCatalog.RUNE_ICONS.get(id) as Texture2D
+		item_name = "Bùa "+str(RuneLearningService.NAMES[id])
+		if kind == &"rune_learn":
+			detail = "Học vĩnh viễn và nhận 1 bùa Thường để ghép. Bùa nhặt được vẫn dùng được dù chưa học."
+			price_text = "Giá học %d Tàn Hồn · Đang có %d · Sau khi học còn %d" % [cost,profile.souls,maxi(0,profile.souls-cost)]
+			confirm_text = "Xác nhận học · %d Tàn Hồn" % cost
+		else:
+			detail = "Chế 1 bùa Thường để ghép vào trang bị. Cách học đã được lưu vĩnh viễn."
+			price_text = "Giá chế: %s\n%s" % [_materials_text(_pending_purchase["materials"]),_rune_material_snapshot(_pending_purchase["materials"])]
+			confirm_text = "Xác nhận chế · 1 bùa Thường"
+	var preview: ServiceItemCard = _item_card(icon,item_name,detail,price_text,"Đang chọn",Callable()) as ServiceItemCard
+	preview.name = "PurchaseItemPreview"
+	preview.set_display_only()
+	var confirm: Button = _button(confirm_text,_confirm_purchase.bind(token))
+	confirm.name = "ConfirmPurchase"
+	var cancel: Button = _button("Hủy · Quay lại",_cancel_purchase.bind(token))
+	cancel.name = "CancelPurchase"
+	# A second Enter from selecting the item cannot also pay for it.
+	cancel.grab_focus.call_deferred()
+
+func _cancel_purchase(token: int) -> void:
+	if _pending_purchase.is_empty() or int(_pending_purchase["token"]) != token: return
+	_pending_purchase.clear()
+	if station_open: _refresh_station()
+
+func _confirm_purchase(token: int) -> void:
+	if not station_open or _pending_purchase.is_empty() or int(_pending_purchase["token"]) != token: return
+	var offer: Dictionary = _pending_purchase.duplicate()
+	# Consume before calling the owner: reentrant signals/stale buttons cannot pay twice.
+	_pending_purchase.clear()
+	if offer["kind"] in [&"rune_learn",&"rune_craft"]:
+		_confirm_rune_purchase(offer)
+		return
+	var quote: Dictionary = _purchase_quote(offer["kind"],offer["id"],int(offer["quality"]))
+	var permitted: bool = current_station == offer["station"] and not profile.read_only and not profile.hub_inventory_quarantined and bool(quote.get("can_buy",false)) and int(quote.get("coin_cost",-1)) == int(offer["cost"])
+	var success: bool = false
+	if permitted:
+		success = economy.buy_weapon(offer["id"],int(offer["quality"])) if offer["kind"] == &"equipment" else economy.buy_consumable(offer["id"])
+	station_notice = ("Mua thành công. Trang bị đã vào hành trang." if offer["kind"] == &"equipment" else "Mua thuốc thành công. Thuốc đã vào túi tiêu hao.") if success else "Chưa mua được. Kiểm tra lại giá, Linh Thạch, chỗ trống và dữ liệu lưu; hãy chọn lại món đồ."
+	_refresh_station()
+
+func _confirm_rune_purchase(offer: Dictionary) -> void:
+	var quote: Dictionary = rune_learning.quote(offer["id"])
+	var learning: bool = offer["kind"] == &"rune_learn"
+	var permitted: bool = current_station == offer["station"] and quote.get("can_learn" if learning else "can_craft",false) and quote.get("learned") == offer["learned"] and int(quote.get("cost",-1)) == int(offer["cost"]) and quote.get("craft_materials",{}) == offer["materials"]
+	var success: bool = false
+	if permitted: success = rune_learning.learn(offer["id"]) if learning else rune_learning.craft(offer["id"])
+	station_notice = ("Đã học vĩnh viễn và nhận 1 bùa Thường. Mở Hành trang để ghép bùa vào trang bị." if learning else "Đã chế 1 bùa Thường và cất vào hành trang.") if success else "Chưa hoàn tất. Điều kiện, chi phí hoặc dữ liệu lưu đã thay đổi; hãy chọn lại bùa."
 	_refresh_station()
 
 func _craft_consumable(id: StringName) -> void:
@@ -892,7 +1022,8 @@ func route_world_input(event: InputEvent) -> void:
 		if dialogue.handle_input(event): get_viewport().set_input_as_handled()
 		return
 	if station_open and (event.is_action_pressed(&"inventory") or event.is_action_pressed(&"interact") or event.is_action_pressed(&"ui_cancel")):
-		close_station()
+		if event.is_action_pressed(&"ui_cancel") and not _pending_purchase.is_empty(): _cancel_purchase(int(_pending_purchase["token"]))
+		else: close_station()
 		get_viewport().set_input_as_handled()
 	elif not station_open and event.is_action_pressed(&"interact") and not gear.modal.is_open:
 		var station: StringName = nearest_station()

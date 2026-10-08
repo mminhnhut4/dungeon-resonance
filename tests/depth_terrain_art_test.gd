@@ -1,5 +1,5 @@
 extends SceneTree
-## Golden physical signatures predate terrain polish; raster checks cannot certify native pixels.
+## Floors2–5 retain pre-terrain goldens; widened floor1 has an explicit reviewed geometry fixture.
 const RoomScript=preload("res://scripts/rooms/depth_room.gd")
 const TerrainScript=preload("res://scripts/presentation/depth_terrain_art.gd")
 const Catalog=preload("res://data/depth_floor_catalog.gd")
@@ -27,6 +27,31 @@ static func physical_signature(room: DungeonRoom) -> String:
 	for key: StringName in room.traversal_points:
 		var point: Vector2=room.traversal_points[key]; points[String(key)]=[point.x,point.y]
 	return JSON.stringify({"bodies":bodies,"points":points,"number":room.room_number,"locked":room.locked},"",true,true).sha256_text()
+static func _wide_geometry_matches(room: DungeonRoom, variant: int) -> bool:
+	# Intentional floor1 layout change, not a regenerated hash from the implementation.
+	var authored: Array[Array]=[
+		["DepthCombatFloor",Vector2(960,680),Vector2(1920,80),false],
+		["DepthWestBoundary",Vector2(16,360),Vector2(32,720),false],
+		["DepthEastBoundary",Vector2(1904,360),Vector2(32,720),false],
+		["DepthShelf0",Vector2(150,556),Vector2(120,16),true],
+		["DepthShelf1",Vector2(340,460),Vector2(280,16),true],
+		["DepthShelf2",Vector2(565,364),Vector2(230,16),true],
+		["DepthShelf3",Vector2(945,460),Vector2(290,16),true],
+		["DepthShelf4",Vector2(1130,556),Vector2(100,16),true],
+		["DepthSealDoor",Vector2(1830,360),Vector2(24,720),false]
+	]
+	var bodies: Array[Node]=room.get_children().filter(func(child: Node)->bool:return child is StaticBody2D)
+	if bodies.size()!=authored.size() or room.locked!=(variant!=1): return false
+	for index: int in authored.size():
+		var body: StaticBody2D=bodies[index] as StaticBody2D
+		var shape: CollisionShape2D=body.get_node("Shape") as CollisionShape2D
+		var expected: Array=authored[index]
+		if String(body.name)!=expected[0] or body.position!=expected[1] or (shape.shape as RectangleShape2D).size!=expected[2]: return false
+		if body.scale!=Vector2.ONE or body.rotation!=0.0 or body.collision_layer!=1 or body.collision_mask!=0 or body.disable_mode!=CollisionObject2D.DISABLE_MODE_KEEP_ACTIVE: return false
+		if shape.position!=Vector2.ZERO or shape.scale!=Vector2.ONE or shape.rotation!=0.0 or shape.one_way_collision!=bool(expected[3]): return false
+		if shape.one_way_collision_margin!=(4.0 if bool(expected[3]) else 1.0) or shape.disabled!=(index==8 and variant==1): return false
+	var points: Dictionary={&"shelf_0":Vector2(150,548),&"shelf_1":Vector2(340,452),&"shelf_2":Vector2(565,356),&"shelf_3":Vector2(945,452),&"shelf_4":Vector2(1130,548),&"entry":Vector2(180,640),&"exit":Vector2(1870,640),&"return":Vector2(640,640),&"high_link":Vector2(560,356)}
+	return room.traversal_points==points
 func _inspect_art(room: DungeonRoom) -> void:
 	var art: Node2D=room.get("terrain_art") as Node2D
 	_check(art!=null and art.get("sprites").size()>0 and art.get("sprites").size()<=TerrainScript.MAX_SPRITES,"Depth%d bounded textured skin exists" % room.room_number)
@@ -101,7 +126,10 @@ func _run() -> void:
 		var room: DungeonRoom=RoomScript.new() as DungeonRoom; room.room_number=number; root.add_child(room); await _step()
 		for variant: int in [0,1,2]:
 			room.set_locked(variant!=1); await _step()
-			_check(physical_signature(room)==GOLDEN[(number-1)*3+variant],"Depth%d collider/transforms/door/traversal byte-equivalent variant%d" % [number,variant])
+			if number==1:
+				_check(_wide_geometry_matches(room,variant),"Depth1 collider/transforms/door/traversal match reviewed1920 layout variant%d" % variant)
+			else:
+				_check(physical_signature(room)==GOLDEN[(number-1)*3+variant],"Depth%d collider/transforms/door/traversal byte-equivalent variant%d" % [number,variant])
 		await _inspect_art(room)
 		var ids: Array[int]=[]
 		for sprite: Sprite2D in room.get("terrain_art").get("sprites"): ids.append(sprite.get_instance_id())

@@ -28,6 +28,12 @@ func available() -> bool:
 func unlocked() -> bool:
 	return profile != null and profile.opening_progress.get("completed", []).has("golem_defeated")
 
+func can_start_floor(floor_number: int) -> bool:
+	# Read-only replay policy: clearing N does not unlock a direct launch into N+1.
+	if floor_number < 1 or floor_number > 5 or not unlocked() or not available(): return false
+	var current: Dictionary = state()
+	return valid(current) and current["accepted"] and floor_number <= maxi(1,int(current["cleared"]))
+
 func accept() -> bool:
 	if not unlocked() or not available(): return false
 	var next: Dictionary = state()

@@ -1,7 +1,7 @@
 extends SceneTree
-## Test-only composition of the actual reviewed schema2 resident source and
+## Test-only composition of the current nonlethal resident source and
 ## canonical courier adapter with the common R2 owner. No product UI activation.
-const SocialLife = preload("res://tests/integration_fixtures/reviewed_opening/social_life_owner.gd")
+const SocialLife = preload("res://scripts/npc/npc_world_state.gd")
 const SocialProgress = preload("res://tests/integration_fixtures/reviewed_opening/social_progress.gd")
 const Courier = preload("res://tests/integration_fixtures/reviewed_opening/courier_opportunity.gd")
 const Model = preload("res://scripts/cultivation/opening_cultivation_state.gd")
@@ -46,7 +46,7 @@ func _raw(path: String) -> PackedByteArray:
 
 func _register(profile: SanctuaryProfile) -> void:
 	_check(profile.register_extension_validator("npc_social",SocialProgress.valid),"Actual social semantic validator registers before load")
-	_check(profile.register_social_fence_reader(Callable(self,"_durable_reader").bind(profile.save_path)),"Trusted actual schema2 primary reader registers before recovery")
+	_check(profile.register_social_fence_reader(Callable(self,"_durable_reader").bind(profile.save_path)),"Trusted current life primary reader registers before recovery")
 
 func _fixture(label: String) -> SanctuaryProfile:
 	var profile := SanctuaryProfile.new()
@@ -68,8 +68,8 @@ func _reader(path: String, expected_ok: bool = true, register_before: bool = tru
 func _life(profile: SanctuaryProfile) -> RefCounted:
 	var life: RefCounted = SocialLife.new()
 	life.set("save_path",profile.save_path+".npc_v1.json")
-	_check(life.call("save")==true and SocialLife.valid(life.call("snapshot")),"Actual six-resident schema2 life owner saves its primary sidecar")
-	_check(life.call("snapshot")["npc_schema"]==2,"Combined fixture uses actual schema2, not a synthetic social transport validator")
+	_check(life.call("save")==true and SocialLife.valid(life.call("snapshot")),"Actual eight-resident schema3 life owner saves its primary sidecar")
+	_check(life.call("snapshot")["npc_schema"]==3 and life.get("records").size()==8,"Combined fixture uses current life authority, not a synthetic transport validator")
 	return life
 
 func _fence(life: RefCounted) -> Dictionary:
@@ -157,13 +157,13 @@ func _pending_recovery() -> void:
 	var dead: SanctuaryProfile = _fixture("pending_dead")
 	var dead_life: RefCounted = _life(dead)
 	dead._writer.fault_plan={"after_old_rename":true}
-	_check(not _help(dead,dead_life).get("ok",true),"Death fixture reaches the pending missing-main window")
+	_check(not _help(dead,dead_life).get("ok",true),"Withdrawal fixture reaches the pending missing-main window")
 	dead_life.call("receive_hit",ID,1.0,0.0)
-	_check(dead_life.call("decide",ID,dead_life.call("decision_token",ID),true,true)==true,"Actual life owner confirms a durable tombstone")
+	_check(dead_life.call("decide",ID,dead_life.call("decision_token",ID),true,true)==false and dead_life.get("records")[ID]["mode"]=="recovering","Actual life owner durably withdraws the injured NPC and rejects execution")
 	var tombstone: PackedByteArray = _raw(dead_life.get("save_path"))
 	var aborted: SanctuaryProfile = _reader(dead.save_path)
-	_check(aborted.last_commit.get("status")=="recovered_aborted" and aborted.material_stash[&"linen_fiber"]==8 and aborted.extension_state("npc_social").is_empty(),"Persisted death aborts a pending social effect without a debit")
-	_check(_raw(dead_life.get("save_path"))==tombstone,"Profile recovery cannot resurrect or rewrite the actual NPC owner")
+	_check(aborted.last_commit.get("status")=="recovered_aborted" and aborted.material_stash[&"linen_fiber"]==8 and aborted.extension_state("npc_social").is_empty(),"Persisted withdrawal aborts a pending social effect without a debit")
+	_check(_raw(dead_life.get("save_path"))==tombstone,"Profile recovery cannot heal or rewrite the actual NPC owner")
 
 func _life_rechecks() -> void:
 	for change: String in ["fear","downed","unsaved_down"]:
@@ -223,7 +223,7 @@ func _courier_choices() -> void:
 		var profile: SanctuaryProfile = _fixture("courier_"+String(choice))
 		var life: RefCounted = _life(profile)
 		life.call("receive_hit","pilot_pilgrim",1.0,0.0)
-		_check(life.call("decide","pilot_pilgrim",life.call("decision_token","pilot_pilgrim"),true,true)==true,"Courier fallback fixture has an actual dead pilgrim")
+		_check(life.call("decide","pilot_pilgrim",life.call("decision_token","pilot_pilgrim"),true,true)==false and life.get("records")["pilot_pilgrim"]["mode"]=="recovering","Courier fallback fixture has an actual withdrawn pilgrim")
 		var npc_bytes: PackedByteArray = _raw(life.get("save_path"))
 		var adapter: RefCounted = Courier.new(); adapter.call("initialize",profile,profile); adapter.call("arm",&"healer")
 		var accepted: Dictionary = adapter.call("apply_action",&"courier_accept")

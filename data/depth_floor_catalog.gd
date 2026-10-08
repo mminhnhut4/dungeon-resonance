@@ -5,6 +5,12 @@ const FLOOR_COUNT: int = 5
 const ENTRY: Vector2 = Vector2(180,640)
 const EXIT: Vector2 = Vector2(1230,640)
 const PORTAL: Vector2 = Vector2(1160,640)
+const VAN_THACH_WIDTH: float = 1920.0
+const VAN_THACH_LANDMARKS: Array[Dictionary] = [
+	{"id":&"cloud_steps","at":Vector2(285,640),"height":138.0,"text":"BẬC MÂY\nNhánh rương trên cao ↑"},
+	{"id":&"stone_gallery","at":Vector2(1080,640),"height":186.0,"text":"HÀNH LANG CỘT ĐÁ\nTheo đường đá sang phải →"},
+	{"id":&"seal_watch","at":Vector2(1660,640),"height":154.0,"text":"TRỤ PHONG ẤN\nDọn đủ hộ vệ để mở lối →"}
+]
 const FLOORS: Array[Dictionary] = [
 	{"id":&"van_thach","name":"VÂN THẠCH · Tàn tích canh giữ","enemy":&"depth_stone_guard","count":3,"tactic":"Né nhát quét đã báo; đánh vào lúc vệ binh hồi phục. Bùa theo hướng chuột.","palette":Color("697b83"),"ambient":Color(.72,.77,.84),"shelves":[Rect2(90,548,120,16),Rect2(200,452,280,16),Rect2(450,356,230,16),Rect2(800,452,290,16),Rect2(1080,548,100,16)],"secret":Vector2(560,356)},
 	{"id":&"moc_can","name":"MỘC CĂN · Vòm rễ nấm","enemy":&"depth_root_bat","count":4,"tactic":"Gần: bổ nhào; xa: bào tử. Rời hướng ngắm đã khóa; đánh khi bào dực rút lên.","palette":Color("638573"),"ambient":Color(.68,.84,.71),"shelves":[Rect2(70,546,110,16),Rect2(210,452,250,16),Rect2(450,356,290,16),Rect2(780,452,280,16),Rect2(1080,546,100,16)],"secret":Vector2(580,356)},
@@ -17,9 +23,24 @@ static func floor_data(number: int) -> Dictionary:
 	return FLOORS[number-1].duplicate(true) if valid(number) else {}
 static func background_path(number: int) -> String:
 	return "res://assets/environment/depth_v1/floor_%d.png" % number if valid(number) else ""
+static func room_width(number: int) -> float:
+	return VAN_THACH_WIDTH if number==1 else 1280.0
+static func exit_point(number: int) -> Vector2:
+	return Vector2(room_width(number)-50.0,640)
+static func seal_point(number: int) -> Vector2:
+	return Vector2(room_width(number)-90.0,360)
+static func camp_point(number: int) -> Vector2:
+	return Vector2(room_width(number)-240.0,640)
+static func landmarks(number: int) -> Array[Dictionary]:
+	return VAN_THACH_LANDMARKS.duplicate(true) if number==1 else []
+static func branch_chest_point(number: int) -> Vector2:
+	return Vector2(560,356) if number==1 else Vector2.ZERO
 static func enemy_anchors(number: int) -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	if not valid(number): return result
+	if number==1:
+		result.assign([Vector2(600,640),Vector2(1120,640),Vector2(1660,640)])
+		return result
 	var count: int = int(FLOORS[number-1]["count"])
 	for index: int in count:
 		result.append(Vector2(580+index*155,520 if number==2 else 560 if number==3 else 640))

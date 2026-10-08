@@ -18,7 +18,9 @@ func _ready() -> void:
 	if room_number < 3:
 		# Combat spine stays at y=640. Entry steps are peripheral, and gallery
 		# undersides are above the tallest ground actor instead of 70px overhead.
-		_shelf(&"WestStair",Rect2(50,534,80,12),true)
+		# Meet the west boundary: the old 18px gap trapped the 20px capsule
+		# between the wall and the stair corner after walking off or knockback.
+		_shelf(&"WestStair",Rect2(32,534,98,12),true)
 		_shelf(&"WestGallery",Rect2(180,444,290 if room_number==1 else 360,16),true)
 		_shelf(&"SecretAlcove",Rect2(32,366,300,16),false)
 		_shelf(&"SecretRoof",Rect2(32,219,148,16),false)

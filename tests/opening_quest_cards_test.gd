@@ -215,12 +215,34 @@ func _canonical_counter() -> void:
 	_check(_snapshot(profile,kit)==after_setup and before!=after_setup,"Canonical counter refresh remains a read-only projection")
 	journal.queue_free(); await _step()
 
+func _early_guidance() -> void:
+	var profile := SanctuaryProfile.new()
+	profile.cultivation_progress = Model.new_progress(4)
+	var kit: GearInventory = HubPreparation.starter_inventory(profile)
+	var before: String = _snapshot(profile,kit)
+	var rows: Array[Dictionary] = OpeningQuestCards.decorate(MapQuestProjection.rows(profile,kit),profile,kit)
+	_check(rows.any(func(row: Dictionary) -> bool: return row["id"] == &"cultivation_breakthrough" and row["card"]["optional"]),"Cultivation route is visible before all opening milestones are complete")
+	_check("mộc nhân" in OpeningProgressionGuide.cultivation_next_step(profile),"Fresh player receives the concrete mastery action")
+	_check(_snapshot(profile,kit) == before,"Guidance does not grant training or mutate resources")
+	var actor: Dictionary = profile.cultivation_progress["actors"]["player"]
+	actor["mastery"] = 8
+	_check("KHO CĂN CỨ" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing bank crystal points to collection and deposit")
+	profile.material_stash[&"crystal"] = 1
+	_check("đóng bảng" in OpeningProgressionGuide.cultivation_next_step(profile),"Funded training tells player to close the menu")
+	actor["energy"] = 40
+	_check("ĐƯỜNG BỘ" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing insight names the actual road interaction")
+	actor["insight_ids"] = ["explored"]
+	_check("Bột Phép" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing breakthrough cost names its bank material")
+	profile.material_stash[&"dust"] = 4
+	_check("Đủ điều kiện" in OpeningProgressionGuide.cultivation_next_step(profile),"Ready player receives the exact breakthrough destination")
+
 func _run() -> void:
 	var allowed: String = OS.get_environment("DUNGEON_QA_DATA_ROOT").replace("\\","/").trim_suffix("/")
 	if not allowed.is_absolute_path() or not OS.get_user_data_dir().replace("\\","/").begins_with(allowed+"/") or DisplayServer.get_name() != "headless":
 		print("FAIL: requires verified isolated user:// and headless engine"); quit(2); return
 	directory = "user://verification/quest_cards_%d_%d" % [OS.get_process_id(),Time.get_ticks_usec()]
 	AudioServer.set_bus_mute(0,true)
+	_early_guidance()
 	await _canonical_counter(); await _old_and_end_state(); await _insight_retry(); await _reward_loop()
 	_check(is_equal_approx(Engine.time_scale,1.0),"Quest teardown releases modal time ownership")
 	DirAccess.make_dir_recursive_absolute("res://docs/verification/quest_cards")

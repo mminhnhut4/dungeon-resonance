@@ -132,14 +132,15 @@ func _product_social_and_courier() -> void:
 	_check(pop.interact("pilot_pilgrim") and _has(hub.dialogue,&"courier_contact"), "Living pilgrim composes namespaced courier choices with social dialogue")
 	life.receive_hit("pilot_pilgrim",1.0,hub.player.global_position.x)
 	pop._choice_selected(&"courier_contact")
-	_check(_has(hub.dialogue,&"pilot_spare") and _has(hub.dialogue,&"pilot_ask_kill") and not _has(hub.dialogue,&"courier_contact") and not _has(hub.dialogue,&"pilot_help"), "New downed episode outranks a delayed living courier callback")
-	_check(not flow.profile.courier_objectives()["contact_recorded"], "Downed callback cannot record a courier contact")
-	await _choose(hub,&"pilot_ask_kill")
-	await _choose(hub,&"pilot_confirm_kill")
-	_check(life.records["pilot_pilgrim"]["mode"] == "dead" and not pop.actors.has("pilot_pilgrim"), "Confirmed real death removes the contact permanently")
+	await _step()
+	_check(not hub.dialogue.is_open and not pop.actors.has("pilot_pilgrim") and hub.player.controls_enabled, "New withdrawal closes stale living choices and releases the dialogue lock")
+	_check(not flow.profile.courier_objectives()["contact_recorded"], "Withdrawn callback cannot record a courier contact")
+	pop._choice_selected(&"pilot_ask_kill")
+	pop._choice_selected(&"pilot_confirm_kill")
+	_check(life.records["pilot_pilgrim"]["mode"] == "recovering" and life.records["pilot_pilgrim"]["death"].is_empty() and not pop.actors.has("pilot_pilgrim"), "Legacy execution callbacks cannot turn withdrawal into permanent death")
 	var tombstone: PackedByteArray = FileAccess.get_file_as_bytes(life.save_path)
 	hub.player.relocate(ExteriorHub.ORIGIN + hub.exterior.interactions[&"shrine"]); await _step()
-	_check(hub.open_courier_register() and _has(hub.dialogue,&"courier_contact"), "Stationary shrine remains a real fallback after contact death")
+	_check(hub.open_courier_register() and _has(hub.dialogue,&"courier_contact"), "Stationary shrine remains a real fallback while the contact recovers")
 	await _choose(hub,&"courier_contact")
 	_check(flow.profile.courier_objectives()["contact_source"] == "shrine" and _has(hub.dialogue,&"courier_help"), "Shrine contact advances the same canonical choice")
 	var dust: int = flow.profile.material_stash[&"dust"]
@@ -147,8 +148,8 @@ func _product_social_and_courier() -> void:
 	var souls: int = flow.profile.souls
 	await _choose(hub,&"courier_help",true)
 	_check(flow.profile.material_stash[&"dust"] == dust-1 and flow.profile.material_stash[&"linen_fiber"] == linen and flow.profile.souls == souls, "Supply confirmation spends one dust, zero social cloth and zero Souls")
-	_check(flow.profile.courier_choice_event().get("source_id") == "p03_shrine_register" and FileAccess.get_file_as_bytes(life.save_path) == tombstone, "Courier event identifies the register and leaves death evidence intact")
-	await _shot("shrine_supply_committed_after_death")
+	_check(flow.profile.courier_choice_event().get("source_id") == "p03_shrine_register" and FileAccess.get_file_as_bytes(life.save_path) == tombstone, "Courier event identifies the register and leaves withdrawal evidence intact")
+	await _shot("shrine_supply_committed_during_recovery")
 	var committed: PackedByteArray = FileAccess.get_file_as_bytes(flow.profile.save_path)
 	_check(hub.courier.apply_action(&"courier_help")["success"] and not hub.courier.apply_action(&"courier_prepare")["success"] and FileAccess.get_file_as_bytes(flow.profile.save_path) == committed, "Replay stays read-only and the other supply outcome remains blocked")
 	hub.dialogue.close(); await _step()
@@ -174,9 +175,11 @@ func _product_social_and_courier() -> void:
 	# directly assigning bank counts would invalidate the common format2 codec.
 	var lineage_dust_before: int = flow.profile.material_stash[&"dust"]
 	for node_id: String in Model.NODE_IDS:
-		var harvest: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"harvest",{"node_id":node_id},"qa_stash_harvest_"+node_id)
+		var harvest_event: String = "cult_%d" % int(flow.profile.cultivation_progress["next_event"])
+		var harvest: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"harvest",{"node_id":node_id},harvest_event)
 		_check(flow.profile.commit_cultivation(harvest), "Controlled stash fixture commits real origin/stock together: " + node_id)
-	var pill: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"craft_pill",{"origin_id":Model.NODE_IDS[0]},"qa_stash_craft_pill")
+	var pill_event: String = "cult_%d" % int(flow.profile.cultivation_progress["next_event"])
+	var pill: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"craft_pill",{"origin_id":Model.NODE_IDS[0]},pill_event)
 	_check(flow.profile.commit_cultivation(pill) and flow.profile.material_stash[&"aptitude_herb"] == 1 and flow.profile.material_stash[&"aptitude_pill"] == 1 and flow.profile.material_stash[&"dust"] == lineage_dust_before-2 and Model.valid(flow.profile.cultivation_progress,flow.profile.material_stash), "Controlled positive lineage rows use actual harvest/craft receipts and exact two-dust cost")
 	hub.open_station(&"stash"); await _step()
 	_check(hub.station_content.columns == 2 and flow.profile.profile_version == 2, "Two-column stash uses the actual common format2 owner")
@@ -193,7 +196,7 @@ func _product_social_and_courier() -> void:
 	await _cleanup()
 	hub = await _open(fixture.save_path)
 	_check(NpcSocialProgress.helped(OpeningSocialRuntime.state(flow.profile),ID) and flow.profile.material_stash[&"linen_fiber"] == 6 and flow.profile.courier_objectives()["outcome"] == "help", "Cold product scene retains both canonical receipts and their exact costs")
-	_check(hub.npc_population.state.records["pilot_pilgrim"]["mode"] == "dead" and not hub.npc_population.actors.has("pilot_pilgrim"), "Cold product load does not recreate its dead contact")
+	_check(hub.npc_population.state.records["pilot_pilgrim"]["mode"] == "recovering" and not hub.npc_population.actors.has("pilot_pilgrim"), "Cold product load does not prematurely restore its withdrawn contact")
 	await _cleanup()
 
 func _product_cold_recovery() -> void:
@@ -201,7 +204,7 @@ func _product_cold_recovery() -> void:
 		var fixture: SanctuaryProfile = _fixture(point)
 		var runtime := OpeningSocialRuntime.new(); _check(runtime.configure(fixture), "Product registration is trusted before pending recovery")
 		var life := NpcWorldState.new(); life.save_path = fixture.save_path + ".npc_v1.json"
-		_check(life.save(), "Actual schema2 primary is durable before interrupted social commit")
+		_check(life.save(), "Actual schema3 primary is durable before interrupted social commit")
 		fixture._writer.fault_plan = {point:true}
 		_check(not OpeningSocialRuntime.help(fixture,life,ID), point + ": caller does not publish interrupted success")
 		var npc_bytes: PackedByteArray = FileAccess.get_file_as_bytes(life.save_path)

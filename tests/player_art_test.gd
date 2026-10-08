@@ -35,6 +35,16 @@ func test_system() -> void:
 	_check(masked.get_pixel(15, 8).a == 1.0 and masked.get_pixel(15, 8).r == 1.0, "An enclosed white face or mask remains fully opaque")
 	_check(masked.get_pixel(9, 12).a == 1.0 and hash(synthetic.get_data()) == before_pixels, "Runtime alpha construction preserves colored silhouette and source pixels")
 	_check(data["bounds"] == Rect2i(8, 3, 16, 18) and data["foot_pixel"] == Vector2(16, 21), "Alpha bounds and lowest boot midpoint produce a stable foot pivot")
+	var mipmapped_source: Image = synthetic.duplicate() as Image
+	_check(mipmapped_source.generate_mipmaps() == OK and mipmapped_source.has_mipmaps(), "Mipmapped concept fixture retains a real source mip chain")
+	var mipmapped_bytes: PackedByteArray = mipmapped_source.get_data().duplicate()
+	var mipmapped_data: Dictionary = RIG_SCRIPT.build_edge_mask(mipmapped_source)
+	_check(not mipmapped_data.is_empty() and mipmapped_data.get("texture") is Texture2D, "Mipmapped concept creates a valid runtime mask texture")
+	if not mipmapped_data.is_empty() and mipmapped_data.get("texture") is Texture2D:
+		var mipmapped_mask: Image = (mipmapped_data["texture"] as Texture2D).get_image()
+		_check(not mipmapped_mask.has_mipmaps() and mipmapped_mask.get_data() == masked.get_data(), "Mipmapped input yields the same masked base pixels without stale alpha mip levels")
+		_check(mipmapped_data["bounds"] == data["bounds"] and mipmapped_data["foot_pixel"] == data["foot_pixel"], "Mipmapped concept preserves silhouette bounds and boot pivot")
+	_check(mipmapped_source.has_mipmaps() and mipmapped_source.get_data() == mipmapped_bytes, "Mask construction leaves shared source pixels and its complete mip chain unchanged")
 	var blank := Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	blank.fill(Color.WHITE)
 	_check(RIG_SCRIPT.build_edge_mask(blank).is_empty(), "All-background input cannot create an invisible live sprite")

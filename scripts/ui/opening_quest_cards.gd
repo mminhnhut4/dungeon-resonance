@@ -35,13 +35,18 @@ static func decorate(rows: Array[Dictionary], profile: SanctuaryProfile, invento
 			row["body"] = "HÀNH TRANG & SỨC MẠNH · %s\n%s" % [row["guide"]["topic"],row["guide"]["body"]]
 		if id in [&"golem_defeated",&"first_upgrade"]:
 			row["body"] += "\n\nLƯỢT CHƠI ĐẦU · Bùa → sức mạnh → chuyến tiếp\n" + OpeningProgressionGuide.first_loop(profile,inventory)["body"]
-	# A completed opening is not proof that the player has finished cultivation.
-	if OpeningProgress.IDS.all(func(id: StringName) -> bool: return id == &"reward_collected" or completed.has(str(id))):
+	# Expose the route before the opening is complete; it stays optional until
+	# the required opening milestones finish and never invents a quest reward.
+	var opening_complete: bool = OpeningProgress.IDS.all(func(id: StringName) -> bool: return id == &"reward_collected" or completed.has(str(id)))
+	if Cultivation.valid(profile.cultivation_progress,profile.material_stash):
 		var progress: Dictionary = profile.cultivation_progress
 		if Cultivation.valid(progress,profile.material_stash) and int(progress["actors"]["player"]["stage"]) < 3:
 			var guide: Dictionary = OpeningProgressionGuide.for_milestone(&"first_upgrade",profile,inventory)
 			result.append({"id":&"cultivation_breakthrough","title":"Đột phá Trúc Cơ lần đầu","body":guide["body"],"target":ExteriorRouteCatalog.HUB,"done":false,"next":false,"card":{"title":"Đột phá Trúc Cơ lần đầu","action":"Đến SÂN LUYỆN → TU LUYỆN. Rèn đòn trúng mộc nhân, điều tức và xem các điều kiện; tại bước cuối chọn một nhánh rồi đột phá.","location":"Căn Cứ Lữ Khách · Sân Luyện","progress":"Cảnh giới %d/3" % progress["actors"]["player"]["stage"],"count":int(progress["actors"]["player"]["stage"]),"prerequisite":"Năng lượng, thông thạo, lĩnh ngộ, tài nguyên và chứng tích đúng bảng tu luyện.","reward":"Học 1 động tác: Hồi Phong Kiếm hoặc Tỏa Linh Ấn (G)","reward_mode":"Nhận một lần cùng đột phá cuối; cần trả chi phí đang ghi trên bảng.","reward_status":"Chưa học nhánh","complete":false,"optional":false,"command":&"","command_label":"","command_enabled":false}})
-		elif Cultivation.valid(progress,profile.material_stash):
+			result[-1]["card"]["optional"] = not opening_complete
+			result[-1]["card"]["action"] = OpeningProgressionGuide.cultivation_next_step(profile)
+			result[-1]["body"] = "LỘ TRÌNH TRÚC CƠ · Làm từng bước, giữ tiến độ qua chuyến đi.\n" + guide["body"]
+		elif opening_complete:
 			result.append({"id":&"prepare_next_run","title":"Chuẩn bị chuyến đi tiếp theo","body":"Các mốc mở đầu và Trúc Cơ đã hoàn tất. Chuyến đi tiếp theo là mục tiêu tự chọn.","target":ExteriorRouteCatalog.HUB,"done":false,"next":false,"card":{"title":"Chuẩn bị chuyến đi tiếp theo","action":"Mở Hành trang để trang bị, gặp Thiết Lão để sửa hoặc cường hóa nếu đủ vật liệu, rồi vào cổng hầm ngục.","location":"Căn Cứ Lữ Khách · Thiết Lão → cổng hầm ngục","progress":"Mục tiêu tự chọn · không có hạn","count":0,"prerequisite":"Vũ khí dùng được; vật liệu/Linh Thạch theo giá hiện tại nếu chọn nâng cấp.","reward":"Đồ rơi và Tàn Hồn tùy chuyến đi, không bảo đảm một gói thưởng nhiệm vụ","reward_mode":"Nhặt và mang về theo luật hành trình hiện có.","reward_status":"Không có thưởng nhiệm vụ mới để nhận","complete":false,"optional":true,"command":&"","command_label":"","command_enabled":false}})
 	# Victory/reward can finish before enough random Souls for Thanh Vy. Give a
 	# real preparation/next-trip goal without forging the permanent-upgrade flag.
@@ -127,7 +132,7 @@ static func _upgrade(profile: SanctuaryProfile,inventory: GearInventory,row: Dic
 		card["reward"] = "Nâng cấp vĩnh viễn đã mua; xem chỉ số hiện tại tại Thanh Vy."
 		return card
 	var economy: EconomySession = _quotes(profile,inventory)
-	var names: Dictionary = {&"max_hp":"Máu tối đa",&"mana_regen":"Hồi năng lượng",&"rune_capacity":"Ô Catalyst"}
+	var names: Dictionary = {&"max_hp":"Máu tối đa",&"max_mana":"Mana tối đa",&"mana_regen":"Hồi năng lượng",&"rune_capacity":"Ô Catalyst"}
 	for id: StringName in WorldProgressionCatalog.UPGRADES:
 		var quote: Dictionary = economy.quote_upgrade(id)
 		if int(quote["level"]) >= int(quote["max_level"]): continue

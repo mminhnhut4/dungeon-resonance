@@ -21,7 +21,7 @@ static func for_milestone(id: StringName, profile: SanctuaryProfile, inventory: 
 		&"explored": return _equipment(inventory)
 		&"golem_defeated": return _materials(profile, inventory)
 		&"reward_collected": return _enhancement(profile, inventory)
-		&"returned_to_hub": return _talisman(inventory)
+		&"returned_to_hub": return _talisman(inventory,profile)
 		&"thanh_vy_met": return _permanent_upgrade(profile, inventory)
 		&"first_upgrade": return _cultivation(profile)
 	return {}
@@ -101,7 +101,7 @@ static func _opening_recipe(installed: Array[StringName],available: Dictionary,c
 		if recipe.recipe_rune_ids.size() == 1 and capacity >= 1 and _recipe_available(recipe,available): return recipe
 	return FIRESTORM
 
-static func _talisman(inventory: GearInventory) -> Dictionary:
+static func _talisman(inventory: GearInventory,profile: SanctuaryProfile = null) -> Dictionary:
 	var installed: Array[StringName] = []
 	var available: Dictionary = inventory.bag.duplicate()
 	for index: int in GearInventory.CATALYST_INDICES:
@@ -132,13 +132,15 @@ static func _talisman(inventory: GearInventory) -> Dictionary:
 	elif exact: text += "\nĐúng bộ. Đóng Hành trang, hướng vào mộc nhân tại SÂN LUYỆN rồi dùng I / chuột phải để thử khi đủ năng lượng chiến đấu; xem thanh năng lượng. Hồi nền %.1f giây, hiệu ứng trang bị có thể đổi thời gian hồi thực tế." % recipe.cooldown_seconds
 	else: text += "\nĐã sở hữu đủ RuneShard cho bộ này. Tháo rune ở vũ khí nếu cần rồi lắp đúng bộ vào Catalyst; thử I / chuột phải trên mộc nhân."
 	text += "\nĐồ đang mang mất khi chết. Sau tầng đã hoàn thành, tới lối ra bên phải, E → Trở về sảnh để giữ đồ đã nhặt; không tự nhặt đồ còn trên đất. E → Tiếp tục xuống tầng nếu muốn đi tiếp, hoặc Ở lại nhặt đồ. Về sớm không tính thắng thủ lĩnh; lượt sau bắt đầu từ Tiền Sảnh. Mốc nhiệm vụ không cấp rune."
+	var teacher: String = "Thanh Vy" if profile != null and profile.opening_progress["completed"].has("thanh_vy_met") else "người giúp đỡ tại căn cứ"
+	text += "\nCó thể học nguyên tố tại %s → Học & chế bùa: học một lần nhận 1 bản bùa Thường, giữ kiến thức sau khi chết; chế thêm dùng vật liệu trong kho. Bùa nhặt từ rương vẫn lắp được dù chưa học." % teacher
 	var view: Dictionary = _view("Ghép đúng bộ → thử bùa", "blocked" if not blockers.is_empty() else "exact_set" if exact else "install_needed", text, blockers)
 	view["recipe_id"] = recipe.id; view["recipe_ids"] = recipe.recipe_rune_ids.duplicate()
 	return view
 
 static func first_loop(profile: SanctuaryProfile,inventory: GearInventory) -> Dictionary:
 	if profile == null or inventory == null: return {"action":"Mở lại bảng sau khi vào vùng chơi.","body":"Chưa đọc được phiên hiện tại.","progress":"Chưa khả dụng","spell_ready":false,"power_ready":false}
-	var spell: Dictionary = _talisman(inventory)
+	var spell: Dictionary = _talisman(inventory,profile)
 	var enhancement: Dictionary = _enhancement(profile,inventory)
 	var power: bool = false
 	var weapon: GearItem = inventory.items.get(inventory.equipped_weapon_uid)
@@ -161,7 +163,7 @@ static func first_loop(profile: SanctuaryProfile,inventory: GearInventory) -> Di
 
 static func _permanent_upgrade(profile: SanctuaryProfile, inventory: GearInventory) -> Dictionary:
 	var healer_known: bool = profile.opening_progress["completed"].has("thanh_vy_met")
-	var names: Dictionary = {&"max_hp":"Máu tối đa", &"mana_regen":"Hồi năng lượng", &"rune_capacity":"Ô bùa Catalyst"}
+	var names: Dictionary = {&"max_hp":"Máu tối đa", &"max_mana":"Mana tối đa", &"mana_regen":"Hồi năng lượng", &"rune_capacity":"Ô bùa Catalyst"}
 	var text: String = "Tại căn cứ → %s → chọn nâng cấp vĩnh viễn. Đây là thao tác ghi mốc nâng cấp đầu tiên; cường hóa vũ khí dùng một bảng khác.\nĐang có %d Tàn Hồn." % ["Thanh Vy" if healer_known else "người giúp đỡ", profile.souls]
 	var affordable: bool = false
 	var has_level: bool = false
@@ -185,7 +187,8 @@ static func _cultivation(profile: SanctuaryProfile) -> Dictionary:
 	var stage: int = actor["stage"]
 	var text: String = "%s · Thông số sơ bộ hiện tại. Tại căn cứ → SÂN LUYỆN → TU LUYỆN. Rèn đòn cận chiến trúng mộc nhân/quái để tăng thông thạo; dấu mốc đã ghi đem lại lĩnh ngộ." % config["stage_labels"][stage]
 	text += "\nĐiều tức: %d Tinh Thạch trong kho / phiên %.1f giây chơi, nhận %d năng lượng cơ bản. Tư chất ảnh hưởng lượng thực nhận. Đóng bảng để luyện; pause/bảng mở không tích thời gian." % [config["training_cost"], float(config["training_session_ticks"]) / float(config["ticks_per_second"]), config["training_gain"]]
-	text += "\nTài trợ người hái thuốc là tùy chọn; việc người này chết không chặn tu luyện của lữ khách."
+	text += "\nNăng lượng tu luyện là tu vi tích lũy, khác mana dùng tung chiêu. Tài trợ người hái thuốc là tùy chọn; người này rút lui dưỡng thương không chặn tu luyện của lữ khách."
+	text += "\nBa lĩnh ngộ: bước qua ĐƯỜNG BỘ, nói chuyện với Thanh Vy, hạ Golem. Mỗi mốc chỉ ghi một lần; đánh mộc nhân nhiều lần không thay lĩnh ngộ."
 	if stage >= 3: return _view("Tu luyện → đột phá", "opening_complete", text+"\nĐã hoàn thành vòng tu luyện mở đầu. Nhánh đã chọn dùng G; cảnh giới tiếp theo chưa có trong vòng này.")
 	var blockers: Array[String] = []
 	for field: String in ["energy", "mastery"]:
@@ -207,3 +210,27 @@ static func _cultivation(profile: SanctuaryProfile) -> Dictionary:
 	if blockers.has("training_crystal_required") or blockers.has("bank_dust_required"):
 		text += "\nNguồn Tinh Thạch/Bột Phép: quái/rương có thể rơi; nhặt rồi về sảnh → KHO CĂN CỨ → Gửi toàn bộ vật liệu. Tháo và phân giải món dự phòng để lấy Bột Phép; không phân giải món đang mặc. Mỗi lượt có thể không đủ tài nguyên."
 	return _view("Tu luyện → đột phá", "requirements_ready" if blockers.is_empty() else "blocked", text, blockers)
+
+static func cultivation_next_step(profile: SanctuaryProfile) -> String:
+	if profile == null or not Cultivation.valid(profile.cultivation_progress, profile.material_stash):
+		return "Về SÂN LUYỆN → TU LUYỆN để kiểm tra trạng thái lưu."
+	var progress: Dictionary = profile.cultivation_progress
+	var actor: Dictionary = progress["actors"]["player"]
+	var config: Dictionary = progress["config"]
+	var stage: int = int(actor["stage"])
+	if stage >= 3: return "Đã lên Trúc Cơ. Trang bị đúng loại vũ khí của nhánh đã học, đóng bảng và dùng G để thử skill."
+	var needed_mastery: int = int(config["mastery_thresholds"][stage]) - int(actor["mastery"])
+	if needed_mastery > 0: return "Đến mộc nhân ở SÂN LUYỆN; đánh cận chiến trúng thêm %d đòn để đủ thông thạo cho %s." % [needed_mastery,config["stage_labels"][stage+1]]
+	if int(actor["energy"]) < int(config["energy_thresholds"][stage]):
+		if int(profile.material_stash[&"crystal"]) < int(config["training_cost"]):
+			return "Nhặt Tinh Thạch từ quái/rương, về KHO CĂN CỨ → Gửi vật liệu. Điều tức dùng Tinh Thạch trong kho, không dùng Linh Thạch."
+		return "Đến SÂN LUYỆN → TU LUYỆN → bắt đầu điều tức cho bản thân, rồi đóng bảng và đứng tại sân. Tu vi còn thiếu %d." % [int(config["energy_thresholds"][stage])-int(actor["energy"])]
+	if actor["insight_ids"].size() < int(config["insight_thresholds"][stage]):
+		if not actor["insight_ids"].has("explored"): return "Đến biển ĐƯỜNG BỘ ở sân căn cứ, E qua cửa để nhận lĩnh ngộ khám phá."
+		if not actor["insight_ids"].has("thanh_vy_met"): return "Đến Thanh Vy ở căn cứ, E nói chuyện để nhận lĩnh ngộ từ cuộc gặp."
+		return "Xuống hầm ngục và hạ Golem để nhận lĩnh ngộ cuối; nhặt phần rơi rồi quay về sân luyện."
+	var dust: int = int(config["final_dust_cost"] if stage == 2 else config["interim_dust_cost"])
+	if int(profile.material_stash[&"dust"]) < dust: return "Cất thêm %d Bột Phép vào KHO CĂN CỨ. Kiếm từ quái/rương hoặc phân giải món dự phòng đã tháo." % [dust-int(profile.material_stash[&"dust"])]
+	if stage == 2 and int(profile.boss_proofs[&"golem"]) < int(config["final_golem_proof"]): return "Hạ Golem trong hầm ngục để có chứng tích cho đột phá Trúc Cơ."
+	if stage == 2 and profile.souls < int(config["final_soul_cost"]): return "Nhặt thêm %d Tàn Hồn từ phần rơi của quái/thủ lĩnh trước khi đột phá Trúc Cơ." % [int(config["final_soul_cost"])-profile.souls]
+	return "Đủ điều kiện lên %s: về SÂN LUYỆN → TU LUYỆN → Đột phá%s." % [config["stage_labels"][stage+1]," và chọn Hồi Phong Kiếm hoặc Tỏa Linh Ấn" if stage == 2 else ""]

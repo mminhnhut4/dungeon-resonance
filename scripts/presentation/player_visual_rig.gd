@@ -586,6 +586,9 @@ static func build_edge_mask(source: Image, remove_edge_white: bool = true) -> Di
 	if source == null or source.is_empty() or source.get_width() * source.get_height() > 4194304:
 		return {}
 	var image: Image = source.duplicate() as Image
+	# The mask edits base pixels only; retain imported mipmaps on the shared source.
+	if image.has_mipmaps():
+		image.clear_mipmaps()
 	image.convert(Image.FORMAT_RGBA8)
 	var width: int = image.get_width()
 	var height: int = image.get_height()

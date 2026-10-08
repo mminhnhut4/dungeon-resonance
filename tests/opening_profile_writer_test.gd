@@ -278,13 +278,14 @@ func _npc_fixture(profile: SanctuaryProfile) -> Dictionary:
 	return {"state": state, "adapter": adapter, "fence": fence, "guard": Callable(adapter, "matches").bind(fence)}
 
 func _fixture_death(state: NpcWorldState, persist: bool) -> void:
-	# Fixture-only terminal event: no gameplay, population, canon or real save.
-	state.records[NPC]["hp"] = 0.0
-	state.records[NPC]["mode"] = "dead"
+	# Retained helper name: fixture now invalidates eligibility by withdrawal.
+	state.records[NPC]["hp"] = 1.0
+	state.records[NPC]["mode"] = "recovering"
+	state.records[NPC]["remaining"] = 0
+	state.records[NPC]["interrupted"] = {}
 	state.records[NPC]["episode"] = 1
-	state.records[NPC]["death"] = {"event_id": NPC + ":1", "killer_id": "player", "tick": state.tick, "room": state.records[NPC]["room"], "context": "explicit_execution"}
 	if persist:
-		_check(state.save(), "Fixture life owner persists its valid death authority")
+		_check(state.save(), "Fixture life owner persists valid nonlethal withdrawal authority")
 
 func _npc_cultivation_gate() -> void:
 	var profile: SanctuaryProfile = _fixture("npc_cultivation_guard")
@@ -304,7 +305,7 @@ func _npc_cultivation_gate() -> void:
 	_check(profile.try_add_souls(1) and profile.cultivation_progress == earned, "Common saves with unchanged NPC progress require no fresh cultivation fence")
 	_fixture_death(life["state"], false)
 	var disable: Dictionary = Model.propose(profile.cultivation_progress, profile.material_stash, profile.souls, profile.boss_proofs, "enroll", {"enabled": false}, "npc_disable_v1")
-	_check(profile.commit_cultivation(disable) and not profile.cultivation_progress["actors"][NPC]["enrolled"] and profile.cultivation_progress["actors"][NPC]["sessions_left"] == 0 and profile.material_stash[&"crystal"] == 19, "Disabling sponsorship after live death stops training without granting progress")
+	_check(profile.commit_cultivation(disable) and not profile.cultivation_progress["actors"][NPC]["enrolled"] and profile.cultivation_progress["actors"][NPC]["sessions_left"] == 0 and profile.material_stash[&"crystal"] == 19, "Disabling sponsorship after withdrawal stops training without granting progress")
 
 func _npc_guards() -> void:
 	var profile: SanctuaryProfile = _fixture("npc_live_guard")
@@ -315,9 +316,9 @@ func _npc_guards() -> void:
 	var npc_before: PackedByteArray = _raw(life["state"].save_path)
 	profile._writer.before_commit = func() -> void: _fixture_death(life["state"], false)
 	var late_death: Dictionary = _social(profile, life["fence"], life["guard"])
-	_check(not late_death.get("ok", true) and late_death.get("status") == "rejected" and late_death.get("error") == "live_or_profile_changed" and _raw(profile.save_path) == before and _raw(life["state"].save_path) == npc_before, "Late unsaved live death aborts cost and reward before profile publication")
+	_check(not late_death.get("ok", true) and late_death.get("status") == "rejected" and late_death.get("error") == "live_or_profile_changed" and _raw(profile.save_path) == before and _raw(life["state"].save_path) == npc_before, "Late unsaved withdrawal aborts cost and reward before profile publication")
 	var cold: SanctuaryProfile = _reader(profile.save_path)
-	_check(cold.material_stash[&"linen_fiber"] == 8 and cold.extension_state("social").is_empty(), "Cold profile cannot grant an event definitively aborted by live death")
+	_check(cold.material_stash[&"linen_fiber"] == 8 and cold.extension_state("social").is_empty(), "Cold profile cannot grant an event definitively aborted by withdrawal")
 	for point: String in ["after_decision", "after_old_rename"]:
 		var pending: SanctuaryProfile = _fixture("npc_pending_death_" + point)
 		var pending_life: Dictionary = _npc_fixture(pending)
@@ -325,8 +326,8 @@ func _npc_guards() -> void:
 		_check(not _social(pending, pending_life["fence"], pending_life["guard"]).get("ok", true), "NPC pending fixture retains a proven interrupted decision")
 		_fixture_death(pending_life["state"], true)
 		var aborted: SanctuaryProfile = _reader(pending.save_path)
-		_check(aborted.last_commit.get("status") == "recovered_aborted" and aborted.material_stash[&"linen_fiber"] == 8 and aborted.extension_state("social").is_empty(), point + ": persisted death blocks pending recovery and preserves old resources")
-		_check(pending_life["state"].records[NPC]["mode"] == "dead" and not FileAccess.file_exists(pending.save_path + ".decision"), "Profile recovery never clears the NPC tombstone or leaves abort intent")
+		_check(aborted.last_commit.get("status") == "recovered_aborted" and aborted.material_stash[&"linen_fiber"] == 8 and aborted.extension_state("social").is_empty(), point + ": persisted withdrawal blocks pending recovery and preserves old resources")
+		_check(pending_life["state"].records[NPC]["mode"] == "recovering" and not FileAccess.file_exists(pending.save_path + ".decision"), "Profile recovery never heals the withdrawn NPC or leaves abort intent")
 	for fault: String in ["future", "corrupt"]:
 		var blocked: SanctuaryProfile = _fixture("npc_pending_" + fault)
 		var blocked_life: Dictionary = _npc_fixture(blocked)
@@ -346,8 +347,8 @@ func _npc_guards() -> void:
 	_check(not _social(committed, committed_life["fence"], committed_life["guard"]).get("ok", true), "Committed NPC fixture interrupts before RAM publication")
 	_fixture_death(committed_life["state"], true)
 	var history: SanctuaryProfile = _reader(committed.save_path)
-	_check(history.material_stash[&"linen_fiber"] == 6 and history.extension_revision("social") == 1 and committed_life["adapter"].capture(NPC).is_empty(), "Death after commit retains earned history while denying any new advancement")
-	_social_once(history, "Committed history after death")
+	_check(history.material_stash[&"linen_fiber"] == 6 and history.extension_revision("social") == 1 and committed_life["adapter"].capture(NPC).is_empty(), "Withdrawal after commit retains earned history while denying any new advancement")
+	_social_once(history, "Committed history after withdrawal")
 	if OS.get_name() == "Windows":
 		var aliases: SanctuaryProfile = _fixture("npc_case_alias")
 		var alias_life: Dictionary = _npc_fixture(aliases)

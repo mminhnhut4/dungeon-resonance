@@ -231,20 +231,19 @@ func _product_replay_and_death() -> void:
 	journal = (hub.gear.modal as InventoryScreen).journal
 	_check(new_inventory.items[new_inventory.equipped_weapon_uid].enhancement_level == 0 and "+0 → +1" in _journal_row(journal,&"reward_collected")["guide"]["body"], "Death guidance reads new UID; old +9 is not resurrected")
 	_check(OpeningProgress.IDS.all(func(id: StringName) -> bool: return _journal_row(journal,id)["done"]), "Death does not erase canonical opening milestones")
-	var resident: Dictionary = hub.npc_population.state.records["pilot_gatherer"]
-	resident["mode"] = "downed"; resident["hp"] = 0.0; resident["episode"] = 1
-	_check(hub.npc_population.state.decide("pilot_gatherer",hub.npc_population.state.decision_token("pilot_gatherer"),true,true), "Explicit fixture death is durably committed by NPC life owner")
+	hub.npc_population.state.receive_hit("pilot_gatherer",1.0,0.0)
+	_check(hub.npc_population.state.records["pilot_gatherer"]["mode"] == "recovering" and hub.npc_population.state.last_save_ok, "Actual NPC life owner durably withdraws the injured fixture resident")
 	journal.refresh()
-	_check("tùy chọn" in _journal_row(journal,&"first_upgrade")["guide"]["body"] and _journal_row(journal,&"first_upgrade")["guide"]["status"] == "blocked", "Dead optional NPC creates no player cultivation gate")
-	_sample("dead_npc_after_player_defeat",flow.profile,new_inventory)
-	_check(hub.open_npc(NpcCatalog.HEALER), "Safe Hub healer services remain reachable after pilot death")
+	_check("tùy chọn" in _journal_row(journal,&"first_upgrade")["guide"]["body"] and _journal_row(journal,&"first_upgrade")["guide"]["status"] == "blocked", "Withdrawn optional NPC creates no player cultivation gate")
+	_sample("withdrawn_npc_after_player_defeat",flow.profile,new_inventory)
+	_check(hub.open_npc(NpcCatalog.HEALER), "Safe Hub healer services remain reachable while resident recovers")
 	hub.dialogue.close()
-	_check(hub.open_npc(NpcCatalog.SMITH), "Safe Hub smith services remain reachable after pilot death")
+	_check(hub.open_npc(NpcCatalog.SMITH), "Safe Hub smith services remain reachable while resident recovers")
 	hub.dialogue.close()
 	var path: String = flow.profile.save_path
 	await _close()
 	hub = await _open(path)
-	_check(hub.npc_population.state.records["pilot_gatherer"]["mode"] == "dead", "Cold reload preserves NPC terminal life state")
+	_check(hub.npc_population.state.records["pilot_gatherer"]["mode"] == "recovering", "Cold reload preserves NPC withdrawal until an actual expedition return")
 	journal = (hub.gear.modal as InventoryScreen).journal
 	_check(journal.rows.size() == 7 and "+0 → +1" in _journal_row(journal,&"reward_collected")["guide"]["body"] and _journal_row(journal,&"explored")["done"], "Cold reload replays canonical old quests and derived follow-up against fresh current gear")
 	await _close()

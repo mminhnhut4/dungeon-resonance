@@ -56,10 +56,18 @@ func _test_progression() -> void:
 	level.add_child(progression)
 	var before_hp: float = player.health.maximum_health
 	var before_regen: float = player.energy.regeneration
+	var before_mana: float = player.energy.maximum
+	var before_energy: float = player.energy.current
 	var before_health: float = player.health.current_health
 	progression.initialize(level.gear, bank)
+	_check(is_equal_approx(player.energy.maximum, before_mana + 10) and player.energy.current == before_energy, "Permanent mana increases capacity without refilling current energy")
 	_check(is_equal_approx(player.health.maximum_health, before_hp + 10) and is_equal_approx(player.energy.regeneration, before_regen + 2) and level.gear.inventory.catalyst_capacity == 4 and player.health.current_health == before_health, "Opt-in progression adds capacity/regen without healing or touching movement")
 	progression.refresh()
+	level.gear.equipment_stats.reset_base_stats()
+	_check(is_equal_approx(player.energy.maximum, before_mana + 10), "Repeated refresh and base reset preserve one mana bonus")
+	var restored := SanctuaryProfile.new()
+	restored.save_path = bank.save_path
+	_check(restored.load_profile() and restored.permanent_upgrades[&"max_mana"] == 1, "Purchased mana survives a real cold profile reload")
 	_check(is_equal_approx(player.health.maximum_health, before_hp + 10) and level.gear.inventory.catalyst_capacity == 4, "Repeated permanent rebuild cannot stack bonuses")
 	progression.queue_free()
 
@@ -328,5 +336,4 @@ func _test_flow() -> void:
 	flow.active_scene.close_station()
 	flow.queue_free()
 	await _step(5)
-
 

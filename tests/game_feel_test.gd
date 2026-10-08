@@ -68,6 +68,11 @@ func test_system() -> void:
 	var mage: Texture2D = load("res://assets/sprites/player/player_concept_full.png")
 	var swordsman: Texture2D = load("res://assets/sprites/player/player_swordsman.png")
 	var alpha: Image = swordsman.get_image()
+	var source_pixels: PackedByteArray = alpha.get_data().duplicate()
+	var source_had_mipmaps: bool = alpha.has_mipmaps()
+	var alpha_base: Image = alpha.duplicate() as Image
+	alpha_base.clear_mipmaps()
+	alpha_base.convert(Image.FORMAT_RGBA8)
 	_check(alpha.detect_alpha() != Image.ALPHA_NONE and alpha.get_pixel(0, 0).a == 0, "Swordsman PNG contains genuine transparent background")
 	var file_hash: String = FileAccess.get_sha256("res://assets/sprites/player/player_swordsman.png")
 	for id: String in ["ancient_sword", "shadow_dagger", "demon_greatsword", "gale_dual_daggers", "storm_arcane_staff"]:
@@ -80,13 +85,15 @@ func test_system() -> void:
 	rig.sync_from_player()
 	var cached: Texture2D = rig.concept_sprite.texture
 	var rendered: Image = cached.get_image()
-	_check(rendered.get_data() == alpha.get_data(), "Transparent sprite retains every original alpha and ivory fabric pixel")
+	_check(rendered.get_size() == alpha_base.get_size() and rendered.get_format() == alpha_base.get_format() and not rendered.has_mipmaps() and rendered.get_data() == alpha_base.get_data(), "Transparent sprite retains every original base-level alpha and ivory fabric pixel")
 	for cycle: int in 40:
 		player.equipped_weapon.equip(load("res://data/weapons/storm_arcane_staff.tres"))
 		rig.sync_from_player()
 		player.equipped_weapon.equip(load("res://data/weapons/ancient_sword.tres"))
 		rig.sync_from_player()
 	_check(rig.concept_sprite.texture == cached, "Repeated gear swaps reuse the same source-owned texture cache")
+	var source_after: Image = swordsman.get_image()
+	_check(alpha.has_mipmaps() == source_had_mipmaps and alpha.get_data() == source_pixels and source_after.has_mipmaps() == source_had_mipmaps and source_after.get_data() == source_pixels, "Gear swaps preserve the source image and complete imported mip chain byte-for-byte")
 	_check(player.hurtbox.transform == hurt_transform and collision.shape == shape, "Skin swaps preserve physical collider and Hurtbox")
 	_check(FileAccess.get_sha256("res://assets/sprites/player/player_swordsman.png") == file_hash, "Skin swaps never rewrite imported PNG bytes")
 	var run: DungeonRun = preload("res://scenes/dungeon_run.tscn").instantiate()

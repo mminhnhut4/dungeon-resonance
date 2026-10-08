@@ -10,6 +10,7 @@ var panel: PanelContainer
 var slots: Array[Button] = []
 var rune_buttons: Array[Button] = []
 var preview: Label
+var acquisition_hint: Label
 var previous_scale: float = 1.0
 var previous_controls: bool = true
 var secondary_panel: SurvivalPanel
@@ -64,6 +65,11 @@ func _ready() -> void:
 	column.add_child(remove)
 	preview = Label.new()
 	column.add_child(preview)
+	acquisition_hint = Label.new()
+	acquisition_hint.name = "RuneAcquisitionHint"
+	acquisition_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	acquisition_hint.add_theme_font_size_override("font_size", 15)
+	column.add_child(acquisition_hint)
 	var close_button := Button.new()
 	close_button.text = "Tiếp tục · Tab"
 	close_button.pressed.connect(close)
@@ -175,6 +181,8 @@ func refresh() -> void:
 		var rune: RuneData = GearInventory.RUNES[index]
 		rune_buttons[index].text = "%s × %d" % [rune.display_name, inventory.bag[rune.id]]
 		rune_buttons[index].disabled = inventory.bag[rune.id] <= 0
+		rune_buttons[index].tooltip_text = "Chọn một ô phía trên, rồi chọn bùa để lắp." if inventory.bag[rune.id] > 0 else "Không còn bản bùa này trong túi. Nhặt từ rương hầm ngục hoặc gặp Thanh Vy tại căn cứ → Học & chế bùa."
 	var recipe: ResonanceDefinition = player.resonance_controller.get_recipe()
 	preview.text = "Cộng hưởng: %s\nĐổi bùa giữ hồi chiêu và phép đã phóng." % [recipe.display_name if recipe != null else "Tổ hợp chưa hợp lệ — không thể niệm"]
+	acquisition_hint.text = ("Bạn chưa có bùa. " if inventory.total_shards() == 0 else "") + "Kiếm bùa: mở rương hầm ngục bằng E rồi nhặt phần rơi.\nHọc bùa: về căn cứ, gặp Thanh Vy → Học & chế bùa. Học một lần nhận 1 bản; chế thêm dùng vật liệu trong kho.\nLắp bùa vào các ô Catalyst để đổi phép; ghép hai nguyên tố để tạo cộng hưởng."
 	AntiqueSkin.update_rune_art(slots, rune_buttons, inventory)

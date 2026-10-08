@@ -6,7 +6,7 @@ var stable_id: String
 var origin_offset_x: float = 0.0
 
 func resolve(event: DamageEvent) -> DamageResult:
-	if world_state == null or world_state.read_only or world_state.records[stable_id]["mode"] in ["downed", "dead", "talk"]:
+	if world_state == null or world_state.read_only or not world_state.records.has(stable_id) or world_state.records[stable_id]["mode"] in ["downed", "dead", "recovering", "talk"]:
 		var blocked := DamageResult.new()
 		blocked.blocked = true
 		blocked.block_reason = &"npc_protected"

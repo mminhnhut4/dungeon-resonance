@@ -76,32 +76,32 @@ func _persistence_and_decisions() -> void:
 	state.end_talk(id)
 	state.receive_hit(id, 1, 0)
 	var token: String = state.decision_token(id)
-	_check(not token.is_empty() and state.records[id]["mode"] == "downed", "Lethal combat stops at a living DOWNED record")
+	_check(token.is_empty() and state.records[id]["mode"] == "recovering", "Lethal combat withdraws a living resident without an execution choice")
 	var downed: Dictionary = state.records[id].duplicate(true)
 	for _index: int in 50: state.advance_ticks(8)
-	_check(state.records[id] == downed, "No offscreen timer executes a downed NPC")
+	_check(state.records[id] == downed, "No offscreen timer heals a withdrawn NPC")
 	_check(not state.decide(id, "stale", false) and not state.decide(id, token, true), "Stale choice and unconfirmed kill cannot commit")
 	var fault := FaultIo.new()
 	state.io = fault
 	fault.reject = true
-	_check(not state.decide(id, token, true, true) and state.records[id]["mode"] == "downed", "Failed disk commit rolls back execution and death record")
+	_check(not state.recover_after_expedition() and state.records[id]["mode"] == "recovering", "Failed disk commit rolls back expedition recovery")
 	fault.reject = false
-	_check(state.decide(id, token, false), "Explicit spare persists recovery")
-	_check(state.records[id]["debt"] == 1 and state.records[id]["fear"] == 6 and state.records[id]["trust"] == -1, "Spare adds goodwill without erasing fear or guaranteeing friendship")
-	_check(not state.decide(id, token, false) and state.records[id]["debt"] == 1, "Repeated decision cannot duplicate relationship events")
+	_check(state.recover_after_expedition(), "Actual expedition-return notification persists recovery")
+	_check(state.records[id]["debt"] == 0 and state.records[id]["fear"] == 6 and state.records[id]["trust"] == -1, "Recovery grants no debt and preserves fear and trust")
+	_check(not state.decide(id, token, false) and state.records[id]["debt"] == 0, "Repeated obsolete choice cannot manufacture a relationship event")
 	for _index: int in 10: state.advance_ticks(8)
-	_check(state.records[id]["mode"] == "walk" and state.records[id]["hp"] == 20, "Recovery uses in-game time and returns at half health")
+	_check(state.records[id]["hp"] == 20 and state.records[id]["mode"] not in ["downed","recovering"], "A recovered resident resumes its authored schedule at half health")
 	state.receive_hit(id, 1, 0)
 	token = state.decision_token(id)
-	_check(state.decide(id, token, true, true), "Fresh explicit confirmed execution creates permanent death")
+	_check(not state.decide(id, token, true, true) and state.records[id]["mode"] == "recovering", "Even a confirmed legacy callback cannot create permanent death")
 	var death: Dictionary = state.records[id].duplicate(true)
-	_check(not state.decide(id, token, true, true) and state.records[id] == death, "Death event is idempotent")
+	_check(not state.decide(id, token, true, true) and state.records[id] == death, "Rejected execution cannot change the withdrawn record")
 	var loaded := NpcWorldState.new()
 	loaded.save_path = state.save_path
 	var load_ok: bool = loaded.load_state()
-	_check(load_ok and loaded.snapshot() == state.snapshot(), "Round-trip preserves stable IDs, death and relationship state")
+	_check(load_ok and loaded.snapshot() == state.snapshot(), "Round-trip preserves stable IDs, withdrawal and relationship state")
 	for _index: int in 20: loaded.advance_ticks(8)
-	_check(loaded.records[id] == death, "Permanent death cannot heal, move or respawn offscreen")
+	_check(loaded.records[id] == death, "Withdrawn residents cannot heal, move or reappear merely offscreen")
 	var corrupt := FileAccess.open(state.save_path, FileAccess.WRITE)
 	corrupt.store_string("{broken")
 	corrupt.close()
@@ -112,7 +112,7 @@ func _persistence_and_decisions() -> void:
 	var future := NpcWorldState.new()
 	future.save_path = path_prefix + "_future.json"
 	var future_data: Dictionary = future.snapshot()
-	future_data["npc_schema"] = 3
+	future_data["npc_schema"] = NpcWorldState.SCHEMA + 1
 	var future_file := FileAccess.open(future.save_path, FileAccess.WRITE)
 	future_file.store_string(JSON.stringify(future_data))
 	future_file.close()
@@ -124,10 +124,10 @@ func _persistence_and_decisions() -> void:
 	var interrupted_io := InterruptedIo.new()
 	interrupted_io.main_path = interrupted_commit.save_path
 	interrupted_commit.io = interrupted_io
-	_check(not interrupted_commit.decide(id, interrupted_commit.decision_token(id), true, true) and interrupted_commit.records[id]["mode"] == "downed", "Failed final rename and failed rollback still report uncommitted living decision")
+	_check(not interrupted_commit.recover_after_expedition() and interrupted_commit.records[id]["mode"] == "recovering", "Failed final rename and failed rollback report uncommitted recovery")
 	var uncertain := NpcWorldState.new()
 	uncertain.save_path = interrupted_commit.save_path
-	_check(not uncertain.load_state() and uncertain.read_only and not uncertain.save(), "Cold load quarantines uncommitted Kill tmp instead of silently applying it")
+	_check(not uncertain.load_state() and uncertain.read_only and not uncertain.save(), "Cold load quarantines ambiguous recovery temp instead of silently healing")
 	var missing_main := NpcWorldState.new()
 	missing_main.save_path = path_prefix + "_missing_main.json"
 	DirAccess.copy_absolute(state.save_path + ".bak", missing_main.save_path + ".bak")
@@ -142,7 +142,7 @@ func _integration() -> void:
 	hub = flow.active_scene as ExteriorHub
 	var population: NpcPopulation = hub.npc_population
 	population.cue_requested.connect(func(_id: String, _cue: StringName, _at: Vector2, _owner: Node) -> void: cues += 1)
-	_check(population != null and population.state.records.size() == 6 and population.actors.is_empty(), "H00 owns one bounded registry but zero pilot scene actors")
+	_check(population != null and population.state.records.size() == 8 and population.actors.is_empty(), "H00 owns one bounded eight-NPC registry but zero road actors")
 	var player_id: int = hub.player.get_instance_id()
 	var owned: Array = hub.gear.inventory.items.keys()
 	hub.player.health.current_health = 37
@@ -150,7 +150,7 @@ func _integration() -> void:
 	hub.player.energy.regeneration_delay = 10000
 	_check(hub.enter_exterior(&"o01_p01", &"main", &"west", false), "Pilot uses ordinary authored exterior travel")
 	await _step(8)
-	_check(population.actors.size() == 1 and _actor_count() == 1, "P01 has exactly its one assigned traveler")
+	_check(population.actors.size() == 2 and population.actors.has("thanh_van_disciple_01") and _actor_count() == 2, "P01 has one assigned traveler and one authored cultivator")
 	var id: String = NpcPilotCatalog.IDS[0]
 	var pilot: NpcPilotActor = population.actors[id]
 	_check(is_equal_approx(pilot.position.y, hub.exterior.floor_y(pilot.position.x)), "Actor feet follow actual authored dry heightfield")
@@ -193,9 +193,9 @@ func _integration() -> void:
 	await _step(Engine.physics_ticks_per_second)
 	_check(pilot.health.current_health < hp_before and population.state.records[id]["mode"] == "flee", "Existing committed melee hits the NPC Hurtbox and triggers local fleeing")
 	var lethal: DamageResult = pilot.hurtbox.take_damage(_event(pilot, 9999, DamageEvent.SourceKind.DIRECT))
-	_check(not lethal.blocked and not lethal.killed and pilot.health.current_health == 1 and population.state.records[id]["mode"] == "downed", "Shared resolver returns living defeat without kill rewards")
+	_check(not lethal.blocked and not lethal.killed and pilot.health.current_health == 1 and population.state.records[id]["mode"] == "recovering", "Shared resolver returns living withdrawal without kill rewards")
 	pilot.sync_record(false)
-	_check(absf(pilot.caption.get_global_transform().get_rotation()) < 0.001 and pilot.caption.global_position.y < pilot.global_position.y-80,"Downed pose keeps the interaction caption upright above the NPC")
+	_check(absf(pilot.caption.get_global_transform().get_rotation()) < 0.001 and pilot.caption.global_position.y < pilot.global_position.y-80,"Last withdrawal sample keeps the caption upright above the NPC")
 	for kind: int in [DamageEvent.SourceKind.DIRECT, DamageEvent.SourceKind.RESONANCE, DamageEvent.SourceKind.DOT, DamageEvent.SourceKind.ENVIRONMENT]:
 		var blocked: DamageResult = pilot.hurtbox.take_internal_damage(_event(pilot, 9999, kind))
 		_check(blocked.blocked and not blocked.killed and pilot.health.current_health == 1, "Damage kind %d cannot finish downed NPC even through internal delivery" % kind)
@@ -207,44 +207,47 @@ func _integration() -> void:
 	var token: String = population.state.decision_token(id)
 	_check(hub.enter_exterior(&"o01_p02", &"main", &"west", false), "Player can leave a downed NPC without auto-execution")
 	await _step(3)
-	_check(population.actors.size() == 1 and population.actors.has("pilot_bridge_keeper") and not population.actors.has(id) and _actor_count() == 1, "Travel detaches traveler and exposes only the bridge's stable resident")
+	_check(population.actors.size() == 2 and population.actors.has("pilot_bridge_keeper") and population.actors.has("xich_lo_guard_01") and not population.actors.has(id) and _actor_count() == 2, "Travel detaches traveler and exposes the two authored bridge residents")
 	_check(hub.enter_exterior(&"o01_p02", &"guard_corridor", &"west", false), "Existing locked corridor is unchanged")
 	await _step(3)
 	_check(population.actors.is_empty() and not hub.exterior.gate_open, "NPC population never spawns past a closed route gate")
 	_check(hub.enter_exterior(&"o01_p01", &"main", &"west", false), "Return to pilot region succeeds")
 	await _step(3)
+	_check(_actor_count() == 1 and not population.actors.has(id) and population.state.decision_token(id) == token and population.state.records[id]["hp"] == 1, "A-B-A keeps withdrawal and only the unharmed cultivator is present")
+	var held: Dictionary = population.state.records[id].duplicate(true)
+	population.talking_id = id
+	population.kill_confirmation = true
+	population._choice_selected(&"pilot_confirm_kill")
+	_check(population.state.records[id] == held, "Forced old confirmation cannot execute a withdrawn resident")
+	population.talking_id = ""
+	_check(not population.interact(id) and hub.player.controls_enabled, "Withdrawn resident cannot retain a ghost interaction or input lock")
+	_check(population.state.recover_after_expedition(), "Controlled owner notification makes an injured resident eligible after a trip")
+	population._region_changed(&"")
+	await _step(3)
 	pilot = population.actors[id]
-	_check(_actor_count() == 1 and population.state.decision_token(id) == token and pilot.health.current_health == 1, "A-B-A restores one downed identity with unchanged decision token")
+	_check(_actor_count() == 2 and pilot.health.current_health == 20 and population.state.records[id]["debt"] == debt_before, "Recovery restores one same-life actor without awarding gratitude")
 	PlayerTravel.relocate(hub.player, pilot.global_position)
 	await _step(4)
-	_check(population.interact(id), "Downed NPC exposes explicit choice on approach")
-	hub.dialogue.advance()
-	_check(hub.dialogue.choices[0]["id"] == &"pilot_spare" and hub.dialogue.pages[0].contains("vĩnh viễn"), "Safe spare is first and permanent consequence is visible")
-	hub.dialogue.select_choice(&"pilot_ask_kill")
-	_check(hub.dialogue.is_open and population.kill_confirmation and population.state.records[id]["mode"] == "downed", "First Kill opens a separate confirmation, preserving living state")
-	_check(not hub.player.controls_enabled and not hub.enter_exterior(&"o01_p02"), "Kill confirmation retains modal combat and travel lock")
-	hub.dialogue.advance()
-	hub.dialogue.select_choice(&"pilot_cancel_kill")
-	hub.dialogue.advance()
-	hub.dialogue.select_choice(&"pilot_spare")
+	_check(population.interact(id), "Recovered resident can again expose a living conversation")
+	_check(hub.dialogue.choices.all(func(choice: Dictionary) -> bool: return choice["id"] not in [&"pilot_ask_kill",&"pilot_confirm_kill",&"pilot_spare"]), "Living product dialogue offers no execution or mercy reward")
+	population._choice_selected(&"pilot_confirm_kill")
+	_check(hub.dialogue.is_open and population.state.records[id]["mode"] == "talk", "A forged legacy execution callback cannot replace a current living dialogue")
+	_check(not hub.player.controls_enabled and not hub.enter_exterior(&"o01_p02"), "Current dialogue retains its own combat and travel lock")
+	hub.dialogue.close()
 	await _step(3)
-	_check(population.state.records[id]["mode"] == "recovering" and population.state.records[id]["debt"] == debt_before + 1, "Actual UI spare commits once and starts recovery")
-	for _index: int in 10: population.state.advance_ticks(8)
+	_check(hub.player.controls_enabled and population.state.records[id]["debt"] == debt_before, "Closing dialogue restores controls without manufacturing a relationship reward")
 	pilot.sync_record(false)
 	pilot.hurtbox.take_damage(_event(pilot, 9999, DamageEvent.SourceKind.DIRECT))
-	_check(population.interact(id), "Another defeat gets its own decision episode")
-	hub.dialogue.advance()
-	hub.dialogue.select_choice(&"pilot_ask_kill")
-	hub.dialogue.advance()
-	hub.dialogue.select_choice(&"pilot_confirm_kill")
+	_check(not population.interact(id), "A new injury immediately removes dialogue eligibility")
+	population._process(0.0)
 	await _step(3)
-	_check(population.state.records[id]["mode"] == "dead" and population.actors.is_empty() and _actor_count() == 0, "Actual confirmed execution commits one tombstone and removes presentation")
+	_check(population.state.records[id]["mode"] == "recovering" and not population.actors.has(id) and _actor_count() == 1, "Withdrawal removes only the injured representation and preserves the other local NPC")
 	_check(hub.player.get_instance_id() == player_id and hub.gear.inventory.items.keys() == owned and hub.player.health.current_health == 37 and hub.player.energy.current == 41, "NPC travel and choices preserve Player/session/UID/HP/energy without rewards")
 	population.set_process(true)
 	for room_id: StringName in ExteriorRouteCatalog.ROOMS:
 		hub.enter_exterior(room_id, &"main", &"west", false)
 		await _step(3)
-		_check(_actor_count() <= 1, "No duplicate local representation after entering %s" % room_id)
+		_check(_actor_count() <= 2 and _actor_count() == population.actors.size(), "No duplicate local representation after entering %s" % room_id)
 		for local_id: String in population.actors:
 			_check(population.state.records[local_id]["room"] == String(room_id), "Current actor belongs to current room %s" % room_id)
 	hub.return_to_hub(false)
@@ -255,7 +258,7 @@ func _integration() -> void:
 	await _step(4)
 	var cold := NpcWorldState.new()
 	cold.save_path = sidecar
-	_check(cold.load_state() and cold.records[id]["mode"] == "dead", "Full scene teardown and cold load do not resurrect executed identity")
+	_check(cold.load_state() and cold.records[id]["mode"] == "recovering", "Full scene teardown and cold load do not heal a withdrawn identity")
 	flow = preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
 	flow.save_path_override = path_prefix + "_profile.json"
 	root.add_child(flow)
@@ -264,7 +267,7 @@ func _integration() -> void:
 	hub = flow.active_scene as ExteriorHub
 	hub.enter_exterior(&"o01_p01", &"main", &"west", false)
 	await _step(3)
-	_check(hub.npc_population.state.records[id]["mode"] == "dead" and _actor_count() == 0, "Actual new GameFlow and revisited room cannot duplicate or resurrect a dead actor")
+	_check(hub.npc_population.state.records[id]["mode"] == "recovering" and not hub.npc_population.actors.has(id) and _actor_count() == 1, "New GameFlow and revisited room do not prematurely restore the withdrawn actor")
 	hub.enter_exterior(&"o01_p03", &"main", &"west", false)
 	await _step(3)
 	population = hub.npc_population

@@ -230,6 +230,47 @@ func _save_with_context(fence: Dictionary = {}, guard: Callable = Callable()) ->
 	last_save_ok=true
 	return true
 
+func compact_cultivation_receipts() -> bool:
+	# Mandatory before the live session starts. Keep an immutable byte-exact
+	# preimage, then use the same sealed writer/rollback protocol as every reward.
+	last_save_ok=false
+	if read_only or not _ensure_writer() or not CultivationState.valid(cultivation_progress,material_stash):
+		return _compaction_failed("invalid_or_read_only_cultivation")
+	if int(cultivation_progress["schema_version"]) == CultivationState.COMPACT_SCHEMA_VERSION:
+		last_commit={"ok":true,"status":"already_compacted"}; last_save_ok=true
+		return true
+	var compacted: Dictionary = CultivationState.compact_progress(cultivation_progress,material_stash)
+	if compacted.is_empty(): return _compaction_failed("legacy_event_sequence_requires_review")
+	var original: PackedByteArray = FileAccess.get_file_as_bytes(save_path)
+	var digest: String = original.hex_encode().sha256_text()
+	if original.is_empty() or digest != _writer.expected_hash:
+		return _compaction_failed("profile_changed_reload_required")
+	var disk: Variant = _read_json(save_path)
+	if not _validate_payload(disk,true) or CommitWriter.canonical(disk.get("cultivation_progress")) != CommitWriter.canonical(cultivation_progress):
+		return _compaction_failed("compaction_source_invalid")
+	var backup: String = save_path + ".cultivation_v1." + digest + ".bak"
+	if FileAccess.file_exists(backup):
+		if FileAccess.get_file_as_bytes(backup) != original: return _compaction_failed("compaction_backup_conflict")
+	else:
+		var staged_backup: String = backup + ".tmp"
+		if _copy_file(save_path,staged_backup) != OK or FileAccess.get_file_as_bytes(staged_backup) != original:
+			return _compaction_failed("compaction_backup_write_failed")
+		if _rename_file(staged_backup,backup) != OK:
+			return _compaction_failed("compaction_backup_publish_failed")
+		if FileAccess.get_file_as_bytes(backup) != original: return _compaction_failed("compaction_backup_verify_failed")
+	var previous: Dictionary = cultivation_progress
+	cultivation_progress=compacted
+	if not _save_with_context():
+		cultivation_progress=previous
+		return false
+	last_commit["cultivation_backup_path"]=backup
+	changed.emit()
+	return true
+
+func _compaction_failed(reason: String) -> bool:
+	last_commit={"ok":false,"status":"rejected","error":reason}
+	return false
+
 func commit_cultivation(proposal: Dictionary, fence: Dictionary = {}, guard: Callable = Callable(), ability_choice: String = "") -> bool:
 	if read_only or not proposal.get("ok",false): return false
 	var gate: Dictionary = _cultivation_proposal_gate(proposal)
@@ -711,7 +752,7 @@ func _has_future_schema(data: Variant) -> bool:
 	var cultivation: Variant = data.get("cultivation_progress")
 	if cultivation is Dictionary:
 		var schema: Variant = cultivation.get("schema_version")
-		if not (schema is int or schema is float) or not is_finite(float(schema)) or float(schema)>1.0: return true
+		if not (schema is int or schema is float) or not is_finite(float(schema)) or float(schema)>float(CultivationState.COMPACT_SCHEMA_VERSION): return true
 	return ExteriorProgress.future(data.get("exterior_progress",null)) or OpeningProgress.future(data.get("opening_progress", null))
 
 

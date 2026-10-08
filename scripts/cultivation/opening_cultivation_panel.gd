@@ -27,6 +27,9 @@ static func build(hub: Node, session: Node, panel: Container) -> void:
 	if actor.is_empty():
 		_text(hub, panel, "Chưa thể đọc cảnh giới của nhân vật.")
 		return
+	var next_step: Label = _text(hub, panel, "VIỆC NÊN LÀM TIẾP\n" + OpeningProgressionGuide.cultivation_next_step(hub.profile))
+	next_step.name = "CultivationNextStep"
+	_text(hub, panel, "Tu vi tích lũy dùng để đột phá; mana trên thanh chiến đấu dùng tung chiêu. Muốn tăng máu/mana tối đa: gặp Thanh Vy → Tịnh hóa bằng Tàn Hồn.")
 	if int(actor["stage"]) < 3:
 		var notice: String = _breakthrough_hint(actor, config, materials, souls, proofs, true)
 		if not notice.is_empty():
