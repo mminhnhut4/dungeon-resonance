@@ -50,9 +50,9 @@
     },
     {
       "path": "README.md",
-      "git_blob": "266ae3fa6f53f47264274a375da91fd3ff31b322",
-      "bytes": 6892,
-      "sha256": "827dca71a946a17f507856619c94aa05479f08188577149372f7292c3cb9bc2c"
+      "git_blob": "9512a2171ae1ec77a42706730b5f706d38422b9a",
+      "bytes": 6976,
+      "sha256": "cd502369031c6d02358427393aed7c0cced8ee3ed860405453b6e1f0bf2d984e"
     },
     {
       "path": "addons/AsepriteWizard/LICENSE",

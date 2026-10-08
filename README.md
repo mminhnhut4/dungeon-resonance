@@ -11,6 +11,8 @@
 
 [Cốt truyện đề xuất “Hai lời thề giữ đường” và các bước tiếp theo](docs/team/PROJECT_AND_STORY.md#cốt-truyện-mở-rộng-đề-xuất-hai-lời-thề-giữ-đường).
 
+**Các mốc phía dưới là lịch sử; xem trạng thái08/10 ở đầu trang.**
+
 **2026-10-03:** opening/save/QA mặc định OFF, resident P2, polish quái hiện hữu và khung cổ vàng–đỏ chỉ có tên khu vực đã áp dụng vào dự án. Full strict trực tiếp đạt148gate/8.639check,170script/33scene; GPU trực tiếp519check/86ảnh thực. Xem [Project State](docs/PROJECT_STATE.md) để phân biệt phần đang chạy, các mốc lịch sử và phần thiết kế/worker chưa kích hoạt. Bản sửa NPC/cửa hàng5.666check/GPU31capture ngày2026-10-02 được giữ tại [báo cáo lịch sử](docs/TARGETED_REPAIR_20261002.md).
 
 Godot **4.7.2**, GDScript, Compatibility, offline. Prototype có HUD khung rồng với TextureProgressBar, icon bùa/vũ khí, Player concept PNG, Slime/Golem/bia/rương PNG alpha, bục/cột đá AtlasTexture, canvas glow, arc kiếm khí bạc/jade, hạt đuôi phép, âm thanh tổng hợp và Skeleton2D. Player hiện có rig modular dùng cutout PNG/AtlasTexture và animation đọc clock gameplay; atlas bộ khởi đầu đã tích hợp. Xem [nền tảng nhân vật](docs/CHARACTER_FOUNDATION.md). Resident còn dùng hình vector tạm; chưa export Steam.
@@ -31,7 +33,7 @@ Tiến độ và hướng dẫn chi tiết: [Dynamic Combat Polish](docs/DYNAMIC
 ./tests/run_tests.ps1
 ```
 
-Báo cáo polish lịch sử đạt **2.857/2.857 assertion**, giữ đủ 2.409 mốc Full Visual và thêm 448 cho procedural motion, global hit-stop/modal, audio, VFX, vòng đời Boss/HUD và giao dịch save. Movement55/Combat100 ở cả 60/120 physics Hz và Resolver20 giữ nguyên. Validator103 script/19 scene; import/editor/addon/exit đều đạt. Ở mốc lịch sử đó, preview14ảnh kiểm đến Boss bị giải phóng và cổng chiến thắng; bốn benchmark GPU Tiền Sảnh/Boss đạt gần60/120FPS trên RTX5080. Các số này không thay bằng chứng hiện tại148gate/8.639check và519GPUcheck/86ảnh, cũng không chứng nhận cân bằng/gamefeel15–20phút. Xem [verification summary](docs/verification/polish_test_summary.json) và [log cuối](docs/verification/hades_juice_strict_suite.log).
+Báo cáo polish lịch sử đạt **2.857/2.857 assertion**, giữ đủ 2.409 mốc Full Visual và thêm 448 cho procedural motion, global hit-stop/modal, audio, VFX, vòng đời Boss/HUD và giao dịch save. Movement55/Combat100 ở cả 60/120 physics Hz và Resolver20 giữ nguyên. Validator103 script/19 scene; import/editor/addon/exit đều đạt. Ở mốc lịch sử đó, preview14ảnh kiểm đến Boss bị giải phóng và cổng chiến thắng; bốn benchmark GPU Tiền Sảnh/Boss đạt gần60/120FPS trên RTX5080. Các số này thuộc checkpoint lịch sử, không thay nghiệm thu08/10 ở đầu README và không chứng nhận cân bằng/gamefeel15–20phút. Xem [verification summary](docs/verification/polish_test_summary.json) và [log cuối](docs/verification/hades_juice_strict_suite.log).
 
 Các lượt chẩn đoán có native editor shutdown `0xC0000005` chưa xác định nguyên nhân; gate cuối sạch không chứng minh lỗi gián đoạn đã hết, xem [native audit](docs/verification/full_visual_native_audit.md). Runner giữ mọi ERROR/WARNING và không dùng GameplayOnly thay strict. Aseprite Wizard được cài nhưng tắt chờ thủ công; PNG/SpriteFrames không cần executable.
 
