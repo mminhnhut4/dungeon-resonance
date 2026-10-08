@@ -140,7 +140,10 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 				profile.hub_inventory = GearInventoryCodec.encode(run_inventory)
 				profile.hub_inventory["run_coins"] = 0
 				profile.coins += run_inventory.run_coins
-			if run.outcome == &"victory":
+			# Crossing the Golem gate completes the opening segment of this same trip.
+			# An early return from the deeper segment still returns after that victory.
+			var completed_opening_trip: bool = run is DepthCampaign and run.connected_opening and not run.is_opening_segment() and run.outcome == &"retreat"
+			if run.outcome == &"victory" or completed_opening_trip:
 				profile.opening_progress = OpeningProgress.with_event(profile.opening_progress, &"returned_to_hub")
 			if (bank_inventory or profile.opening_progress != previous_opening) and not profile.save():
 				profile.coins = previous_coins
@@ -273,10 +276,18 @@ func start_campaign() -> void:
 	var prepared: GearInventory = _take_prepared_inventory()
 	if world_building_enabled and prepared == null: return
 	_clear()
-	var campaign := (campaign_scene if campaign_scene != null else preload("res://scenes/linear_campaign.tscn")).instantiate() as DungeonRun
+	# Connected opening/depth is one DungeonRun and one Player for the whole trip.
+	# The Lạc Ấn shortcut remains a fresh Hub departure handled separately.
+	var connected: bool = depth_expansion_enabled and world_building_enabled and depth_progress != null
+	var scene: PackedScene = preload("res://scenes/rooms/depth_campaign.tscn") if connected else (campaign_scene if campaign_scene != null else preload("res://scenes/linear_campaign.tscn"))
+	var campaign := scene.instantiate() as DungeonRun
 	campaign.profile = profile
 	campaign.world_building_enabled = world_building_enabled
 	campaign.starting_inventory = prepared
+	if connected:
+		campaign.set("connected_opening", true)
+		campaign.set("depth_progress_committer", depth_progress.record)
+		campaign.set("depth_entry_authorizer", _authorize_continuous_depth.bind(campaign))
 	add_child(campaign)
 	campaign.content.qa_tools_enabled = qa_tools_enabled
 	active_scene = campaign
@@ -298,6 +309,20 @@ func start_campaign() -> void:
 	campaign.save_retry_requested.connect(_on_run_return_requested)
 	campaign.floor_return_requested.connect(_on_run_return_requested)
 	if cultivation_session!=null: cultivation_session.bind_scene(campaign)
+
+
+func _authorize_continuous_depth(campaign: DungeonRun) -> bool:
+	# Called by the same live campaign at its defeated-Golem continuation gate.
+	# No Hub transfer, refill, coin bank, or NPC recovery happens at this boundary.
+	if not depth_expansion_enabled or not world_building_enabled or depth_progress == null or _return_busy or return_save_pending:
+		return false
+	if not is_instance_valid(campaign) or active_scene != campaign or campaign.profile != profile or campaign.outcome != &"" or campaign.has_pending_rewards():
+		return false
+	if not campaign is DepthCampaign or not campaign.connected_opening or not campaign.is_opening_segment() or not campaign.can_continue_to_depth():
+		return false
+	if not campaign.portal_active or campaign.player.health.current_health <= 0.0 or not depth_progress.unlocked() or not depth_progress.available():
+		return false
+	return depth_progress.accept()
 
 
 func _process(delta: float) -> void:

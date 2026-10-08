@@ -78,7 +78,7 @@ func _run() -> void:
 	_check(flow.profile.record_boss_defeat("depth_launch_controlled_proof"), "Product fixture durably unlocks the expansion")
 	_check(guide.open(), "Unlocked guide can open at its physical location")
 	guide._act(); await _step()
-	_check(flow.depth_progress.state()["accepted"] and "Xuống tầng 1" in guide.action.text, "Actual quest action saves then clearly offers descent")
+	_check(flow.depth_progress.state()["accepted"] and "Xuống tầng 4" in guide.action.text, "Actual quest action saves then clearly offers descent")
 	var inventory: GearInventory = hub.gear.inventory
 	var starter_uid: int = inventory.equipment_bag_uids()[0] if not inventory.equipment_bag_uids().is_empty() else inventory.items.keys()[0]
 	guide._act(); await _step(8)

@@ -142,7 +142,7 @@ func _integration() -> void:
 	hub = flow.active_scene as ExteriorHub
 	var population: NpcPopulation = hub.npc_population
 	population.cue_requested.connect(func(_id: String, _cue: StringName, _at: Vector2, _owner: Node) -> void: cues += 1)
-	_check(population != null and population.state.records.size() == 8 and population.actors.is_empty(), "H00 owns one bounded eight-NPC registry but zero road actors")
+	_check(population != null and population.state.records.size() == 10 and population.actors.is_empty(), "H00 owns one bounded ten-NPC registry but zero road actors")
 	var player_id: int = hub.player.get_instance_id()
 	var owned: Array = hub.gear.inventory.items.keys()
 	hub.player.health.current_health = 37

@@ -12,7 +12,7 @@ static func next_door(room: StringName,route: StringName,target: StringName,know
 		if visited.has(key): continue
 		visited[key] = true
 		if state["room"] == target: return state["first"]
-		for door: StringName in [&"door_west",&"door_east",&"tunnel"]:
+		for door: StringName in [&"door_west",&"door_east",&"tunnel",&"sect_branch"]:
 			var link: Dictionary
 			if state["room"] == ExteriorRouteCatalog.HUB:
 				if door != &"door_east": continue

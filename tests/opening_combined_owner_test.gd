@@ -68,8 +68,8 @@ func _reader(path: String, expected_ok: bool = true, register_before: bool = tru
 func _life(profile: SanctuaryProfile) -> RefCounted:
 	var life: RefCounted = SocialLife.new()
 	life.set("save_path",profile.save_path+".npc_v1.json")
-	_check(life.call("save")==true and SocialLife.valid(life.call("snapshot")),"Actual eight-resident schema3 life owner saves its primary sidecar")
-	_check(life.call("snapshot")["npc_schema"]==3 and life.get("records").size()==8,"Combined fixture uses current life authority, not a synthetic transport validator")
+	_check(life.call("save")==true and SocialLife.valid(life.call("snapshot")),"Actual ten-resident schema4 life owner saves its primary sidecar")
+	_check(life.call("snapshot")["npc_schema"]==4 and life.get("records").size()==10,"Combined fixture uses current life authority, not a synthetic transport validator")
 	return life
 
 func _fence(life: RefCounted) -> Dictionary:

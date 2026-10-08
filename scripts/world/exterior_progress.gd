@@ -11,7 +11,7 @@ static func valid(data: Variant) -> bool:
 	var room := StringName(data["room_id"])
 	if String(ExteriorRouteCatalog.region(room)) != data["region_id"] or not ExteriorRouteCatalog.valid_anchor(room,StringName(data["route_id"]),StringName(data["anchor_id"])): return false
 	if not data.get("sc01_open",null) is bool: return false
-	if not _valid_ids(data.get("discovered_rooms",null),ExteriorRouteCatalog.ROOMS) or not _valid_ids(data.get("notes",null),ExteriorRouteCatalog.NOTES): return false
+	if not _valid_ids(data.get("discovered_rooms",null),ExteriorRouteCatalog.all_rooms()) or not _valid_ids(data.get("notes",null),ExteriorRouteCatalog.NOTES): return false
 	return true
 
 static func _valid_ids(values: Variant, allowed: Array[StringName]) -> bool:

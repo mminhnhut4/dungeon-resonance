@@ -113,6 +113,7 @@ func resolve() -> Dictionary:
 		profile.set_meta(TRACKED,&"")
 		return _fallback("complete","Nhiệm vụ đã hoàn tất; mũi tên đã dừng. Chọn nhiệm vụ tiếp theo nếu muốn.")
 	if selected.get("card",{}).get("command",&"") == &"retry_insights": return _fallback("reward_pending","Dấu mốc đã ghi nhưng lĩnh ngộ còn chờ lưu; về căn cứ và dùng nút thử lưu lại trên thẻ nhiệm vụ.")
+	if String(id).begins_with("sect_"): return _sect_goal(world,actor,String(id).trim_prefix("sect_"))
 	var hub_goal: StringName
 	match id:
 		&"explored": hub_goal = &"exterior_road"
@@ -133,6 +134,28 @@ func resolve() -> Dictionary:
 		if hub_goal == NpcCatalog.WANDERER: return _exit_goal(world)
 		return _dungeon_goal(world,actor,id)
 	return _station(world,hub_goal)
+
+func _sect_goal(world: Node, actor: Node2D, faction_id: String) -> Dictionary:
+	if faction_id not in SectRouteCatalog.FACTIONS: return _fallback("quest_missing","Nhiệm vụ môn phái không hợp lệ.")
+	if world.has_method("living_enemies"): return _fallback("outside_goal","Nhiệm vụ môn phái nằm trên đường bộ. Trở về căn cứ để tiếp tục.")
+	if bool(property(world,&"inside_house",false)):
+		var home: Node=property(world,&"house") as Node
+		var exit_point: Node2D=property(home,&"exit_point") as Node2D
+		return _point(exit_point.global_position,"Ra sân bằng cửa nhà, E tương tác; sau đó tới lối đường bộ.",&"home_exit") if is_instance_valid(exit_point) else _fallback("anchor_missing","Cửa ra sân chưa sẵn sàng.")
+	if not bool(property(world,&"outside",false)): return _station(world,&"exterior_road")
+	var room: ExteriorRoom=property(world,&"exterior") as ExteriorRoom
+	if not is_instance_valid(room): return _fallback("world_missing","Đường đi chưa sẵn sàng.")
+	var stored: Dictionary=profile.extension_state(SectJourneyProgress.SCOPE)
+	if not SectJourneyProgress.valid(stored): return _fallback("state_unavailable","Hồ sơ nhiệm vụ môn phái chưa sẵn sàng.")
+	var entry: Dictionary=stored[faction_id]
+	var target: StringName=SectRouteCatalog.first(faction_id)
+	var key: StringName=&""
+	if room.room_id==SectRouteCatalog.ROAD_ROOMS[faction_id]: key=&"sect_branch"
+	elif room.room_id==target:
+		key=&"sect_marker_west" if not entry["markers"].has("west") else &"sect_marker_east" if not entry["markers"].has("east") else &"sect_register"
+	if key!=&"" and room.interactions.has(key): return _point(room.to_global(room.interactions[key]),"Đi theo mũi tên; E đọc mốc / sổ tiếp nhận, chọn xác nhận để lưu.",key)
+	var known: Dictionary=MapQuestProjection.known_rooms(profile)
+	return _outside(world,actor,target if known.has(target) else SectRouteCatalog.ROAD_ROOMS[faction_id])
 
 func update_navigation() -> void:
 	if world_ref == null: return

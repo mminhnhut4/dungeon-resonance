@@ -242,6 +242,16 @@ func refresh_hud() -> void:
 		boss_hp.tooltip_text = "%d / %d" % [roundi(boss.health.current_health), roundi(boss.health.maximum_health)]
 	else:
 		_clear_boss_hud()
+	_layout_footer()
+
+
+func _layout_footer() -> void:
+	# Keep the 1280x720 composition while anchoring the footer to smaller windows.
+	var extent: Vector2 = get_viewport().get_visible_rect().size
+	boss_panel.position = Vector2((extent.x - 420.0) * 0.5, extent.y - 91.0)
+	var lift: float = 92.0 if extent.x < 1000.0 and boss_panel.visible else 0.0
+	weapon_icon.position.y = extent.y - 130.0 - lift
+	weapon_name.position.y = extent.y - 112.0 - lift
 
 
 func _live_property(source: Object, property: StringName) -> Object:

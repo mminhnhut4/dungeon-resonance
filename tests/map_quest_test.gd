@@ -50,9 +50,9 @@ func _run() -> void:
 	_check(journal.objective_label.get_theme_color("font_color") == AntiqueSkin.TEXT, "Map/Quest body inherits the shared readable ivory token")
 	_check("Thanh Vy" in str(journal.rows) and "Vô Danh" in str(journal.rows) and journal.graph.known.size() == 1, "Concrete quest instructions identify Hub NPCs without revealing unknown map rooms")
 	_check(journal.graph.known.size() == 1 and journal.graph.known.has(ExteriorRouteCatalog.HUB), "New profile shows only the known Hub")
-	for room: StringName in ExteriorRouteCatalog.ROOMS:
+	for room: StringName in ExteriorRouteCatalog.all_rooms():
 		var button: Button = journal.graph.buttons[room]
-		_check(button.disabled and button.text == "?\nChưa biết" and button.tooltip_text.is_empty(), "Unknown room has no revealed name or actionable pin: %s" % room)
+		_check(button.disabled and button.text == "?" and button.tooltip_text.is_empty(), "Unknown room has no revealed name or actionable pin: %s" % room)
 	for extent: Vector2i in [Vector2i(800,600),Vector2i(1280,720),Vector2i(1920,1080)]:
 		await _size(extent)
 		await _road()

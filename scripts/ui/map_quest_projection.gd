@@ -53,9 +53,11 @@ static func rows(profile: SanctuaryProfile, inventory: GearInventory = null) -> 
 				row["guide"] = guide
 				row["body"] += "\n\nHÀNH TRANG & SỨC MẠNH · "+guide["topic"]+"\n"+guide["body"]
 		result.append(row)
+	result.append_array(SectJourneyProgress.rows(profile))
 	return result
 
 static func room_name(room: StringName) -> String:
 	if room == ExteriorRouteCatalog.HUB: return "Căn Cứ Lữ Khách"
+	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.title(room)
 	var index: int = ExteriorRouteCatalog.ROOMS.find(room)
 	return ExteriorRouteCatalog.TITLES[index] if index >= 0 else ""

@@ -1,5 +1,6 @@
 extends SceneTree
 ## Real rooms, Player, query Hitbox contacts and runtime actor clocks; isolated save.
+var capture: bool = false
 var checks: int = 0
 var failures: int = 0
 var flow: GameFlow
@@ -15,6 +16,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	for arg: String in OS.get_cmdline_user_args():
+		if arg=="--native-approved": capture=true
 		if arg.begins_with("--hz="): Engine.physics_ticks_per_second = int(arg.trim_prefix("--hz="))
 	path_prefix = "user://verification/cultivator_%d_%d" % [Engine.physics_ticks_per_second,Time.get_ticks_usec()]
 	flow = preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
@@ -45,6 +47,8 @@ func _run() -> void:
 
 func _exercise_cultivator(id: String) -> void:
 	var spec: Dictionary = NpcPilotCatalog.definition(id)
+	if id in NpcPilotCatalog.SECT_STEWARD_IDS:
+		_check(hub.sect_journey.progress.record(SectRouteCatalog.faction(StringName(spec["room"])),"accept"),"Fixture accepts only the steward entrance quest")
 	_check(hub.enter_exterior(StringName(spec["room"]),&"main",&"west",false),"Enter authored room for "+id)
 	await _step(6)
 	_check(population.actors.has(id),"Population selects the authored cultivator subclass")
@@ -82,6 +86,10 @@ func _exercise_cultivator(id: String) -> void:
 	mouse.position = hub.player.get_canvas_transform()*(actor.global_position+Vector2(0,-25))
 	Input.parse_input_event(mouse)
 	await _step(1)
+	if capture:
+		var camera:=hub.player.get_node("Camera2D") as Camera2D
+		camera.reset_smoothing(); camera.force_update_scroll()
+	await _capture(id+"_patrol")
 	var hp_before: float = actor.health.current_health
 	Input.action_press(&"attack")
 	await _step(1)
@@ -102,6 +110,7 @@ func _exercise_cultivator(id: String) -> void:
 	PlayerTravel.relocate(hub.player,actor.global_position+Vector2(-48,0))
 	await _wait_phase(actor,"tell",3.0)
 	_check(actor.combat_phase == "tell" and not actor.strike_hitbox.active,"Visible tell precedes the damaging window")
+	await _capture(id+"_tell")
 	var cancelled_id: int = actor._strike.attack_id if actor._strike != null else 0
 	await _probe(actor,hub.player,1.0)
 	_check(actor.combat_phase == "hurt" and not actor.strike_hitbox.active and actor._strike == null,"Accepted injury immediately cancels the committed strike")
@@ -110,6 +119,7 @@ func _exercise_cultivator(id: String) -> void:
 		if actor.accepted_strikes > strikes_before: break
 		await _step(1)
 	_check(actor.accepted_strikes > strikes_before and hub.player.health.current_health < hub.player.health.maximum_health,"Self-defense active Hitbox physically damages the existing Player")
+	await _capture(id+"_counterstrike")
 	_check(cancelled_id > 0 and cancelled_id not in _received_attack_ids,"Cancelled strike cannot leak damage from an old snapshot")
 	await _wait_phase(actor,"tell",3.0)
 	(hub.gear.modal as InventoryScreen).open()
@@ -229,3 +239,8 @@ func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
 		print("FAIL: "+message)
+
+func _capture(label: String) -> void:
+	if not capture: return
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png(OS.get_environment("DUNGEON_QA_EVIDENCE_ROOT").path_join(label+".png"))

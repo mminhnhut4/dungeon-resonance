@@ -163,7 +163,7 @@ func _run() -> void:
 			_check(run.can_choose_floor_exit(),"Depth%d cleared exit reachable through real walking" % number)
 			_check(run.floor_exit.open(),"Depth%d uses existing E-choice owner" % number)
 			await _step(3)
-			_check(run.floor_exit.heading.text.contains(str(number)+"/5") and not run.floor_exit.notice.text.contains("Golem"),"Depth exit text refers to this expedition")
+			_check(run.floor_exit.heading.text.contains(str(number+3)+"/8") and not run.floor_exit.notice.text.contains("Golem"),"Depth exit text uses the shared dungeon floor numbering")
 			run.floor_exit._continue(); await _step(8)
 			_check(run.player.get_instance_id()==player_id and run.gear.get_instance_id()==gear_id and run.room.get_instance_id()!=before_room,"Depth%d transition keeps player/gear and replaces room lifetime" % number)
 		else:

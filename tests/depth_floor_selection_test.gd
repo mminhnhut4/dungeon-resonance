@@ -66,7 +66,7 @@ func _run() -> void:
 	print("POPUP after navigation focus=",popup.get_focused_item())
 	await _key(popup,KEY_ENTER)
 	print("POPUP selected_floor=",guide.selected_floor)
-	_check(guide.selected_floor == 3 and guide.action.text.contains("Xuống tầng 3"),"Popup input selects floor three and updates launch text")
+	_check(guide.selected_floor == 3 and guide.action.text.contains("Xuống tầng 6"),"Popup input keeps local floor three identity while displaying dungeon floor six")
 	_check(FileAccess.get_file_as_bytes(path) == before_bytes and flow.profile.extension_revision(Progress.SCOPE) == before_revision,"Changing selection has no save or reward side effect")
 	await _picture("selector_chosen_3")
 	# The displayed choice can become stale while its modal is open.

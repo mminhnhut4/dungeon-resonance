@@ -3,10 +3,15 @@ extends RefCounted
 ## Hand-authored pilot roles, not new named canon or sect definitions.
 const LEGACY_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice"]
 const SCHEMA_TWO_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper"]
-const CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01"]
-const IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01"]
+const ORIGINAL_CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01"]
+const SECT_STEWARD_IDS: Array[String] = ["thanh_van_steward_01", "xich_lo_steward_01"]
+const CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
+const SCHEMA_THREE_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01"]
+const IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
 const MAX_HEALTH: float = 40.0
 const DEFINITIONS: Dictionary = {
+	"thanh_van_steward_01": {"name":"Phùng Yên Trúc", "role":"Chấp sự · Thanh Vân", "goal":"Ta ghi điều người đi đường thực sự nhìn thấy. Sổ tiếp nhận bên phải luôn ở đó, kể cả khi ta phải dưỡng thương.", "room":"tv01_cloud_gate", "left":1990.0,"right":2150.0,"speed":32.0,"activity":"Kiểm sổ đường núi","tint":"8eccc9"},
+	"xich_lo_steward_01": {"name":"Tống Hồng Diệp", "role":"Chấp sự · Xích Lô", "goal":"Nước thông thì lò mới yên. Đọc hai mốc trên đê rồi trình bản ghi vào sổ phía đông; đừng buộc tội từ một dấu cặn.", "room":"xl01_red_causeway", "left":2290.0,"right":2390.0,"speed":30.0,"activity":"Kiểm tuyến dẫn thủy","tint":"cba178"},
 	"pilot_traveler": {"name":"Khách đường xa", "role":"Lữ hành", "goal":"Xem đèn bên mái miếu, lên ghế nghỉ rồi quay lại đường núi.", "room":"o01_p01", "left":360.0, "right":1420.0, "speed":48.0, "activity":"Quan sát đường", "tint":"95b7b5"},
 	"pilot_pilgrim": {"name":"Người hành hương", "role":"Hành hương", "goal":"Chăm đèn ở miếu rồi trở về đường khô.", "room":"o01_p03", "left":1560.0, "right":1820.0, "speed":30.0, "activity":"Chăm đèn", "tint":"c3ba8b"},
 	"pilot_gatherer": {"name":"Người hái thuốc", "role":"Hái thuốc", "goal":"Tìm cây thuốc ven đường và giữ sức để về bến.", "room":"o01_p04", "left":580.0, "right":900.0, "speed":36.0, "activity":"Tìm cây thuốc", "tint":"9cba86"},
@@ -18,6 +23,8 @@ const DEFINITIONS: Dictionary = {
 }
 ## Stop durations use gameplay ticks (4 Hz). These are existing room landmarks.
 const SCHEDULES: Dictionary = {
+	"thanh_van_steward_01":[{"x":2000.0,"mode":"work","ticks":10,"label":"Đối chiếu ghi chép"},{"x":2140.0,"mode":"rest","ticks":10,"label":"Quan sát lối vào"}],
+	"xich_lo_steward_01":[{"x":2300.0,"mode":"work","ticks":10,"label":"Ghi mực nước"},{"x":2380.0,"mode":"rest","ticks":10,"label":"Kiểm đường hàng"}],
 	"pilot_traveler": [{"x":380.0,"mode":"work","ticks":6,"label":"Xem đèn bên mái miếu"},{"x":980.0,"mode":"work","ticks":8,"label":"Xem đèn nghiêng"},{"x":1380.0,"mode":"rest","ticks":12,"label":"Nghỉ cạnh ghế"},{"x":900.0,"mode":"rest","ticks":4,"label":"Nhìn lại đường núi"}],
 	"pilot_pilgrim": [{"x":1570.0,"mode":"work","ticks":9,"label":"Chăm đèn"},{"x":1705.0,"mode":"work","ticks":7,"label":"Xem mái miếu"},{"x":1800.0,"mode":"rest","ticks":11,"label":"Nghỉ bên miếu"}],
 	"pilot_gatherer": [{"x":610.0,"mode":"work","ticks":7,"label":"Xem cây ven đường"},{"x":880.0,"mode":"work","ticks":10,"label":"Tìm cây thuốc"},{"x":740.0,"mode":"rest","ticks":8,"label":"Nghỉ trên đường khô"}],
@@ -28,6 +35,8 @@ const SCHEDULES: Dictionary = {
 	"xich_lo_guard_01": [{"x":1570.0,"mode":"work","ticks":7,"label":"Canh lối qua cầu"},{"x":1800.0,"mode":"work","ticks":8,"label":"Tuần tra Xích Lô"},{"x":1680.0,"mode":"rest","ticks":12,"label":"Nghỉ bên đường cầu"}]
 }
 const STARTS: Dictionary = {
+	"thanh_van_steward_01":{"x":2000.0,"index":0,"mode":"work","remaining":5},
+	"xich_lo_steward_01":{"x":2300.0,"index":0,"mode":"work","remaining":5},
 	"pilot_traveler":{"x":520.0,"index":1,"mode":"walk"},
 	"pilot_pilgrim":{"x":1705.0,"index":1,"mode":"work","remaining":5},
 	"pilot_gatherer":{"x":660.0,"index":1,"mode":"walk"},

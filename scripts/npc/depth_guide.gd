@@ -97,20 +97,20 @@ func refresh() -> void:
 	if progress == null or panel == null: return
 	var state: Dictionary = progress.state()
 	var unlocked: bool = progress.unlocked()
-	heading.text = "LẠC ẤN · NGŨ TẦNG PHONG ẤN"
-	objective.text = "Hạ Golem Cổ Bảo trong hầm ngục mở đầu, quay về gặp Lạc Ấn tại sân căn cứ." if not unlocked else "Nhận bản đồ từ Lạc Ấn, xuống năm tầng. Dọn quái để mở cửa E; có thể quay về sau mỗi tầng đã dọn." if not state["accepted"] else "Chọn lại tầng đã hoàn tất. Muốn mở tầng mới, dọn tầng đang đi rồi qua lối E bên phải; chọn tầng không cấp thưởng." if not state["boss_defeated"] else "Đã phá Ngũ Tầng Phong Ấn. Chọn một tầng đã hoàn tất để bắt đầu chuyến mới với trang bị đang chuẩn bị."
+	heading.text = "LẠC ẤN · HẦM NGỤC TẦNG 4–8"
+	objective.text = "Vượt ba tầng mở đầu và hạ Golem Cổ Bảo, rồi chọn đi tiếp xuống tầng 4. Lạc Ấn giữ lối tắt cho những chuyến sau." if not unlocked else "Năm ải Phong Ấn nối tiếp Golem, từ tầng 4 đến tầng 8. Nhận bản đồ để dùng lối tắt; dọn quái rồi qua cửa E bên phải." if not state["accepted"] else "Chọn lại tầng đã hoàn tất để bắt đầu chuyến mới. Muốn xuống sâu hơn, dọn tầng đang đi rồi qua lối E bên phải; chọn tầng không cấp thưởng." if not state["boss_defeated"] else "Đã vượt tầng 8 và phá Ngũ Tầng Phong Ấn. Chọn một tầng đã hoàn tất để bắt đầu chuyến mới với trang bị đang chuẩn bị."
 	for index: int in 5:
 		var complete: bool = int(state["cleared"]) > index
-		floor_rows[index].text = "%s %d · %s\n%s" % ["✓" if complete else "→" if int(state["cleared"]) == index else "○", index + 1, Catalog.FLOORS[index]["name"], Catalog.FLOORS[index]["tactic"]]
+		floor_rows[index].text = "%s %d · %s\n%s" % ["✓" if complete else "→" if int(state["cleared"]) == index else "○", index + 4, Catalog.FLOORS[index]["name"], Catalog.FLOORS[index]["tactic"]]
 		floor_rows[index].modulate = Color(.65, .83, .72) if complete else Color(1, .91, .72) if int(state["cleared"]) == index else Color(.78, .82, .88)
 	if not progress.can_start_floor(selected_floor): selected_floor = 1
 	floor_choice.clear()
 	for number: int in range(1,clampi(int(state["cleared"]),1,Catalog.FLOOR_COUNT)+1):
-		floor_choice.add_item("Tầng %d · %s" % [number,Catalog.FLOORS[number-1]["name"]],number)
+		floor_choice.add_item("Tầng %d · %s" % [number+3,Catalog.FLOORS[number-1]["name"]],number)
 	floor_choice.select(selected_floor-1)
 	floor_choice.visible = unlocked and state["accepted"]
 	floor_choice.disabled = not progress.can_start_floor(selected_floor)
-	action.text = "Hạ Golem để mở hành trình" if not unlocked else "Nhận bản đồ · Lưu nhiệm vụ" if not state["accepted"] else "Xuống tầng %d · Mang trang bị đang chuẩn bị" % selected_floor
+	action.text = "Hạ Golem để mở hành trình" if not unlocked else "Nhận bản đồ · Lưu nhiệm vụ" if not state["accepted"] else "Xuống tầng %d · Mang trang bị đang chuẩn bị" % (selected_floor + 3)
 	action.disabled = not unlocked or not progress.available() or (state["accepted"] and not progress.can_start_floor(selected_floor))
 	_resize()
 
@@ -172,7 +172,7 @@ func _build_panel() -> void:
 	floor_choice.name = "CompletedFloorChoice"
 	floor_choice.clip_text = true
 	floor_choice.item_selected.connect(_select_floor)
-	floor_choice.tooltip_text = "Chỉ chọn tầng đã hoàn tất; lần đầu bắt đầu ở tầng 1."
+	floor_choice.tooltip_text = "Chỉ chọn tầng đã hoàn tất; lối tắt đầu tiên đưa đến tầng 4, ngay dưới Golem."
 	panel.add_child(floor_choice)
 	notice = _label(panel, 15)
 	action = Button.new()

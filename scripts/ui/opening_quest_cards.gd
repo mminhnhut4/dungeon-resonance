@@ -30,6 +30,12 @@ static func decorate(rows: Array[Dictionary], profile: SanctuaryProfile, invento
 				_insight(card,profile,"thanh_vy_met")
 			&"first_upgrade":
 				card = _upgrade(profile,inventory,row)
+		if String(id).begins_with("sect_"):
+			var faction_id: String=String(id).trim_prefix("sect_")
+			var saved: Dictionary=profile.extension_state(SectJourneyProgress.SCOPE)
+			if SectJourneyProgress.valid(saved) and faction_id in SectRouteCatalog.FACTIONS:
+				var entry: Dictionary=saved[faction_id]
+				card.merge({"location":SectRouteCatalog.title(SectRouteCatalog.first(faction_id)),"progress":"%d/2 quan sát · %s" % [entry["markers"].size(),"Đã có quyền khách" if entry["guest"] else "Chưa trình đủ ghi chép"],"count":entry["markers"].size(),"prerequisite":"Nhận việc ở sổ gần cổng; tới từng mốc và chọn Ghi quan sát.","reward":"Quyền khách vào sân trong của môn phái này","reward_mode":"Trình hai ghi chép tại sổ trong khuôn viên; không mất tiền, không có thưởng tiền/đồ.","reward_status":"Đã mở sân trong" if entry["guest"] else "Chờ trình ghi chép","optional":true},true)
 		row["card"] = card
 		if row.has("guide"):
 			row["body"] = "HÀNH TRANG & SỨC MẠNH · %s\n%s" % [row["guide"]["topic"],row["guide"]["body"]]

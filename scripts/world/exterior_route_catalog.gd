@@ -14,29 +14,38 @@ const C: float = 36.0
 const SAFE_ANGLE: float = 10.0
 const BASE_Y: float = 2100.0
 
+static func all_rooms() -> Array[StringName]:
+	var rooms: Array[StringName]=ROOMS.duplicate()
+	rooms.append_array(SectRouteCatalog.ROOMS)
+	return rooms
+
 static func region(room: StringName) -> StringName:
+	if room in SectRouteCatalog.ROOMS: return StringName(SectRouteCatalog.faction(room))
 	if room == HUB: return HUB
 	var index: int = ROOMS.find(room)
 	return &"o01_duong_hanh_huong" if index >= 0 and index < 4 else &"o02_ben_tram" if index >= 4 else &""
 
 static func valid_route(room: StringName, route: StringName) -> bool:
-	return (room == HUB or room in ROOMS) and (route == MAIN or (room == ROOMS[1] and route == TUNNEL))
+	return (room == HUB or room in ROOMS or room in SectRouteCatalog.ROOMS) and (route == MAIN or (room == ROOMS[1] and route == TUNNEL))
 
 static func valid_anchor(room: StringName, route: StringName, anchor: StringName) -> bool:
 	if not valid_route(room,route): return false
 	if room == HUB: return anchor == &"road"
+	if anchor == &"sect" and route == MAIN: return room in [&"o01_p03",&"o02_b04"]
 	if anchor in [&"west",&"east"]: return true
 	if route == TUNNEL: return false
 	return (anchor == &"tunnel" and room in [ROOMS[0],ROOMS[2]]) or (anchor == &"shrine" and room == ROOMS[2]) or (anchor == &"water" and room == ROOMS[4]) or (anchor == &"shipyard" and room == ROOMS[7])
 
 static func title(room: StringName, route: StringName = MAIN) -> String:
 	if room == HUB: return "Căn Cứ Lữ Khách"
+	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.title(room)
 	var index: int = ROOMS.find(room)
 	if index < 0: return ""
 	return "P02 · Đường giữ đèn" if route == TUNNEL else ("P%02d" % (index+1) if index < 4 else "B%02d" % (index-3)) + " · " + TITLES[index]
 
 static func layout(room: StringName, route: StringName) -> Dictionary:
 	if not valid_route(room,route) or room == HUB: return {}
+	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.layout(room)
 	if route == TUNNEL: return {"start":5.0,"beats":[Vector2(800,5),Vector2(680,4),Vector2(360,4)]}
 	match room:
 		&"o01_p01": return {"start":5.0,"beats":[Vector2(400,5),Vector2(860,6.3),Vector2(360,6.3),Vector2(540,5.5),Vector2(260,5.5)]}
@@ -52,6 +61,7 @@ static func layout(room: StringName, route: StringName) -> Dictionary:
 	return {}
 
 static func link(room: StringName, route: StringName, door: StringName) -> Dictionary:
+	if route==MAIN and (room in SectRouteCatalog.ROOMS or door==&"sect_branch"): return SectRouteCatalog.link(room,door)
 	if route == TUNNEL:
 		return {"room":ROOMS[0] if door == &"door_west" else ROOMS[2],"route":MAIN,"anchor":&"tunnel"}
 	if door == &"tunnel": return {"room":ROOMS[1],"route":TUNNEL,"anchor":&"west" if room == ROOMS[0] else &"east"}

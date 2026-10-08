@@ -3,7 +3,7 @@ extends Node2D
 ## Texture/UV skin only. Existing polygon vertices and physical owners remain untouched.
 const PATH: String="res://assets/environment/exterior/rendered_v2/route_terrain.png"
 const FALLBACK: Texture2D=preload("res://assets/environment/exterior/pilgrimage_v1/pilgrimage_terrain_material.png")
-const THEMES: Dictionary[StringName,int]={&"o01_p03":0,&"o01_p04":1,&"o02_b01":2,&"o02_b02":3,&"o02_b03":3,&"o02_b04":2}
+const THEMES: Dictionary[StringName,int]={&"o01_p03":0,&"o01_p04":1,&"o02_b01":2,&"o02_b02":3,&"o02_b03":3,&"o02_b04":2,&"tv01_cloud_gate":0,&"tv02_pine_court":0,&"xl01_red_causeway":2,&"xl02_cooling_yard":2}
 const TILE_WIDTH: float=128.0
 const MAX_POLYGONS: int=48
 const MAX_FLOOR_POINTS: int=32

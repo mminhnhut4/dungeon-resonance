@@ -40,6 +40,8 @@ func _run() -> void:
 
 func _exercise(id: String) -> void:
 	var spec: Dictionary = NpcPilotCatalog.definition(id)
+	if id in NpcPilotCatalog.SECT_STEWARD_IDS:
+		_check(hub.sect_journey.progress.record(SectRouteCatalog.faction(StringName(spec["room"])),"accept"),"Fixture accepts only the steward entrance quest")
 	_check(hub.enter_exterior(StringName(spec["room"]),&"main",&"west",false),"Enter actual route for "+id)
 	await _step(5)
 	var actor: CultivatorActor = hub.npc_population.actors.get(id) as CultivatorActor
@@ -49,7 +51,7 @@ func _exercise(id: String) -> void:
 	_check(actor.body.texture == texture and actor.portrait == texture,"Population binds the stable ID portrait")
 	_check(actor.body.modulate == Color.WHITE,"Source palette remains untinted")
 	_check(actor.body.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS,"Small painted body uses mipmap filtering")
-	_check(FileAccess.get_sha256(texture.resource_path) == SOURCE_HASHES[id],"PNG is byte-identical to selected imagegen output")
+	_check(FileAccess.get_sha256(texture.resource_path) == SOURCE_HASHES[CultivatorCatalog.UNIFORMS.get(id,id)],"PNG is byte-identical to selected imagegen output")
 	var image: Image = texture.get_image()
 	_check(image != null and image.get_size() == Vector2i(1024,1536),"Full source resolution is preserved")
 	if image == null: return
@@ -77,9 +79,9 @@ func _exercise(id: String) -> void:
 	actor.combat_phase = "idle"
 	actor.sync_record(true)
 	var lines: Array[String] = CultivatorCatalog.dialogue_lines(id)
-	_check(lines.size() == 2 and lines[1].contains("Bến Trầm"),"Two grounded story paragraphs are available")
+	_check(lines.size()==(1 if id in NpcPilotCatalog.SECT_STEWARD_IDS else 2) and (lines[0].contains("sổ") if id in NpcPilotCatalog.SECT_STEWARD_IDS else lines[1].contains("Bến Trầm")),"Authored dialogue directs this identity to its actual region and role")
 	lines.clear()
-	_check(CultivatorCatalog.dialogue_lines(id).size() == 2,"Dialogue caller cannot mutate catalog content")
+	_check(CultivatorCatalog.dialogue_lines(id).size() == (1 if id in NpcPilotCatalog.SECT_STEWARD_IDS else 2),"Dialogue caller cannot mutate catalog content")
 	PlayerTravel.relocate(hub.player,actor.global_position+Vector2(-22,0))
 	await _step(2)
 	var profile_hash: String = FileAccess.get_sha256(hub.profile.save_path)

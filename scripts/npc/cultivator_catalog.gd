@@ -1,7 +1,8 @@
 class_name CultivatorCatalog
 extends RefCounted
 ## Combat/presentation prototype only. NpcPilotCatalog owns world placement.
-const IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01"]
+const IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
+const UNIFORMS: Dictionary={"thanh_van_steward_01":"thanh_van_disciple_01","xich_lo_steward_01":"xich_lo_guard_01"}
 const PORTRAITS: Dictionary = {
 	"thanh_van_disciple_01": preload("res://assets/npc/cultivators/thanh_van_disciple.png"),
 	"xich_lo_guard_01": preload("res://assets/npc/cultivators/xich_lo_guard.png")
@@ -12,13 +13,15 @@ const SPECS: Dictionary = {
 }
 
 static func definition(id: String) -> Dictionary:
-	return SPECS.get(id,{}).duplicate(true)
+	return SPECS.get(UNIFORMS.get(id,id),{}).duplicate(true)
 
 static func portrait(id: String) -> Texture2D:
-	return PORTRAITS.get(id)
+	return PORTRAITS.get(UNIFORMS.get(id,id))
 
 static func dialogue_lines(id: String) -> Array[String]:
 	match id:
+		"thanh_van_steward_01": return ["Ta là Phùng Yên Trúc, chấp sự giữ sổ. Đọc mốc tây và đông rồi nộp ở sổ tiếp nhận bên phải; quyền khách mở lối vào Tùng Đình. Ta sẽ không kết tội một môn phái chỉ vì một lời đồn."]
+		"xich_lo_steward_01": return ["Ta là Tống Hồng Diệp. Ghi mực nước và dấu cặn trên đê; sổ tiếp nhận phía đông đối chiếu đủ hai mốc sẽ mở Sân Dẫn Thủy. Người trọng thương được nghỉ, nhưng việc đã làm vẫn được nhớ."]
 		"thanh_van_disciple_01": return [
 			"Ta là đệ tử Thanh Vân, được cử giữ đoạn đường này. Người qua núi mang theo hàng hóa, thư từ và cả lời đồn. Giữ đường thông thì dễ; giữ cho lời kể còn nguyên mới khó.",
 			"Có lời đồn dấu niêm ở miếu đèn không khớp với bản ghi tại bưu trạm Bến Trầm. Ta chưa thấy đủ hai bản để kết tội ai. Miếu còn đó, hồ sơ dưới bến cũng còn; chuyện này cần người chịu nhìn cho kỹ."

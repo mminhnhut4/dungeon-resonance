@@ -32,7 +32,7 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 	width = cursor.x
 	anchors = {&"west":Vector2(150,surface[0].y),&"east":Vector2(width-150,cursor.y)}
 	interactions = {&"door_west":Vector2(90,surface[0].y)}
-	if id != ExteriorRouteCatalog.ROOMS[7] or route == ExteriorRouteCatalog.TUNNEL: interactions[&"door_east"] = Vector2(width-90,cursor.y)
+	if not ExteriorRouteCatalog.link(id,route,&"door_east").is_empty(): interactions[&"door_east"] = Vector2(width-90,cursor.y)
 	min_y = surface[0].y
 	for point: Vector2 in surface: min_y = minf(min_y,point.y)
 	bounds = Rect2(0,min_y-340,width,maxf(2400,min_y+600)-(min_y-340))
@@ -55,6 +55,7 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 		_sign(Vector2(1110,floor_y(1110)),"Hành lang có nền / ramp thật")
 	else:
 		_author_details()
+		SectJourney.author_room(self)
 	for key: StringName in interactions:
 		if key in [&"door_west",&"door_east"]: _door(interactions[key],"← Lối về" if key == &"door_west" else "Đi tiếp →")
 	if room_id == &"o01_p01" and route_id == ExteriorRouteCatalog.MAIN:
@@ -65,7 +66,12 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 		var art: Node2D = ROUTE_PRESENTATION.new()
 		add_child(art)
 		art.initialize(self)
-	preload("res://scripts/presentation/existing_map_raster.gd").attach_exterior(self)
+	if room_id in SectRouteCatalog.ROOMS:
+		var lowest: float=surface[0].y
+		for point: Vector2 in surface: lowest=maxf(lowest,point.y)
+		bounds=Rect2(0,min_y-540,width,maxf(960,lowest-min_y+900))
+		SectRoomArt.attach(self)
+	else: preload("res://scripts/presentation/existing_map_raster.gd").attach_exterior(self)
 	return true
 
 func _author_details() -> void:

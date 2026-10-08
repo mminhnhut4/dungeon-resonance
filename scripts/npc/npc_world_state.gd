@@ -4,7 +4,7 @@ extends RefCounted
 signal activity_changed(id: String, activity: String)
 const STEP: float = 0.25
 const MAX_TICKS: int = 1000000000
-const SCHEMA: int = 3
+const SCHEMA: int = 4
 var tick: int = 0
 var records: Dictionary = {}
 var save_path: String = ""
@@ -185,8 +185,8 @@ func _commit_or_restore(before: Dictionary) -> bool:
 static func valid(data: Variant) -> bool:
 	if not data is Dictionary or data.size() != 3 or not _integer(data.get("npc_schema"), 1, SCHEMA) or not data.get("records") is Dictionary: return false
 	var legacy: bool = int(data["npc_schema"]) == 1
-	var nonlethal: bool = int(data["npc_schema"]) == SCHEMA
-	var ids: Array[String] = NpcPilotCatalog.LEGACY_IDS if legacy else NpcPilotCatalog.IDS if nonlethal else NpcPilotCatalog.SCHEMA_TWO_IDS
+	var nonlethal: bool = int(data["npc_schema"]) >= 3
+	var ids: Array[String] = NpcPilotCatalog.LEGACY_IDS if legacy else NpcPilotCatalog.IDS if int(data["npc_schema"])==4 else NpcPilotCatalog.SCHEMA_THREE_IDS if nonlethal else NpcPilotCatalog.SCHEMA_TWO_IDS
 	if not _integer(data.get("tick"), 0, MAX_TICKS) or data["records"].size() != ids.size(): return false
 	for id: String in ids:
 		var record: Variant = data["records"].get(id)
@@ -261,7 +261,7 @@ func _restore(data: Dictionary) -> void:
 		else:
 			records[id]["schedule_index"] = int(records[id]["schedule_index"])
 			if not records[id]["interrupted"].is_empty(): records[id]["interrupted"]["remaining"] = int(records[id]["interrupted"]["remaining"])
-		if int(data["npc_schema"]) < SCHEMA:
+		if int(data["npc_schema"]) < 3:
 			# Preserve the original fact and all relation/progression fields. The new
 			# nonlethal policy changes active state, not what the old save recorded.
 			records[id]["legacy_death"] = records[id]["death"].duplicate(true)
@@ -272,14 +272,16 @@ func _restore(data: Dictionary) -> void:
 				records[id]["interrupted"] = {}
 			records[id]["death"] = {}
 	if int(data["npc_schema"]) == 1: records["pilot_bridge_keeper"] = NpcPilotCatalog.initial_record("pilot_bridge_keeper")
-	if int(data["npc_schema"]) < SCHEMA:
-		for id: String in NpcPilotCatalog.CULTIVATOR_IDS: records[id] = NpcPilotCatalog.initial_record(id)
+	if int(data["npc_schema"]) < 3:
+		for id: String in NpcPilotCatalog.ORIGINAL_CULTIVATOR_IDS: records[id] = NpcPilotCatalog.initial_record(id)
+	if int(data["npc_schema"]) < 4:
+		for id: String in NpcPilotCatalog.SECT_STEWARD_IDS: records[id] = NpcPilotCatalog.initial_record(id)
 
 func load_state() -> bool:
 	if not FileAccess.file_exists(save_path):
 		# A valid tmp can still be an execution whose commit was reported failed.
 		# An older backup can predate a committed death. Neither proves history.
-		for suffix: String in [".previous", ".tmp", ".bak", ".pre_nonlethal_v1.json", ".pre_nonlethal_v2.json"]:
+		for suffix: String in [".previous", ".tmp", ".bak", ".pre_nonlethal_v1.json", ".pre_nonlethal_v2.json", ".pre_sect_v3.json"]:
 			if not FileAccess.file_exists(save_path + suffix): continue
 			read_only = true
 			return false
@@ -313,7 +315,7 @@ func _preserve_legacy_source(data: Dictionary) -> bool:
 	# with different bytes is evidence to preserve, never permission to replace.
 	var original: PackedByteArray = FileAccess.get_file_as_bytes(save_path)
 	if original.is_empty() or JSON.parse_string(original.get_string_from_utf8()) != data: return false
-	var backup_path: String = save_path + ".pre_nonlethal_v%d.json" % int(data["npc_schema"])
+	var backup_path: String = save_path + (".pre_sect_v3.json" if int(data["npc_schema"])==3 else ".pre_nonlethal_v%d.json" % int(data["npc_schema"]))
 	if FileAccess.file_exists(backup_path):
 		return FileAccess.get_file_as_bytes(backup_path) == original
 	if io._copy_file(save_path,backup_path) != OK: return false

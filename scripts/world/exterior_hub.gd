@@ -10,12 +10,16 @@ var last_entry: StringName = &"west"
 var pending_note: StringName = &""
 var transition_count: int = 0
 var npc_population: NpcPopulation
+var sect_journey: SectJourney
 var entry_card: RegionEntryCard
 var _entry_controller_device: int = -1
 
 func _ready() -> void:
 	super._ready()
 	if world_building_enabled:
+		sect_journey=SectJourney.new()
+		add_child(sect_journey)
+		sect_journey.initialize(self)
 		npc_population = NpcPopulation.new()
 		npc_population.hub = self
 		add_child(npc_population)
@@ -33,6 +37,9 @@ func _can_travel() -> bool:
 func enter_exterior(room: StringName, route: StringName = ExteriorRouteCatalog.MAIN, entry: StringName = &"west", commit: bool = true) -> bool:
 	if not _can_travel() or not ExteriorRouteCatalog.valid_anchor(room,route,entry): return false
 	if room == ExteriorRouteCatalog.HUB: return return_to_hub(commit)
+	if room in SectRouteCatalog.ROOMS and (sect_journey==null or not sect_journey.can_enter(room)):
+		prompt.text="Lối môn phái chưa mở. Đọc sổ tiếp nhận gần cổng; sân trong cần đủ hai ghi chép và quyền khách."
+		return false
 	if reject_next_load:
 		reject_next_load = false
 		return false
@@ -156,7 +163,8 @@ func interact_station(id: StringName) -> bool:
 			return enter_exterior(ExteriorRouteCatalog.ROOMS[0])
 		return super.interact_station(id)
 	if not _can_travel() or id != nearest_station() or not player.motor.is_grounded(): return false
-	if id in [&"door_west",&"door_east",&"tunnel"]:
+	if id in [&"sect_register",&"sect_marker_west",&"sect_marker_east",&"sect_history"]: return sect_journey!=null and sect_journey.interact(id)
+	if id in [&"door_west",&"door_east",&"tunnel",&"sect_branch"]:
 		if door_latched: return false
 		var destination: Dictionary = ExteriorRouteCatalog.link(exterior.room_id,exterior.route_id,id)
 		if destination.is_empty(): return false
@@ -278,7 +286,7 @@ func _process(delta: float) -> void:
 func _entry_destination(id: StringName) -> Dictionary:
 	if not outside:
 		return {"room":ExteriorRouteCatalog.ROOMS[0],"route":ExteriorRouteCatalog.MAIN,"anchor":&"west"} if id == &"exterior_road" and not inside_house else {}
-	return ExteriorRouteCatalog.link(exterior.room_id,exterior.route_id,id) if is_instance_valid(exterior) and id in [&"door_west",&"door_east",&"tunnel"] else {}
+	return ExteriorRouteCatalog.link(exterior.room_id,exterior.route_id,id) if is_instance_valid(exterior) and id in [&"door_west",&"door_east",&"tunnel",&"sect_branch"] else {}
 
 func _update_entry_card() -> void:
 	if entry_card == null: return
@@ -286,6 +294,11 @@ func _update_entry_card() -> void:
 	var target: Dictionary = _entry_destination(id)
 	if target.is_empty():
 		entry_card.hide_preview(true)
+		prompt.show()
+		return
+	if target["room"] in SectRouteCatalog.ROOMS and not sect_journey.can_enter(target["room"]):
+		entry_card.hide_preview(true)
+		prompt.text="Lối chưa mở · E đọc sổ tiếp nhận gần cổng; sân trong cần trình đủ hai ghi chép."
 		prompt.show()
 		return
 	if not _can_travel() or not player.motor.is_grounded() or door_latched or get_tree().paused:
