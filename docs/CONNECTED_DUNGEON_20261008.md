@@ -1,5 +1,7 @@
 # Nối năm ải Phong Ấn vào hầm ngục chính
 
+**Cập nhật phiên tiếp tục sau18h:** Đã ghép main525355d sau strict273/273, có backup/hash guard; xem hậu kiểm và giới hạn trong báo cáo tiếp tục. Responsive native49/49 kiểm thanhHPboss800 và HUD; fixtureDepthQuest đã dùng số hiển thị4. Full strict và biên bản ghép mới ở [báo cáo tiếp tục](SECT_MAPS_RESUME_20261008.md). Phần “chưa ghép/chưa strict” bên dưới ghi checkpoint trước18h, không phải trạng thái cuối phiên mới.
+
 Yêu cầu ngày 08/10/2026: các ải đang ở bảng Lạc Ấn phải thành những tầng sâu của cùng hầm ngục. Hạn phiên là 18:00 giờ Việt Nam (11:00 UTC). Phần nối tầng được triển khai trong checkout riêng `C:/Users/Admin/.codex/worktrees/sect-path-repair/hầm ngục`, **chưa ghép vào bản chính**. Bản chính đã có gói sửa FPS/tiến triển tại commit `327c627`.
 
 ## Tuyến trong bản thử

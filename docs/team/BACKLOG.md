@@ -76,3 +76,6 @@ Owner mở rộng sect_research: cập nhật fixtures npc_population_test, npc_
 ### 2026-10-08 10:36UTC — core đã ghép, tiếp tục nối tầng theo yêu cầu mới
 - Core105targets main đã ghép sau263/263strict; hậuimport/numeric64/copiedsave110/nativeFPS11 sạch, nguyênsave tới10:29:01. User mởeditor/game sauđó; GPUUIpost bịguardchặn trướclaunch, khôngkillgame.
 - Yêu cầu mới: nămảiDepth trởthành tầng4–8 của hầmngụcchính sauGolemopening. sect_reference ownWorldCampaign/DepthCampaign +testsegment, sect_research ownGameFlow bridge +testcarry, rootUIguide/labels/runner/integrator. GiữlocalprogressIDs vàsave; draftngoàicheckout tới root nhảsource. stuck_audit chỉauditcontract/rollback. KhôngGPU khiuserđangchơi.
+## Tiếp tục sau18h — root giữ ownership connector/tông môn
+
+Người dùng yêu cầu tiếp tục các việc dở gồm map tông môn; mốc18h cũ không còn là điểm dừng của lần tiếp tục. Không gọi thêm agent. Root dùng private2611f63, nối bốn map/quest/NPC, kiểm input/native/schema4 và strict cuối rồi mới ghép. Đã ghép main525355d sau strict273/273, có backup/hash guard; xem hậu kiểm và giới hạn trong báo cáo tiếp tục. [Báo cáo](../SECT_MAPS_RESUME_20261008.md). Còn witness/truy nã/hire/kế nhiệm/animation riêng, đã ghi roadmap; không đổi motor, cân bằng kinh tế hay dùng save thật cho QA.

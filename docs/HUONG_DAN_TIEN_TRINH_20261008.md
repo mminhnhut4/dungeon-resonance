@@ -1,6 +1,6 @@
 # Dungeon Resonance — đường đi từ Luyện Khí đến Trúc Cơ
 
-Ngày 08/10/2026. Đối chiếu source và cấu hình hiện hành. Các giá dưới đây là thông số thử nghiệm, chưa phải cân bằng cuối. Giá hiển thị trong save/bảng giao dịch đang chơi là nguồn quyết định. Phần **học bùa tại Thanh Vy, mana tối đa, xác nhận mua và hướng dẫn bước tiếp theo** đã ghép core vào bản chính17:28VN. Phần nối năm ải thành tầng4–8 đang được triển khai riêng, hướng dẫn dưới mô tả checkpoint core đã kiểm.
+Ngày 08/10/2026. Đối chiếu source và cấu hình hiện hành. Các giá dưới đây là thông số thử nghiệm, chưa phải cân bằng cuối. Giá hiển thị trong save/bảng giao dịch đang chơi là nguồn quyết định. Phần **học bùa tại Thanh Vy, mana tối đa, xác nhận mua và hướng dẫn bước tiếp theo** đã ghép core vào bản chính17:28VN. Phiên tiếp tục nối năm ải thành tầng4–8 và mở nhánh tông môn; trạng thái nghiệm thu/ghép ở [báo cáo mới](SECT_MAPS_RESUME_20261008.md).
 
 ## Bắt đầu một chuyến có mục tiêu
 
@@ -13,9 +13,9 @@ Ngày 08/10/2026. Đối chiếu source và cấu hình hiện hành. Các giá 
 
 ## Đi năm tầng sâu và chọn lại tầng đã vượt qua
 
-Sau khi hạ Golem mở đầu, về sân căn cứ và gặp **Lạc Ấn ở phía phải** bằng E. Nhận bản đồ Ngũ Tầng Phong Ấn, chuẩn bị trang bị rồi xuống tầng1. Đọc chiến thuật từng tầng trong bảng của Lạc Ấn và trên HUD; dọn địch trước khi dùng E ở lối ra để đi tiếp hoặc quay về nhặt/nâng đồ.
+Sau khi hạ Golem mở đầu và lưu phần thưởng thành công, tới cổng phải, E → **Đi sâu · Tầng4/8**. Chuyến tiếp tục với đúng máu/mana/đồ/hồi chiêu đang có; có thể ở lại nhặt đồ hoặc về sảnh. Khi báo lỗi lưu, dùng retry trước khi đi tiếp. Bảng Lạc Ấn vẫn là nơi xem chiến thuật và chuẩn bị lối tắt cho chuyến sau.
 
-Đã thêm ô **chọn tầng** dưới danh sách chiến thuật. Khi đã hoàn tất và lưu tầngN, chuyến sau có thể bắt đầu ở tầng1..N. Ví dụ đã vượt tầng3 thì chọn thẳng **Tầng3 · Hàn Kính**, không cần đánh lại1–2; muốn tới tầng4, vẫn phải dọn tầng3 của chuyến đó rồi qua cửa tiếp. Quái/rương/boss của chuyến mới còn nguyên, lựa chọn không cấp lại cờ thắng hoặc thưởng nhiệm vụ. Tính năng này chỉ áp cho Ngũ Tầng của Lạc Ấn; hành trình Golem mở đầu ở mục trên vẫn theo lối cũ.
+Khi đã vượt và lưu một tầng sâu, gặp **Lạc Ấn phía phải sân căn cứ**, E rồi chọn tầng đã hoàn tất. Ví dụ đã vượt **Tầng6 · Hàn Kính** thì có thể bắt đầu chuyến mới từ tầng6; tới tầng7 vẫn cần dọn tầng6 của chuyến đó. Tầng4–8 tương ứng VânThạch, MộcCăn, HànKính, XíchLô, UMinhTháp. Quái/rương/boss của chuyến mới còn nguyên; lựa chọn không cấp lại cờ thắng hoặc thưởng nhiệm vụ. Lối tắt không tính một chiến thắng Golem mới.
 
 Trong bản rộng Vân Thạch, đường chính đi sang phải qua ba nhóm hộ vệ. Ngay đầu tầng, **Bậc Mây** dẫn lên rương ở bục cao; đây là nhánh tùy chọn, nhảy theo ba bậc rồi E mở/nhặt. Có thể thả xuống đường chính để tiếp tục. Rương không tự đưa đồ vào kho: nhặt đồ còn trên đất trước khi rời phòng.
 
@@ -109,3 +109,10 @@ Không mở thêm hệ thống lớn để lấp chỗ trống trước khi vòn
 Hướng cốt truyện tiếp theo đã ghi trong [roadmap tông môn](SECT_STORY_ROADMAP_20261008.md): hai khu vực Thanh Vân/Xích Lô, điều tra nguyên nhân phù trận, gia nhập/học công pháp và khiêu chiến có đồng thuận để nhận chức chưởng môn. Các map và cơ chế mới này chưa được triển khai.
 
 Nguồn đối chiếu trong dự án: `data/cultivation/opening_cultivation_config_v1.json`, `scripts/cultivation/opening_cultivation_state.gd`, `cultivation_style_runtime.gd`, `scripts/runtime/gear_session.gd`, `scripts/loot/loot_spawner.gd`, `scripts/resources/world_progression_catalog.gd`, và `scripts/ui/opening_quest_cards.gd`.
+
+## Ghé hai môn phái và mở sân trong
+
+- **Thanh Vân:** theo đường bộ tới P03, đọc Sổ tiếp nhận gần cửa môn phái, nhận việc rồi vào Vân Quan. Ghi mốc tây và đông bằng E → Ghi quan sát; nộp ở sổ cạnh Phùng Yên Trúc để mở Tùng Đình.
+- **Xích Lô:** đi tới B04, đọc sổ gần cửa cạnh tuyến xưởng Hạnh, nhận việc rồi vào Đê Đất Đỏ. Ghi hai mốc, nộp ở sổ cạnh Tống Hồng Diệp để mở Sân Dẫn Thủy.
+- M → chọn nhiệm vụ môn phái để đọc bước tiếp và theo dõi mũi tên. Cửa tây đưa về đường cũ. Chấp sự dưỡng thương không làm mất sổ tiếp nhận. Quan sát xong nhưng chọn Để sau thì chưa được tính ghi mốc.
+- Hiện nhận **quyền khách**, không tốn tiền và không có thưởng tiền/đồ. Gia nhập, học công pháp phái, thuê đồng hành và khiêu chiến làm chưởng môn vẫn chưa mở; không có lựa chọn ẩn để nhận chúng. [Nội dung đã làm và phần tiếp theo](SECT_MAPS_RESUME_20261008.md).

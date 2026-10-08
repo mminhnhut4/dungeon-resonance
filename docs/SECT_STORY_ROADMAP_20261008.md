@@ -1,5 +1,7 @@
 # Cốt truyện và lộ trình tông môn — 08/10/2026
 
+**Cập nhật triển khai sau18h:** bốn phòng `tv01_cloud_gate`, `tv02_pine_court`, `xl01_red_causeway`, `xl02_cooling_yard`, hai chấp sự và nhiệm vụ mở quyền khách đã được nối trong bản nghiệm thu. Đã ghép main525355d sau strict273/273, có backup/hash guard; xem hậu kiểm và giới hạn trong báo cáo tiếp tục. Xem [báo cáo hiện hành](SECT_MAPS_RESUME_20261008.md). Các phòng thứ ba, gia nhập, thuê người, báo tin/truy nã, công pháp và kế nhiệm bên dưới vẫn là thiết kế; phần nền tảng “chưa có map” phản ánh lúc soạn ban đầu.
+
 **Đây là tài liệu thiết kế cho bước tiếp theo, chưa triển khai hệ tông môn đầy đủ.** Soạn trong private `sect-path-repair`, theo skill portable [godot-dungeon-dev](../.agents/skills/godot-dungeon-dev/SKILL.md). Phạm vi lần giao này chỉ là tài liệu; không đổi source, map, asset, save, không chạy engine. Ưu tiên hiện tại vẫn là hiệu năng, sửa lỗi và nghiệm thu những thay đổi đang có. Mốc 17:00 giờ Việt Nam ngày 08/10, tức 10:00 UTC, không phải cam kết hoàn thành các hệ thống lớn bên dưới.
 
 ## 1. Luật đã chốt và đề xuất sáng tạo
