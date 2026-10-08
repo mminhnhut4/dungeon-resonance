@@ -1,6 +1,6 @@
 # Phối hợp và hướng phát triển
 
-Đây là kế hoạch đề xuất triển khai từ checkpoint2026-10-08, chưa gán tên người hay cam kết lịch khi chưa biết sức làm của nhóm. Một người có thể giữ nhiều vai; **chỉ một integrator ghép vào main**.
+Đọc [hiện trạng, cốt truyện và lộ trình cập nhật](PROJECT_AND_STORY.md) trước: tuyến1–8 và bốn map tông môn đã ghép; các hệ môn phái lớn vẫn là thiết kế. Các mốc M0–M5 dưới đây là trình tự làm việc, cần đối chiếu backlog hiện hành. Đây là kế hoạch đề xuất triển khai từ checkpoint2026-10-08, chưa gán tên người hay cam kết lịch khi chưa biết sức làm của nhóm. Một người có thể giữ nhiều vai; **chỉ một integrator ghép vào main**.
 
 ## Vai trò và ranh giới
 
@@ -34,7 +34,7 @@ File chung cần đặt owner trước khi sửa: `project.godot`, `scripts/hub/
 | M4 · mở rộng có duyệt | Chọn một slice roadmap còn thiếu: thưởng1/3, một đột phá/nhánh, bí mật/NPC trợ lực | Scope và balance được duyệt; save transaction/migration và integration chơi được |
 | M5 · hướng Steam | Export offline, QA máy mục tiêu, gamepad/audio/UI và chuẩn bị store | Là mốc sau; ZIP source này không là build Steam |
 
-Run15–20phút là mục tiêu để đo, không lịch sản xuất mặc định. Chưa mở boss/tầng mới trong M0–M2. Các giá/loot chưa được người dùng chốt vẫn là prototype. Bản Nguyên Thần Thạch chưa có nguồn loot hợp lệ trong roster hiện tại.
+Run15–20phút là mục tiêu để đo, không lịch sản xuất mặc định. Trong M0–M2, ưu tiên ổn định tuyến1–8 và roster đã ghép; phần mở thêm boss/tầng cần một scope mới được duyệt. Các giá/loot chưa được người dùng chốt vẫn là prototype. Bản Nguyên Thần Thạch chưa có nguồn loot hợp lệ trong roster hiện tại.
 
 ## Nhịp làm việc nhẹ
 

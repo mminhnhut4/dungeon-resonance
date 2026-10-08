@@ -1,6 +1,10 @@
 # Kiểm tra và bàn giao có bằng chứng
 
-## Checkpoint trước đóng gói
+## Checkpoint hiện hành 08/10 sau khi ghép map
+
+Xem [SECT_MAPS_RESUME](../SECT_MAPS_RESUME_20261008.md): strict candidate frozen273/273, main validator234/37, numeric64, savecopy136 và native tông môn276/connector49. Đây là evidence của checkpoint đã nghiệm thu, không phải kiểm thử mới khi upload tài liệu. Fixture source_id giả đã sửa; PACKAGING_VERIFICATION.json và phần Oct7 bên dưới giữ lịch sử. Native cleanup crash còn chưa xác định, tải map56–104ms và frame-time cần kiểm tiếp. [Tóm tắt cho nhóm](PROJECT_AND_STORY.md).
+
+## Checkpoint lịch sử trước ZIP đầu
 
 Combat Oct7 trên bản chính: import,268 headless,21 native combat,5 cold-load sạch/exit0; probe4 native walk bổ sung sạch. Atlas resident/save writer có byte guard/journal ẩn coalesce đã ghép; bùa5đơn/Bão Lửa và Golem UV mesh nối runtime. Mẫu RTX5080/Compatibility1152×648/cap120: p99 normal37.578→23.431ms, >25ms21→4;4 mẫu còn lại mang hitstop flag. Đây là mẫu hữu hạn, không đảm bảo mọi trận/máy.
 

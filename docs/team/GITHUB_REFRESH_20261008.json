@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-08",
+  "scope": "Publish current local history and update project/story/roadmap documentation; no new gameplay implementation",
+  "runtime_base": "9bf5bba227093377be3e223883140f1c33eaa300",
+  "engine_verified": "4.7.2.stable.official.ed1daf0bf",
+  "backup": "Git bundle outside checkout; original source remains untouched during preparation",
+  "reused_qa": {
+    "strict_candidate_gates": 273,
+    "report": "../SECT_MAPS_RESUME_20261008.md",
+    "new_engine_test": false,
+    "new_graphical_or_frame_time_test": false
+  },
+  "historical_package_report": "PACKAGING_VERIFICATION.json belongs to first ZIP, not current main",
+  "selected_images": [
+    {
+      "file": "thanh_van.png",
+      "source": "main_sect_native/tv02_pine_court_center.png",
+      "sha256": "7ce2def626d1d0618e0f267a1c1299ba4cad94a143d362b66e2c6c0d03a2797f"
+    },
+    {
+      "file": "xich_lo.png",
+      "source": "main_sect_native/xl02_cooling_yard_center.png",
+      "sha256": "3d4af2a721697217f5f0854be956dfff47457494279570e1de64368bce6ec2aa"
+    },
+    {
+      "file": "floor_8.png",
+      "source": "main_connected_native/connected_floor_8_800.png",
+      "sha256": "51829d7e937b91686745f78c76fb99d7baa873e896bf3f401e96e5b52e051cc9"
+    }
+  ],
+  "remaining_limits": [
+    "native cleanup crash root cause unresolved",
+    "map entry 56-104ms in previous sample",
+    "natural playtest and final balance pending",
+    "full sect causality/companion/succession systems remain design"
+  ]
+}

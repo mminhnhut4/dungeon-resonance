@@ -1,8 +1,15 @@
 # Dungeon Resonance — Godot 4 prototype
 
-**Bàn giao nhóm 2026-10-08:** bắt đầu tại [hướng dẫn thành viên](docs/team/START_HERE.md). Có [kế hoạch/owner](docs/team/TEAM_PLAN.md), [map](docs/team/MAP_GUIDE.md), [bùa](docs/team/SPELL_GUIDE.md), [nhân vật](docs/team/CHARACTER_GUIDE.md), [skill portable](docs/team/AI_SKILL_GUIDE.md), [QA](docs/team/QA_AND_HANDOFF.md) và [backlog](docs/team/BACKLOG.md). Repo dùng chung [mminhnhut4/dungeon-resonance](https://github.com/mminhnhut4/dungeon-resonance), **private**; upload/commit xác nhận trong receipt bàn giao. Source snapshot không phải bản game export.
+**Dành cho thành viên:** đọc [dự án và cốt truyện](docs/team/PROJECT_AND_STORY.md) rồi [hướng dẫn bắt đầu](docs/team/START_HERE.md). Có [kế hoạch/owner](docs/team/TEAM_PLAN.md), [map](docs/team/MAP_GUIDE.md), [bùa](docs/team/SPELL_GUIDE.md), [nhân vật](docs/team/CHARACTER_GUIDE.md), [skill portable](docs/team/AI_SKILL_GUIDE.md), [QA](docs/team/QA_AND_HANDOFF.md) và [backlog](docs/team/BACKLOG.md). Repo [mminhnhut4/dungeon-resonance](https://github.com/mminhnhut4/dungeon-resonance) giữ **private**. Dùng nhánh **main** để xem nguồn mới; ZIP release bàn giao đầu ngày là snapshot lịch sử. Source chưa phải game export.
 
-**Combat hiện hành Oct7:** atlas resident, cache save có byte guard, journal ẩn coalesce; bùa/cast/contact và Golem UV mesh rig đã nối runtime. Import/268headless/21native/5cold-load sạch, probe4walk sạch; p99 mẫunormal37.578→23.431ms. Còn save peaks, layout800×600 và native crash lịch sử chưa kết luận; chưa fullstrict/longrun mới. [Báo cáo và giới hạn](docs/COMBAT_VISUAL_FIX_20261007.md). Các số phía dưới là checkpoint lịch sử.
+**Hiện hành 08/10/2026:** tuyến Golem nối tầng4–8; bốn map Thanh Vân/Xích Lô và hai nhiệm vụ mở sân trong đã ghép. Core có học/chế bùa, mana tối đa, hướng dẫn tiến triển và giảm chi phí mastery/save. Gia nhập, đồng hành, nhân chứng/truy nã và kế nhiệm vẫn là thiết kế. [Dự án + cốt truyện + hướng phát triển + ảnh game](docs/team/PROJECT_AND_STORY.md) · [Cách chơi hiện tại](docs/HUONG_DAN_TIEN_TRINH_20261008.md) · [Nghiệm thu và giới hạn](docs/SECT_MAPS_RESUME_20261008.md).
+
+
+Ảnh native bản chính 08/10, fixture kiểm thử; không phải benchmark hoặc playtest tự nhiên:
+
+![Thanh Vân · Tùng Đình](docs/team/evidence/current_20261008/thanh_van.png)
+
+[Cốt truyện đề xuất “Hai lời thề giữ đường” và các bước tiếp theo](docs/team/PROJECT_AND_STORY.md#cốt-truyện-mở-rộng-đề-xuất-hai-lời-thề-giữ-đường).
 
 **2026-10-03:** opening/save/QA mặc định OFF, resident P2, polish quái hiện hữu và khung cổ vàng–đỏ chỉ có tên khu vực đã áp dụng vào dự án. Full strict trực tiếp đạt148gate/8.639check,170script/33scene; GPU trực tiếp519check/86ảnh thực. Xem [Project State](docs/PROJECT_STATE.md) để phân biệt phần đang chạy, các mốc lịch sử và phần thiết kế/worker chưa kích hoạt. Bản sửa NPC/cửa hàng5.666check/GPU31capture ngày2026-10-02 được giữ tại [báo cáo lịch sử](docs/TARGETED_REPAIR_20261002.md).
 

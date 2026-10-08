@@ -1,13 +1,13 @@
 # Bắt đầu cùng Dungeon Resonance
 
-Gói nguồn bàn giao ngày **2026-10-08**. Godot **4.7.2 stable**, GDScript, renderer **Compatibility**. Đây là prototype hành động 2D offline hướng tới Steam; chưa phải game export hoặc bản phát hành.
+Nguồn main cập nhật ngày **2026-10-08**, sau khi ghép core và nhánh tông môn. Đọc [dự án, cốt truyện và hướng phát triển](PROJECT_AND_STORY.md) trước. ZIP release bàn giao đầu ngày là snapshot cũ; ưu tiên clone/pull main hoặc Code → Download ZIP để lấy hiện tại. Godot **4.7.2 stable**, GDScript, renderer **Compatibility**. Đây là prototype hành động 2D offline hướng tới Steam; chưa phải game export hoặc bản phát hành.
 
 ## Mở lần đầu
 
 1. Clone repo được ghi trong [trạng thái GitHub](GITHUB_STATUS.md), hoặc giải nén ZIP vào một thư mục mới. Thành viên phát triển bằng Git nên clone; ZIP là snapshot để gửi và đối chiếu, không có lịch sử Git.
 2. Chuẩn bị Godot 4.7.2 từ [nguồn chính thức](https://godotengine.org/download/archive/). Gói không kèm engine/executable. Không nâng phiên bản hoặc đổi renderer riêng trên một nhánh nội dung.
 3. Import `project.godot`, chờ import xong; main là `scenes/maps/prologue_hub.tscn`. F5 mở Căn Cứ Lữ Khách. F6 chỉ chạy scene đang chọn; các scene Alpha/TestLevel cũ không thay main.
-4. Đọc [AGENTS](../../AGENTS.md), [trạng thái](../PROJECT_STATE.md), [kiến trúc](../PROJECT_ARCHITECTURE.md), quyết định mới nhất trong [DECISIONS](../DECISIONS.md), [báo cáo combat hiện hành](../COMBAT_VISUAL_FIX_20261007.md) và nhật ký mới nhất. Các tài liệu mốc cũ giữ giá trị lịch sử.
+4. Đọc [AGENTS](../../AGENTS.md), [trạng thái](../PROJECT_STATE.md), [kiến trúc](../PROJECT_ARCHITECTURE.md), quyết định mới nhất trong [DECISIONS](../DECISIONS.md), [báo cáo nghiệm thu hiện hành](../SECT_MAPS_RESUME_20261008.md) và [hướng dẫn tiến triển](../HUONG_DAN_TIEN_TRINH_20261008.md) và nhật ký mới nhất. Các tài liệu mốc cũ giữ giá trị lịch sử.
 5. Khi chơi thử, dùng **save riêng** qua [hướng dẫn QA](QA_AND_HANDOFF.md). Main thông thường ghi `user://`; không dùng save thật để thử giao dịch/rèn/chết.
 
 Điều khiển: A/D chạy, Space nhảy, Shift dash; chuột trái đánh, chuột phải tung bùa, hướng theo con trỏ 360°. E tương tác, Tab hành trang/bùa, C sinh tồn, M nhiệm vụ/map; ` hoặc ~ bật chữ debug. QA cấp đồ/warp mặc định tắt.
@@ -29,7 +29,7 @@ Vòng chơi: căn cứ → chọn trang bị/bùa → khám phá/chiến đấu 
 
 Mục tiêu run 15–20 phút, NPC/khám phá và đột phá mở động tác là định hướng đã chọn. Thời lượng này **chưa được chứng minh bằng playtest tự nhiên**. Nhiều ý tưởng trong roadmap cũ đã được triển khai một phần, vì vậy xem trạng thái/code hiện hành trước khi nhận task. Không mặc định mở tầng/boss mới từ một tài liệu thiết kế.
 
-Bản hiện hành đã ghép sửa combat/bùa/Golem và có kiểm tra tập trung. Còn khựng liên quan save đồng bộ, hai lỗi layout800×600 và native crash lịch sử chưa kết luận; Strict mặc định trên ZIP mới đã qua 25 gate rồi dừng ở campaign_60 vì fixture dùng source_id giả; các gate sau chưa chạy. Kết quả và raw log nằm trong [PACKAGING_VERIFICATION](PACKAGING_VERIFICATION.json). Xem [QA](QA_AND_HANDOFF.md) để phân biệt bằng chứng cũ và kiểm tra đóng gói mới.
+Bản hiện hành đã nối Golem→tầng4–8 và bốn map tông môn; hai nhiệm vụ mở quyền khách vào sân trong. Strict candidate frozen273/273 và hậu kiểm main đã ghi trong [báo cáo](../SECT_MAPS_RESUME_20261008.md), không phải lượt chạy mới của lần upload tài liệu. Lỗi source_id giả ở ZIP đầu đã sửa bằng fixture sống; [PACKAGING_VERIFICATION](PACKAGING_VERIFICATION.json) giữ kết quả lịch sử, không dùng làm trạng thái main mới. Còn native cleanup crash, đỉnh frame-time và tải map; xem [QA](QA_AND_HANDOFF.md).
 
 ## Nguồn, quyền sử dụng, dữ liệu
 

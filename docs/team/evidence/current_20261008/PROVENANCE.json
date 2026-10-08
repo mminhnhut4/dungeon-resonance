@@ -1,0 +1,50 @@
+{
+  "runtime_commit": "525355df759e0cf973419d8379545367a9de1557",
+  "images": [
+    {
+      "file": "thanh_van.png",
+      "source": "main_sect_native/tv02_pine_court_center.png",
+      "sha256": "7ce2def626d1d0618e0f267a1c1299ba4cad94a143d362b66e2c6c0d03a2797f"
+    },
+    {
+      "file": "xich_lo.png",
+      "source": "main_sect_native/xl02_cooling_yard_center.png",
+      "sha256": "3d4af2a721697217f5f0854be956dfff47457494279570e1de64368bce6ec2aa"
+    },
+    {
+      "file": "floor_8.png",
+      "source": "main_connected_native/connected_floor_8_800.png",
+      "sha256": "51829d7e937b91686745f78c76fb99d7baa873e896bf3f401e96e5b52e051cc9"
+    }
+  ],
+  "original_runs": [
+    {
+      "label": "main_sect_native",
+      "script": "res://tests/sect_routes_test.gd",
+      "args": [
+        "--hz=60",
+        "--native-approved"
+      ],
+      "headless": false,
+      "startedUtc": "2026-10-08T12:08:16.9661341Z",
+      "finishedUtc": "2026-10-08T12:08:34.4916371Z",
+      "exitCode": 0,
+      "diagnostics": [],
+      "passed": true
+    },
+    {
+      "label": "main_connected_native",
+      "script": "res://tests/connected_dungeon_visual_probe.gd",
+      "args": [
+        "--native-approved"
+      ],
+      "headless": false,
+      "startedUtc": "2026-10-08T12:09:04.125233Z",
+      "finishedUtc": "2026-10-08T12:09:14.0699267Z",
+      "exitCode": 0,
+      "diagnostics": [],
+      "passed": true
+    }
+  ],
+  "new_graphical_test_in_upload_task": false
+}

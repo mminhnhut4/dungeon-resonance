@@ -1,13 +1,13 @@
 # Backlog khởi động nhóm
 
-Snapshot2026-10-08. **Owner chưa phân công**; điền username sau khi nhóm nhận việc. Các task dưới là việc tiếp theo, không ghi đè mốc đã ghép ngàyOct7.
+Snapshot2026-10-08. **Owner chưa phân công**; điền username sau khi nhóm nhận việc. Bảng khởi động đã được đối chiếu mốc mới: core và bốn map tông môn đã ghép, xem [tóm tắt hiện hành](PROJECT_AND_STORY.md). Nhật ký ownership phía dưới giữ các bước private→main theo thời điểm; không nhận lại phần đã ghép chỉ từ một dòng cũ.
 
 | ID | Ưu tiên / trạng thái | Task cụ thể | Acceptance / phụ thuộc |
 |---|---|---|---|
 | DR-001 | P0 / Todo | Đo khựng còn lại khi mastery/save trong trận thật | A/B cùng seed/engine/scene; p95/p99/max và mẫu hitstop; xác minh bottleneck trước sửa, giữ durability/seal/rollback |
 | DR-002 | P0 / Todo | Sửa map/quest cards ở800×600 | Tái hiện baseline trước; nút/scroll/focus đọc được,1280×720 không hồi quy; giữ input/reward |
 | DR-003 | P0 / Todo | Điều tra native crash lịch sử nếu tái hiện | Source/engine exact, exit/crash/log và ablation; không gắn nhãn đã fix từ gate sạch đơn lẻ |
-| DR-004 | P0 / Todo | Sửa fixture nguồn hit rồi tiếp tục strict | Lượt đóng gói Oct8 dừng campaign_60:31 assertions/exit0 nhưng ERROR ObjectDB. SurvivalTestBase dùng source_id987654 giả, EnemyHitAggro gọi instance_from_id. Fixture cần nguồn sống đúng contract; giữ runtime và không lọc ERROR. Các gate sau chưa chạy. Xem PACKAGING_VERIFICATION.json |
+| DR-004 | Merged main | Fixture nguồn hit hợp lệ | Đã thay ID giả bằng nguồn sống đúng lifetime; xem ../SYNTHETIC_DAMAGE_FIXTURE_20261008.md. Checkpoint tiếp tục đạt strict273/273 và hậu kiểm main theo ../SECT_MAPS_RESUME_20261008.md. PACKAGING_VERIFICATION.json là kết quả ZIP đầu; native crash lịch sử vẫn cần theo dõi riêng. |
 | DR-005 | P0 / Todo | Playtest opening tự nhiên, fresh save | Không warp/clear/directgrant; đánh Slime, ghép bùa, boss/retreat, rèn/cất, load lại; timed notes và lỗi thực |
 | DR-006 | P1 / Todo | Native readability5bùa+10 cặp trong trận | Kiểm hướng/windup/active/contact/recovery, blocked/miss và boss;10 cặp logic cũ không thay native proof |
 | DR-007 | P1 / Todo | Audit animation quái/NPC hiện hữu | Bảngstate/asset/binding/clock; ưu tiên silhouette fallback đang có; không thêm archetype mới |
