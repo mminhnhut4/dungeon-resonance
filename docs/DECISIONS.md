@@ -137,3 +137,7 @@ Seal bùa, thân đạn và Golem UV rig là presentation đọc committed snaps
 
 
 Hậu kiểm cùng ngày: body rig cuối dùng MeshInstance2D/ArrayMesh tĩnh, giữ UV/khớp/đồng hồ; bỏ nhánh Polygon2D sau native teardown crash. Baseline/ablation và mesh private/main đều có receipt riêng; chỉ final mesh được nghiệm thu focused21native/exit0. Root cause cấp engine0x547F2C chưa khẳng định; xem báo cáo combatOct7.
+
+## Phạm vi tiếp tục ngày2026-10-08
+
+Người dùng mở rộng sang năm tầng xuống sâu, boss tầng5 hai phase, animation quái theo tầng và NPC nhiệm vụ rõ hơn; phạm vi này thay giới hạn tạm không mở tầng ở yêu cầu trước. Giữ tu tiên/gear-driven classes/bùa primary/khám phá theo nhiệm vụ. DepthCampaign subclass và DepthProgress extension dùng authority SanctuaryProfile hiện có, không thêm save writer. Presentation mới đọc FSM/committed snapshot/hitbox, không điều khiển damage. Chỉ root ghép sau private gates, backup+exact hash guard; không push/upload. Bản candidate và evidence/giới hạn được ghi tại CONTINUATION_20261008.md.

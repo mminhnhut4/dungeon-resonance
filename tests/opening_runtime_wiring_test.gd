@@ -21,13 +21,13 @@ func _check(ok: bool, label: String) -> void:
 func _step(count: int = 4) -> void:
 	for _index: int in count: await physics_frame
 
-func _fixture(label: String) -> SanctuaryProfile:
+func _fixture(label: String, seed_value: int = 4) -> SanctuaryProfile:
 	var value := SanctuaryProfile.new()
 	value.save_path = directory + "/" + label + "/profile.json"
 	value.souls = 25; value.material_stash[&"linen_fiber"] = 8
 	value.material_stash[&"dust"] = 10; value.material_stash[&"crystal"] = 20
 	_check(value.save(), label + ": durable isolated format1 fixture")
-	_check(value.commit_cultivation(Model.initial_proposal(Model.new_progress(4),value.material_stash,value.souls,value.boss_proofs)), label + ": canonical format2 initialized")
+	_check(value.commit_cultivation(Model.initial_proposal(Model.new_progress(seed_value),value.material_stash,value.souls,value.boss_proofs)), label + ": canonical format2 initialized")
 	return value
 
 func _open(path: String) -> ExteriorHub:
@@ -97,7 +97,9 @@ func _shot(tag: String) -> void:
 	captures += 1
 
 func _product_social_and_courier() -> void:
-	var fixture: SanctuaryProfile = _fixture("product")
+	# Seed57 has both existing authored herb sources under unchanged tuning.
+	# Other recovery/migration fixtures keep their previous seed4 and costs.
+	var fixture: SanctuaryProfile = _fixture("product",57)
 	var hub: ExteriorHub = await _open(fixture.save_path)
 	_check(hub != null and flow.profile.social_transactions_available() and hub.courier != null, "Actual main scene enables reviewed social and courier owners")
 	if hub == null: await _cleanup(); return
@@ -167,11 +169,25 @@ func _product_social_and_courier() -> void:
 	hub.open_station(&"training")
 	_check(hub.station_content.columns == 1 and hub.station_content.find_child("CultivationStartPlayer",true,false) != null, "Actual product cultivation panel fits the shared Container as one column")
 	await _shot("product_training_panel")
-	hub.close_station(); hub.open_station(&"stash"); await _step()
+	hub.close_station()
+	# Controlled positive stock must include its canonical lineage origins;
+	# directly assigning bank counts would invalidate the common format2 codec.
+	var lineage_dust_before: int = flow.profile.material_stash[&"dust"]
+	for node_id: String in Model.NODE_IDS:
+		var harvest: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"harvest",{"node_id":node_id},"qa_stash_harvest_"+node_id)
+		_check(flow.profile.commit_cultivation(harvest), "Controlled stash fixture commits real origin/stock together: " + node_id)
+	var pill: Dictionary = Model.propose(flow.profile.cultivation_progress,flow.profile.material_stash,flow.profile.souls,flow.profile.boss_proofs,"craft_pill",{"origin_id":Model.NODE_IDS[0]},"qa_stash_craft_pill")
+	_check(flow.profile.commit_cultivation(pill) and flow.profile.material_stash[&"aptitude_herb"] == 1 and flow.profile.material_stash[&"aptitude_pill"] == 1 and flow.profile.material_stash[&"dust"] == lineage_dust_before-2 and Model.valid(flow.profile.cultivation_progress,flow.profile.material_stash), "Controlled positive lineage rows use actual harvest/craft receipts and exact two-dust cost")
+	hub.open_station(&"stash"); await _step()
 	_check(hub.station_content.columns == 2 and flow.profile.profile_version == 2, "Two-column stash uses the actual common format2 owner")
+	var lineage_before: Dictionary = flow.profile.material_stash.duplicate()
+	var lineage_carried_before: Dictionary = hub.gear.inventory.materials.duplicate()
+	var lineage_bytes: PackedByteArray = FileAccess.get_file_as_bytes(flow.profile.save_path)
 	for id: StringName in [&"aptitude_herb",&"aptitude_pill"]:
 		var row: Button = hub.station_content.find_child("WithdrawMaterial_"+String(id),true,false) as Button
 		_check(row != null and row.disabled and row.get_signal_connection_list("pressed").is_empty(), "Lineage-bound product stash row has no transfer callback: " + String(id))
+		if row != null: row.pressed.emit()
+	_check(flow.profile.material_stash == lineage_before and hub.gear.inventory.materials == lineage_carried_before and FileAccess.get_file_as_bytes(flow.profile.save_path) == lineage_bytes, "Forced lineage UI presses preserve banked/carried counts and exact canonical save bytes")
 	await _shot("product_stash_v2")
 	hub.close_station()
 	await _cleanup()

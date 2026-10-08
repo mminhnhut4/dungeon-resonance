@@ -123,11 +123,13 @@ func _run() -> void:
 	hub.economy.deposit_all()
 	hub.player.relocate(hub.stations[&"merchant"].global_position)
 	await _key(KEY_E)
-	var sell_essence: Button
-	for node: Node in hub.station_content.get_children():
-		if node is Button and node.text == "Bán Tinh Chất Slime":
-			sell_essence = node
+	# ServiceItemCard retains the authored action NodePath; its accessible
+	# caption now includes the whole-stash action and the material title.
+	var sell_essence: Button = hub.station_content.get_node_or_null("SellMaterial_slime_essence") as Button
 	_check(hub.station_open and sell_essence != null and not sell_essence.disabled, "E at Kael exposes the approved essence sale through real GUI")
+	if not hub.station_open or sell_essence == null or sell_essence.disabled:
+		await _abort_fixture(flow)
+		return
 	sell_essence.pressed.emit()
 	_check(flow.profile.coins == 6 and flow.profile.material_stash[&"slime_essence"] == 0 and flow.profile.material_stash[&"crystal"] == 3, "Kael button sells only selected stored material once at its prototype price")
 	hub.close_station()
@@ -148,6 +150,9 @@ func _run() -> void:
 		if node is Button and node.text.begins_with("Sửa "):
 			repair = node
 	_check(hub.station_open and repair != null and not repair.disabled, "E at the smith shows a repair quote using stored materials")
+	if not hub.station_open or repair == null or repair.disabled:
+		await _abort_fixture(flow)
+		return
 	repair.pressed.emit()
 	_check(not damaged.broken and damaged.loot_rolled and damaged.drop_bonus == 0.04 and damaged.affix_value == 0.02 and flow.profile.material_stash[&"metal"] == 0 and flow.profile.material_stash[&"dust"] == 0, "Smith GUI repairs the same UID without rerolling or duplicating its saved loot state")
 	hub.close_station()
@@ -240,6 +245,9 @@ func _run() -> void:
 		if node is Button and node.text.begins_with("Sửa "):
 			repair = node
 	_check(repair != null and not repair.disabled, "Victorious carried drop reaches the real Hub smith repair UI")
+	if repair == null or repair.disabled:
+		await _abort_fixture(flow)
+		return
 	repair.pressed.emit()
 	_check(not returned.broken and returned.drop_bonus == 0.05 and returned.affix_value == 0.03 and hub.gear.inventory.items.size() == won_gear_count, "Full pickup -> win -> Hub -> repair cycle preserves UID and frozen attributes without duplicates")
 	hub.close_station()
@@ -300,6 +308,14 @@ func _run() -> void:
 	await _step(3)
 	print("RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)
+
+func _abort_fixture(flow: GameFlow) -> void:
+	# Preserve the failing assertion and release the real scene owners instead
+	# of dereferencing a missing button and idling until the runner timeout.
+	flow.queue_free()
+	await _step(8)
+	print("RESULT: %d checks, %d failures" % [checks, failures])
+	quit(1)
 
 func _damage(target: Hurtbox, amount: float) -> DamageEvent:
 	var event := DamageEvent.new()

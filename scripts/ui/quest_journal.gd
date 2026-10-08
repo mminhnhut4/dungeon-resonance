@@ -30,6 +30,11 @@ var quest_buttons: Dictionary = {}
 var rows: Array[Dictionary] = []
 var selected_id: StringName = &""
 var columns: HBoxContainer
+var map_column: VBoxContainer
+var quest_column: VBoxContainer
+var legend_scroll: ScrollContainer
+var map_title: Label
+var quest_title: Label
 var _projection_dirty: bool = false
 
 func _enter_tree() -> void:
@@ -60,28 +65,34 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation",14)
 	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(columns)
-	var map_column := VBoxContainer.new()
+	map_column = VBoxContainer.new()
 	map_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_column.size_flags_stretch_ratio = 1.0
 	map_column.add_theme_constant_override("separation",5)
 	columns.add_child(map_column)
-	map_column.add_child(_label("ĐƯỜNG BỘ · Sơ đồ tuyến",15))
+	map_title = _label("ĐƯỜNG BỘ · Sơ đồ tuyến",15)
+	map_column.add_child(map_title)
 	graph = MapRouteGraph.new()
 	map_column.add_child(graph)
 	graph.room_selected.connect(_room_selected)
 	legend = _label("Bạn · Đã tới · ? Chưa khảo sát\n─ Lối đã biết · Sơ đồ không theo tỷ lệ",12)
-	map_column.add_child(legend)
+	legend_scroll = ScrollContainer.new()
+	legend_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	legend_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	map_column.add_child(legend_scroll)
+	legend_scroll.add_child(legend)
 	map_info = _label("",13)
 	map_column.add_child(map_info)
 	navigation_label = _label("Chọn một nhiệm vụ để theo dõi đường đi.",13)
 	map_column.add_child(navigation_label)
-	var quest_column := VBoxContainer.new()
+	quest_column = VBoxContainer.new()
 	quest_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	quest_column.size_flags_stretch_ratio = 1.1
 	quest_column.custom_minimum_size.x = 290
 	quest_column.add_theme_constant_override("separation",6)
 	columns.add_child(quest_column)
-	quest_column.add_child(_label("DẤU MỐC MỞ ĐẦU",15))
+	quest_title = _label("DẤU MỐC MỞ ĐẦU",15)
+	quest_column.add_child(quest_title)
 	quest_scroll = ScrollContainer.new()
 	quest_scroll.custom_minimum_size.y = 130
 	quest_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -190,9 +201,20 @@ func apply_visual_theme(shared_theme: Theme) -> void:
 	if is_instance_valid(graph): graph.queue_redraw()
 
 func set_compact_layout(compact: bool) -> void:
-	graph.custom_minimum_size.y = 196 if compact else 230
-	quest_scroll.custom_minimum_size.y = 110 if compact else 130
-	detail_scroll.custom_minimum_size.y = 104 if compact else 120
+	# Keep the target, navigation and action outside the scroll regions at 800x600.
+	# The complete legend remains readable in its own compact scroll; desktop
+	# retains its natural height. Both graph sizes reserve room for a wrapped
+	# navigation hint; the 60px route pins still fit at the compact 188px.
+	map_title.visible = not compact
+	quest_title.visible = not compact
+	add_theme_constant_override("separation",4 if compact else 6)
+	map_column.add_theme_constant_override("separation",3 if compact else 5)
+	quest_column.add_theme_constant_override("separation",4 if compact else 6)
+	graph.custom_minimum_size.y = 188 if compact else 200
+	legend_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if compact else ScrollContainer.SCROLL_MODE_DISABLED
+	legend_scroll.custom_minimum_size.y = 44 if compact else 0
+	quest_scroll.custom_minimum_size.y = 90 if compact else 130
+	detail_scroll.custom_minimum_size.y = 96 if compact else 120
 
 func bind_progress(source: SanctuaryProfile, carried: GearInventory) -> void:
 	if profile != null and profile.changed.is_connected(_request_refresh): profile.changed.disconnect(_request_refresh)

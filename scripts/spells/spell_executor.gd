@@ -12,6 +12,8 @@ var explosion_count: int = 0
 signal presentation_burst(position: Vector2, color: Color, element: StringName)
 signal presentation_cast(position: Vector2)
 signal presentation_contact(position: Vector2, color: Color, direction: Vector2)
+## Cosmetic identity only; preserve the legacy three-argument observer API.
+signal committed_contact(position: Vector2, color: Color, direction: Vector2, recipe_id: StringName, root_id: int, source_id: int)
 
 
 func spawn_cast(snapshot: SpellSnapshot) -> void:
@@ -72,6 +74,7 @@ func primary_hit(target: Hurtbox, context: SpellContext, attack_id: int, travel_
 
 func wall_hit(position: Vector2, context: SpellContext) -> void:
 	presentation_contact.emit(position, context.snapshot.color, context.snapshot.direction)
+	committed_contact.emit(position, context.snapshot.color, context.snapshot.direction, context.snapshot.recipe_id, context.snapshot.root_id, context.snapshot.source_id)
 	if context.effect_triggered:
 		return
 	context.effect_triggered = true

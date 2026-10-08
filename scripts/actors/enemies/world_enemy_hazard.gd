@@ -39,6 +39,7 @@ func _ready() -> void:
 	attack.root_event_id = attack.attack_id
 	if kind == &"jade_bolt": hitbox.activate(attack, shape, Vector2.ZERO)
 	lifetime = 3.5 if kind == &"jade_bolt" else 3.0
+	preload("res://scripts/presentation/depth_enemy_skill_art.gd").attach_to(self)
 
 func _physics_process(delta: float) -> void:
 	if is_instance_valid(feedback) and feedback.is_frozen(): return

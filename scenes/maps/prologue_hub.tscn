@@ -7,3 +7,4 @@ script = ExtResource("1")
 hub_scene = ExtResource("2")
 campaign_scene = ExtResource("3")
 world_building_enabled = true
+depth_expansion_enabled = true

@@ -152,7 +152,7 @@ func _boss_sequence(boss: BossGolem) -> void:
 		if not run.outcome.is_empty(): break
 	_check(captured.size()==5,"Real boss stomp has tell/flight/plunge/landing/recovery")
 	_check(vfx.impact_count==1 and boss.shockwave_count==2 and vfx.linked_wave_count==2,"GPU landing has one impact and the original two skinned hazards")
-	_check(skin.sprite.visible and skin.sprite.modulate.a>0.9,"Boss body remains visible through the captured attack")
+	_check(skin.art_rig!=null and skin.art_rig.is_visible_in_tree() and skin.art_rig.modulate.a>0.9 and not skin.sprite.visible,"Static UV mesh boss body remains visible through the captured attack")
 	clips["boss_stomp"]={"frames":sequence,"sample_fps":15,"source":"actual WorldCampaign GPU viewport","fixed_render_step":60}
 
 func _clip_frame(label: String,index: int,actor: Node2D) -> Dictionary:

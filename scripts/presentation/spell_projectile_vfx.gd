@@ -8,6 +8,7 @@ const MAX_PARTICLES: int = 12
 const MAX_TRAIL_LENGTH: float = 72.0
 const POINT_SPACING: float = 5.0
 const SPARK_TEXTURE: Texture2D = preload("res://assets/presentation/spark.png")
+const ART = preload("res://scripts/presentation/rendered_spell_art.gd")
 
 var particles: GPUParticles2D
 var line: Line2D
@@ -21,6 +22,10 @@ var _clock: float = 0.0
 var _ages := PackedFloat32Array()
 var committed_recipe: StringName = &"basic"
 var committed_behavior: StringName = &"bolt"
+var committed_element: StringName = &"physical"
+var _art_layers: Array[Sprite2D] = []
+var _art_ready: bool = false
+var _owner_self_modulate: Color = Color.WHITE
 
 
 func _ready() -> void:
@@ -74,6 +79,7 @@ func _ready() -> void:
 
 
 func bind(projectile: SpellProjectile, combat_feedback: CombatFeedback = null) -> void:
+	_restore_owner_ink()
 	owner_id = projectile.get_instance_id() if is_instance_valid(projectile) else 0
 	feedback_id = combat_feedback.get_instance_id() if is_instance_valid(combat_feedback) else 0
 	points.clear()
@@ -87,9 +93,18 @@ func bind(projectile: SpellProjectile, combat_feedback: CombatFeedback = null) -
 		tracked_root_id = projectile.context.snapshot.root_id
 		committed_recipe = projectile.context.snapshot.recipe_id
 		committed_behavior = projectile.context.snapshot.behavior_id
+		committed_element = projectile.context.snapshot.cosmetic_element
+		_owner_self_modulate = projectile.self_modulate
 		if projectile.context.snapshot.weapon_family_visual:
 			committed_quality = clampi(projectile.context.snapshot.cosmetic_quality, 0, 5)
 	_update_color()
+	if _art_layers.is_empty():
+		_art_layers = ART.make_layers(self)
+	_art_ready = ART.configure(_art_layers, ART.PROJECTILE, committed_recipe, committed_element)
+	if _art_ready and is_instance_valid(projectile):
+		# Hide only the legacy immediate-mode projectile paint, never its child
+		# sprite, Hitbox, collider, physics transform or lifetime.
+		projectile.self_modulate.a = 0.0
 	if committed_quality >= 0:
 		if particles != null: particles.amount = mini(MAX_PARTICLES, 2 + committed_quality * 2)
 		if line != null: line.width = 2.5 + committed_quality * 0.7
@@ -147,10 +162,16 @@ func _sample_owner(delta: float) -> void:
 				_ages.remove_at(0)
 			break
 	line.points = points
+	var body_size := Vector2(78.0, 56.0)
+	if committed_behavior == &"charged_slash": body_size = Vector2(70.0, 50.0)
+	if committed_behavior == &"arcane_wave": body_size = Vector2(84.0, 64.0)
+	if committed_quality >= 0: body_size *= 0.72 + committed_quality * 0.055
+	ART.seek(_art_layers, body_size, 0.98, _clock, ART.PROJECTILE, committed_recipe, tint)
 	queue_redraw()
 
 func _draw() -> void:
 	if owner_id == 0: return
+	if _art_ready: return
 	var edge:=Color(0.015,0.025,0.03,0.95)
 	var bright:=tint.lerp(Color.WHITE,0.7)
 	var shape:=PackedVector2Array()
@@ -180,7 +201,15 @@ func _draw() -> void:
 
 
 func _exit_tree() -> void:
+	_restore_owner_ink()
 	owner_id = 0
 	feedback_id = 0
 	points.clear()
 	_ages.clear()
+	_art_layers.clear()
+
+func _restore_owner_ink() -> void:
+	if owner_id == 0 or not is_instance_id_valid(owner_id): return
+	var projectile: Node2D = instance_from_id(owner_id) as Node2D
+	if projectile != null and not projectile.is_queued_for_deletion():
+		projectile.self_modulate = _owner_self_modulate

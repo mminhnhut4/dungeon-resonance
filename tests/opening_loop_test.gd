@@ -39,6 +39,26 @@ func _step(count: int) -> void:
 		await physics_frame
 		await process_frame
 
+func _dialogue_key(code: int) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = code; event.keycode = code; event.pressed = true
+	root.push_input(event, true)
+	await _step(2)
+	event.pressed = false
+	root.push_input(event, true)
+	await _step(2)
+
+func _dialogue_mouse(position: Vector2) -> void:
+	var motion := InputEventMouseMotion.new(); motion.position = position
+	root.push_input(motion, true)
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT; event.position = position; event.pressed = true
+	root.push_input(event, true)
+	await _step(2)
+	event.pressed = false
+	root.push_input(event, true)
+	await _step(2)
+
 func _reader(profile: SanctuaryProfile) -> SanctuaryProfile:
 	var reader := SanctuaryProfile.new()
 	reader.save_path = profile.save_path
@@ -137,6 +157,16 @@ func _test_opening() -> void:
 	_check(hub.open_npc(NpcCatalog.HEALER) and bank.opening_objectives()["completed"].has("thanh_vy_met"), "Opening Thanh Vy's real dialogue records the encounter")
 	hub.dialogue.advance()
 	hub.dialogue.select_choice(&"upgrade_max_hp")
+	_check(bank.souls == 25 and bank.permanent_upgrades[&"max_hp"] == 0 and hub.dialogue.page_index == 0, "Opening service cannot spend before the final live-balance page")
+	for attempt: int in hub.dialogue.pages.size() * 2 + 2:
+		if hub.dialogue.page_index == hub.dialogue.pages.size() - 1 and not hub.dialogue.is_typing(): break
+		await _dialogue_key(KEY_E)
+	var hp_button: Button = hub.dialogue.choice_list.get_node_or_null("Choice_upgrade_max_hp") as Button
+	_check(hp_button != null and not hp_button.disabled and hub.dialogue.choice_list.visible, "Final Thanh Vy page exposes the real twenty-Soul HP service")
+	if hp_button != null and not hp_button.disabled:
+		hub.dialogue.body_scroll.ensure_control_visible(hp_button)
+		await _step(3)
+		await _dialogue_mouse(hp_button.get_global_rect().get_center())
 	_check(bank.souls == 5 and bank.permanent_upgrades[&"max_hp"] == 1 and is_equal_approx(hub.player.health.maximum_health, before_hp + 10), "Thanh Vy's existing first HP upgrade consumes 20 Souls and adds ten maximum HP")
 	hub.dialogue.close()
 	_check(bank.opening_objectives()["complete"] and _reader(bank).opening_objectives()["complete"], "All six real opening milestones survive reload")

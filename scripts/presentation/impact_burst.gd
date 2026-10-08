@@ -10,6 +10,7 @@ const GROUND_CRACK_PATH: String = "res://assets/vfx/movement/regions/ground_crac
 const IMPACT_WARP: Shader = preload("res://shaders/local_impact_warp.gdshader")
 const FINISHER_DECAL_SECONDS: float = 1.0
 const FINISHER_WARP_SECONDS: float = 0.12
+const ART = preload("res://scripts/presentation/rendered_spell_art.gd")
 
 var element: StringName = &"physical"
 var tint: Color = Color(1.0, 0.82, 0.58)
@@ -28,6 +29,9 @@ var shockwave: MeshInstance2D
 var _warp_material: ShaderMaterial
 var _initialized: bool = false
 var _configured_world_position: Vector2 = Vector2.ZERO
+var spell_recipe_id: StringName
+var _art_layers: Array[Sprite2D] = []
+var _art_ready: bool = false
 
 
 func configure(world_position: Vector2, color: Color, element_id: StringName = &"physical", travel_direction: Vector2 = Vector2.UP) -> void:
@@ -42,6 +46,11 @@ func configure(world_position: Vector2, color: Color, element_id: StringName = &
 
 func configure_spell(world_position: Vector2, travel_direction: Vector2 = Vector2.UP) -> void:
 	configure(world_position, Color(0.35, 1.0, 0.76), &"spell_contact", travel_direction)
+
+func configure_spell_art(recipe: StringName) -> void:
+	spell_recipe_id = recipe
+	if _initialized:
+		_update_rendered_art()
 
 
 func enable_melee_sparks() -> void:
@@ -128,6 +137,7 @@ func _build_light() -> void:
 
 
 func _update_tint() -> void:
+	_update_rendered_art()
 	if flash != null:
 		flash.color = tint
 		peak_light_energy = 0.55 + cosmetic_quality * 0.17 if melee_sparks or element == &"physical" else 1.4
@@ -154,6 +164,23 @@ func _update_tint() -> void:
 		behavior.scale_max = (10.0 if element == &"ice" else 7.0) / texture_width
 		particles.amount = mini(14, 10 + cosmetic_quality) if melee_sparks or element == &"physical" else 11 if element == &"poison" else 16
 		behavior.spread = 42.0 if melee_sparks or element == &"physical" else 65.0
+
+func _update_rendered_art() -> void:
+	if melee_sparks or element == &"physical":
+		_art_ready = false
+		for sprite: Sprite2D in _art_layers: sprite.visible = false
+		return
+	if _art_layers.is_empty(): _art_layers = ART.make_layers(self)
+	_art_ready = ART.configure(_art_layers, ART.CONTACT, spell_recipe_id, element)
+	_seek_rendered_art()
+
+func _seek_rendered_art() -> void:
+	if not _art_ready: return
+	var fade: float = clampf(1.0 - (duration - remaining) / MAX_LIFETIME, 0.0, 1.0)
+	var age: float = 1.0 - fade
+	# Painted debris stays finite and follows the same accepted-contact clock.
+	ART.seek(_art_layers, Vector2.ONE * (68.0 + age * 38.0), pow(fade, 1.5), duration - remaining, ART.CONTACT, spell_recipe_id, tint)
+	for sprite: Sprite2D in _art_layers: sprite.rotation += direction.angle()
 
 
 func _update_finisher() -> void:
@@ -197,12 +224,14 @@ func _process(delta: float) -> void:
 		shockwave.visible = warp_progress < 1.0
 		_warp_material.set_shader_parameter("wave_radius", 0.08 + warp_progress * 0.9)
 		_warp_material.set_shader_parameter("opacity", (1.0 - warp_progress) * 0.6)
+	_seek_rendered_art()
 	queue_redraw()
 	if remaining <= 0.0:
 		queue_free()
 
 
 func _draw() -> void:
+	if _art_ready: return
 	var fade: float = clampf(1.0 - (duration - remaining) / MAX_LIFETIME, 0.0, 1.0)
 	var age: float = 1.0 - fade
 	if melee_sparks or element == &"physical":

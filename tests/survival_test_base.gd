@@ -10,6 +10,8 @@ var checks: int = 0
 var failures: int = 0
 ## Legacy system gates keep neutral starter stats; new product-loadout tests opt out.
 var use_neutral_equipment: bool = true
+## Synthetic hits identify one live non-Player owner across scene replacement.
+var _damage_source: Node2D
 
 
 func _initialize() -> void:
@@ -20,6 +22,10 @@ func _run() -> void:
 	for argument: String in OS.get_cmdline_user_args():
 		if argument.begins_with("--hz="):
 			Engine.physics_ticks_per_second = int(argument.trim_prefix("--hz="))
+	_damage_source = Node2D.new()
+	_damage_source.name = "SyntheticDamageFixtureSource"
+	_damage_source.process_mode = Node.PROCESS_MODE_DISABLED
+	root.add_child(_damage_source)
 	profile = SanctuaryProfile.new()
 	profile.save_path = "user://verification/%s_%d.json" % [suite, Engine.physics_ticks_per_second]
 	level = preload("res://scenes/test_level.tscn").instantiate()
@@ -41,7 +47,9 @@ func _run() -> void:
 	await test_system()
 	if is_instance_valid(level):
 		level.queue_free()
+	_damage_source.queue_free()
 	await _step(4)
+	_damage_source = null
 	_check(is_equal_approx(Engine.time_scale, 1.0) and not paused, "System teardown restores global time and pause")
 	_check(get_nodes_in_group(&"phantoms").is_empty() and get_nodes_in_group(&"floor_traps").is_empty(), "System teardown releases incident and trap visuals")
 	print("RESULT: %d checks, %d failures" % [checks, failures])
@@ -54,7 +62,7 @@ func test_system() -> void:
 
 func _damage(target: Hurtbox, amount: float, heavy: bool = false) -> DamageEvent:
 	var event := DamageEvent.new()
-	event.source_id = 987654
+	event.source_id = _damage_source.get_instance_id()
 	event.source_team_id = 2 if target.team_id == 1 else 1
 	event.target_id = target.get_actor_id()
 	event.attack_id = CombatIds.next_id()

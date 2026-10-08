@@ -20,3 +20,11 @@ Snapshot2026-10-08. **Owner chưa phân công**; điền username sau khi nhóm 
 `DR-xxx | owner:@username | branch:fix/dr-xxx-slug | files:... | status:Doing | base:<commit> | GPU:<khung giờ nếu cần>`
 
 Trạng thái: Todo → Doing → Review → Verified private → Merged main. Blocked ghi điều kiện cụ thể. `Verified private` cần log/exit/ảnh khi liên quan; `Merged main` cần commit main và hậu kiểm. Không cộng dồn113/268checks cũ để cho task mới PASS.
+
+## Owner và candidate tiếp tục08/10 — chưa ghép
+
+Owner: Codex root/integrator duy nhất; private DgContinue_20261008, base main fe4017e. DR-001 đã đo A/B và loại thử writer không cải thiện; cold-cast prewarm private đã kiểm, mastery/save còn Todo. DR-002 Verified private UI800/native. DR-004 Verified private fixture live-source, default strict đang chạy. DR-006 Verified private10cặp native, wall-contact recipe còn thiếu. DR-008 Verified private background/terrain routes; props/NPC legacy còn prototype. DR-005 và DR-009 giữ Todo cần người chơi thử tự nhiên. DR-003 vẫn chưa rõ native teardown; retry sạch không là fix. Phạm vi được người dùng mở mới: năm tầng/roster khác/boss2phase/NPC Lạc Ấn, private native+focused đã có receipt; chưa Merged main. Xem ../CONTINUATION_20261008.md.
+
+**Root checkpoint 01:43 UTC:** candidate B default strict241/241 sạch,2.193source freeze; root sole integrator chuẩn bị backup/exact-target apply và hậu kiểm main. Không coi focused PNG/logic là playtest tự nhiên.
+
+**Root chốt 01:47 UTC:** đã ghép216exact-target sau strictB241/241; main import/numeric64/native82-17ảnh sạch, backup/hashrollback/save5nguyênbyte. Root soleintegration kết thúc, các agent không chạyGPU. Masterysave peaks/nativecrash chưa rõ/cân bằng tự nhiên còn cần playtest; không mở việc mới.

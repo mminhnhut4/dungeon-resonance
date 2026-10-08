@@ -33,6 +33,7 @@ var motion: Node2D
 var actor_shadow: ActorShadow
 var stomp_vfx: GolemStompVFX
 var _observed_fsm: ActorStateMachine
+var _observed_hurt: Hurtbox
 var _target_hurt: Hurtbox
 var _state_time: float = 0.0
 var _emitted_orbs: int = 0
@@ -175,6 +176,9 @@ func _connect_owner_events(boss: BossGolem) -> void:
 	_observed_fsm = boss.fsm
 	if is_instance_valid(_observed_fsm) and not _observed_fsm.state_changed.is_connected(_on_boss_state):
 		_observed_fsm.state_changed.connect(_on_boss_state)
+	_observed_hurt = boss.hurtbox
+	if is_instance_valid(_observed_hurt) and not _observed_hurt.hit_resolved.is_connected(_on_boss_hit):
+		_observed_hurt.hit_resolved.connect(_on_boss_hit)
 	_bind_target_contact()
 
 func _bind_target_contact() -> void:
@@ -190,6 +194,12 @@ func _on_boss_state(_previous: StringName, _next: StringName) -> void:
 	_bind_target_contact()
 	refresh_skin()
 
+func _on_boss_hit(event: DamageEvent, result: DamageResult) -> void:
+	if result.blocked or result.actual_damage <= 0.0 or event.source_kind == DamageEvent.SourceKind.DOT: return
+	# Boss feedback may freeze the later physics observer in this same tick.
+	# Publish the accepted hurt peak now; keep both owner clocks unchanged.
+	refresh_skin()
+
 func _on_target_hit(event: DamageEvent, result: DamageResult) -> void:
 	if event.source_id != _actor_id or result.blocked or result.actual_damage <= 0.0 or event.source_kind == DamageEvent.SourceKind.DOT: return
 	# The resolved contact can freeze later physics observers in this tick.
@@ -199,9 +209,12 @@ func _on_target_hit(event: DamageEvent, result: DamageResult) -> void:
 func _disconnect_owner_events() -> void:
 	if is_instance_valid(_observed_fsm) and _observed_fsm.state_changed.is_connected(_on_boss_state):
 		_observed_fsm.state_changed.disconnect(_on_boss_state)
+	if is_instance_valid(_observed_hurt) and _observed_hurt.hit_resolved.is_connected(_on_boss_hit):
+		_observed_hurt.hit_resolved.disconnect(_on_boss_hit)
 	if is_instance_valid(_target_hurt) and _target_hurt.hit_resolved.is_connected(_on_target_hit):
 		_target_hurt.hit_resolved.disconnect(_on_target_hit)
 	_observed_fsm = null
+	_observed_hurt = null
 	_target_hurt = null
 
 func sweep_readability_snapshot() -> Dictionary:

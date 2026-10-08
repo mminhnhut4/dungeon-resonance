@@ -70,12 +70,41 @@ func _test_contacts(presentation: SlicePresentation) -> void:
 	var spell: DamageEvent = _damage(dummy.hurtbox, 2.0)
 	spell.spell_id = &"basic"
 	spell.attack_direction = Vector2.LEFT
-	dummy.hurtbox.take_damage(spell)
+	before = presentation.impact_count
+	var basic_result: DamageResult = dummy.hurtbox.take_damage(spell)
 	burst = presentation.impacts.get_child(presentation.impacts.get_child_count() - 1) as ImpactBurst
-	var behavior: ParticleProcessMaterial = burst.particles.process_material as ParticleProcessMaterial
-	var colors: Gradient = (behavior.color_ramp as GradientTexture1D).gradient
-	_check(burst.element == &"spell_contact" and colors.sample(0).r > colors.sample(0).b and colors.sample(0.42).g > colors.sample(0.42).r, "Spell target contact bursts from gold into jade green light motes")
-	_check(burst.particles.one_shot and burst.particles.amount == 16 and burst.duration <= 0.5, "Spell contact retains the bounded sixteen-particle one-shot lifetime")
+	_check(not basic_result.blocked and basic_result.actual_damage == 2.0 and presentation.impact_count == before + 1 and burst.spell_recipe_id == spell.spell_id and burst.element == &"physical", "Accepted basic contact retains its neutral appearance and creates one finite owner")
+	_check(burst.particles.one_shot and burst.particles.amount <= 16 and burst.duration <= 0.5, "Basic target contact keeps bounded particles and a finite owner lifetime")
+	# Controlled committed payload exercises the real accepted-contact path;
+	# it is not a claim that a human performed a natural cast.
+	var payload := SpellSnapshot.new()
+	payload.source_id = player.get_instance_id()
+	payload.root_id = CombatIds.next_id()
+	payload.recipe_id = &"fire_bolt"
+	payload.behavior_id = &"fire_bolt"
+	payload.damage = 2.0
+	payload.direction = Vector2.LEFT
+	payload.origin = dummy.hurtbox.global_position + Vector2(64, 0)
+	payload.color = Color(1, 0.4, 0.08)
+	var context := SpellContext.new(payload)
+	var attack_id: int = CombatIds.next_id()
+	var health_before: float = dummy.health.current_health
+	before = presentation.impact_count
+	level.spell_executor.primary_hit(dummy.hurtbox, context, attack_id, payload.direction)
+	var accepted: DamageEvent = dummy.last_damage_event
+	burst = presentation.impacts.get_child(presentation.impacts.get_child_count() - 1) as ImpactBurst
+	_check(accepted.root_event_id == payload.root_id and accepted.source_id == payload.source_id and accepted.attack_id == attack_id and accepted.spell_id == payload.recipe_id and health_before - dummy.health.current_health == payload.damage and presentation.impact_count == before + 1, "Actual accepted spell damage publishes one contact for the current committed root")
+	var painted: Sprite2D = burst.get_node_or_null("RenderedCore") as Sprite2D
+	var crop: AtlasTexture = painted.texture as AtlasTexture if painted != null else null
+	_check(painted != null and painted.visible and painted.modulate.a > 0 and crop != null and crop.atlas == RenderedSpellArt.sheet and crop.atlas.resource_path == RenderedSpellArt.SHEET_PATH and crop.filter_clip and crop.region.position.y >= crop.atlas.get_height() * 0.5 and crop.region.end.y <= crop.atlas.get_height() * 0.75, "Elemental accepted contact binds visible resident PNG contact paint with clipped atlas edges")
+	_check(burst.spell_recipe_id == payload.recipe_id and burst.direction == payload.direction and burst.global_position.is_equal_approx(dummy.hurtbox.global_position) and burst._art_layers.size() <= 2 and burst.particles.amount <= 16 and burst.duration <= 0.5, "Painted contact stays at the accepted location and direction within layer, particle and lifetime budgets")
+	var painted_owner_id: int = burst.get_instance_id()
+	var painted_light_id: int = burst.flash.get_instance_id()
+	var painted_sprite_id: int = painted.get_instance_id() if painted != null else 0
+	before = presentation.impact_count
+	var blocked: DamageResult = dummy.hurtbox.take_damage(accepted)
+	level.spell_executor.primary_hit(dummy.hurtbox, context, attack_id, payload.direction)
+	_check(blocked.blocked and blocked.block_reason == &"duplicate" and presentation.impact_count == before and health_before - dummy.health.current_health == payload.damage, "Blocked replay and repeated root contact cannot create extra paint or damage")
 	before = presentation.impact_count
 	var dot: DamageEvent = _damage(dummy.hurtbox, 1.0)
 	dot.source_kind = DamageEvent.SourceKind.DOT
@@ -84,6 +113,7 @@ func _test_contacts(presentation: SlicePresentation) -> void:
 	_check(presentation.impact_count == before, "Burn DOT stays silent instead of multiplying shader or particle impacts")
 	await _time(0.7)
 	_check(presentation.impacts.get_child_count() == 0, "Target contact sparks and lights expire independently of GPU finished")
+	_check(not is_instance_id_valid(painted_owner_id) and not is_instance_id_valid(painted_light_id) and not is_instance_id_valid(painted_sprite_id) and RenderedSpellArt.sheet != null and RenderedSpellArt.cells.size() <= 20, "Finite painted contact releases its sprites and light while the bounded atlas remains resident")
 
 
 func _test_projectile_wake(presentation: SlicePresentation) -> void:

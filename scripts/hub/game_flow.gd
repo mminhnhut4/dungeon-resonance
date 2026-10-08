@@ -16,6 +16,8 @@ var return_from_defeat: bool = false
 @export var world_building_enabled: bool = false
 ## Opt in only from dedicated fixtures; all product entrypoints default to false.
 @export var qa_tools_enabled: bool = false
+@export var depth_expansion_enabled: bool = false
+var depth_progress: RefCounted
 var hub_session_state: Dictionary = {}
 var return_save_pending: bool = false
 var return_save_error: StringName = &""
@@ -55,6 +57,9 @@ func _ready() -> void:
 		social_runtime = preload("res://scripts/npc/opening_social_runtime.gd").new()
 		social_runtime.configure(profile)
 	profile.load_profile()
+	if depth_expansion_enabled:
+		depth_progress = preload("res://scripts/runtime/depth_progress.gd").new()
+		depth_progress.initialize(profile)
 	if world_building_enabled:
 		cultivation_session=preload("res://scripts/cultivation/opening_cultivation_session.gd").new()
 		cultivation_session.name="OpeningCultivationSession"
@@ -162,6 +167,12 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 	hub.run_requested.connect(start_run)
 	hub.campaign_requested.connect(start_campaign)
 	active_scene = hub
+	if depth_expansion_enabled and world_building_enabled and hub is PrologueHub:
+		var guide := preload("res://scripts/npc/depth_guide.gd").new()
+		guide.name = "DepthGuide"
+		hub.add_child(guide)
+		guide.initialize(hub)
+		guide.expedition_requested.connect(_on_depth_campaign_requested.bind(guide))
 	if cultivation_session!=null: cultivation_session.bind_scene(hub)
 	_return_busy = false
 	return_save_changed.emit()
@@ -207,6 +218,39 @@ func _on_run_died() -> void:
 	returning = true
 	return_from_defeat = true
 	return_remaining = 1.2
+
+
+func start_depth_campaign() -> bool:
+	if not depth_expansion_enabled or _return_busy or active_scene is DungeonRun or depth_progress == null: return false
+	if not depth_progress.unlocked() or not depth_progress.available() or not depth_progress.state()["accepted"]: return false
+	var scene: PackedScene = load("res://scenes/rooms/depth_campaign.tscn") as PackedScene
+	if scene == null: return false
+	var prepared: GearInventory = _take_prepared_inventory()
+	if world_building_enabled and prepared == null: return false
+	_clear()
+	var campaign: DungeonRun = scene.instantiate() as DungeonRun
+	campaign.profile = profile
+	campaign.world_building_enabled = world_building_enabled
+	campaign.starting_inventory = prepared
+	campaign.set("depth_progress_committer", depth_progress.record)
+	add_child(campaign)
+	campaign.content.qa_tools_enabled = qa_tools_enabled
+	active_scene = campaign
+	campaign.player.health.reset_health()
+	campaign.player.energy.reset()
+	campaign.gear.loot.set("crystal_drops_enabled", true)
+	campaign.gear.loot.set("prologue_drops_enabled", true)
+	campaign.player.health.died.connect(_on_run_died)
+	campaign.save_retry_requested.connect(_on_run_return_requested)
+	campaign.floor_return_requested.connect(_on_run_return_requested)
+	if cultivation_session != null: cultivation_session.bind_scene(campaign)
+	return true
+
+
+func _on_depth_campaign_requested(guide: Node) -> void:
+	if start_depth_campaign(): return
+	if is_instance_valid(guide) and guide.open():
+		guide.notice.text = "Chưa xuống được tầng sâu. Hãy thử lại sau khi lưu trang bị; hành trang và tiến độ được giữ."
 
 
 func start_campaign() -> void:

@@ -1,0 +1,13 @@
+# DepthGuide: cold first-open layout
+
+Private checkout only; main merge and native review belong to the root integrator.
+
+The existing native locked-guide screenshot was a dark full-height strip, while later refreshed/unlocked captures were usable. The old PanelContainer inherited the wrapped labels' minimum height before they acquired their final width; assigning panel.size therefore allowed a very tall minimum to determine the centering position. The fix gives the viewport-bound shell a fixed Panel rectangle, independent of child text minimum sizes. Header, objective, notice and the two actions have explicit bounded rectangles; only the five-floor body scrolls. Width is supplied to its column/labels while hidden. Quest UI labels opt out of DungeonDebugOverlay via its existing debug_keep contract because its automatic exemption applies to PanelContainer ancestors.
+
+Scope: scripts/npc/depth_guide.gd plus the new focused test. No GameFlow, quest persistence, controls, modal claims, resume guard or progression changes. Original file is backed up outside the product at npc_work/first_open_backup/depth_guide.gd.
+
+Executed headless: npc_firstopen_layout60_final and npc_firstopen_layout120_final, each 51/51 assertions, exit 0, no ERROR/WARNING diagnostics. Actual configured main scene, new isolated locked QA profile, actual physical E input, first-open observations at frames 1/3/8 without an extra refresh; close/reopen at frame 1. Viewports: 1280x720, 800x600, 1920x1080. Header/objective/action/back fit and labels plus first floor are visible. Trace records all five row rectangles; at 1280 width every row is 660x47 with distinct positions. Rejected development receipts retain their visibility failures and were corrected through the UI metadata contract.
+
+Executed narrow input/save regression: npc_modal_after_firstopen60, 24/24, exit 0, diagnostics empty. Real Space accepts once, closes without leaking a jump; freeing an open guide restores controls/launcher; real v2 writer candidate fault preserves hub/profile/inventory, actionable guide retry launches once. Existing 120-Hz modal proof is reused because only layout changed.
+
+Native probe prepared, not run by this agent: npc_work/npc_firstopen_probe.gd extends the focused test. Root runs through probes/run_probe.ps1 with -Script <absolute probe path> -UserArgs @('--capture'), without -Headless. It observes frames 1/3/8 before screenshots and produces six first/reopen PNGs plus firstopen_trace.json. No boss proof, quest activation or save progression is introduced. Geometry/input checks do not establish native text readability or a finished gameplay experience; root must inspect the six captures before acceptance.

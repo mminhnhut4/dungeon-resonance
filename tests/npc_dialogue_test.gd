@@ -59,7 +59,7 @@ func _run() -> void:
 	for item: Control in [box.panel, box.body_scroll, box.speaker_label, box.text_label, box.choice_list, box.close_button, box.hint, box.portrait]:
 		print("NPC UI DIAGNOSTIC: %s size=%s min=%s" % [item.name, item.size, item.get_combined_minimum_size()])
 	_check(root.get_visible_rect().encloses(box.panel.get_global_rect()) and root.get_visible_rect().encloses(box.close_button.get_global_rect()), "Fully revealed portrait dialogue and five choices keep the close footer inside the viewport")
-	_select(box, &"smith_repair")
+	await _select(box, &"smith_repair")
 	await _step(3)
 	_check(not box.is_open and hub.station_open and hub.current_station == &"blacksmith" and smith_requests == 1, "Real smith choice opens the existing material-backed repair menu")
 	_check(not hub.player.controls_enabled and is_equal_approx(Engine.time_scale, 0.1), "Switching dialogue to repair preserves a single input/time owner")
@@ -80,21 +80,24 @@ func _run() -> void:
 	await _key(KEY_E)
 	_check(box.speaker_label.text == "Thanh Vy" and box.text_label.text == NpcCatalog.dialogue(NpcCatalog.HEALER)[0], "Healer uses the user's Vietnamese purification dialogue")
 	await _key(KEY_E)
-	_check(not box.is_typing() and box.choice_list.get_child_count() == 6 and box.choice_list.has_node("Choice_courier_open"), "E reveals three permanent services, consumables, the optional courier entry and goodbye")
+	_check(not box.is_typing() and box.page_index == 0 and not box.choice_list.visible, "E reveals the approved first healer page without skipping the live balance page")
+	var early_souls: int = profile.souls
+	_select_while_hidden(box, &"upgrade_max_hp")
+	_check(upgrades_requested.is_empty() and profile.souls == early_souls, "Hidden service cannot spend Souls or publish an upgrade before the final page")
+	await _reveal_services(box)
+	_check(box.choice_list.visible and box.choice_list.get_child_count() == 6 and box.choice_list.has_node("Choice_courier_open"), "Final healer page exposes three permanent services, consumables, courier and goodbye")
 	_check((box.choice_list.get_node("Choice_upgrade_max_hp") as Button).text.contains("+0 → +10 HP"), "Upgrade choice renders the quoted benefit and cost as Vietnamese text")
 	var hp_quote: Dictionary = hub.economy.call(&"quote_upgrade", &"max_hp")
 	var souls_before: int = profile.souls
 	var maximum_before: float = hub.player.health.maximum_health
 	var health_before: float = hub.player.health.current_health
-	_select(box, &"upgrade_max_hp")
+	await _select(box, &"upgrade_max_hp")
 	await _step(3)
 	var hp_after: Dictionary = hub.economy.call(&"quote_upgrade", &"max_hp")
 	_check(upgrades_requested == [&"max_hp"] and hp_after["level"] == hp_quote["level"] + 1 and profile.souls == souls_before - hp_quote["cost"], "Mouse service choice delegates one atomic Soul purchase to EconomySession")
 	_check(is_equal_approx(hub.player.health.maximum_health, maximum_before + 10.0) and is_equal_approx(hub.player.health.current_health, health_before), "Bought permanent HP updates the real Player capacity without giving free healing")
-	_check(box.is_open and box.speaker_label.text == "Thanh Vy" and box.pages.size() == 2, "Successful service keeps a Vietnamese confirmation conversation")
-	box.advance()
-	box.advance()
-	box.advance()
+	_check(box.is_open and box.speaker_label.text == "Thanh Vy" and box.pages.size() == NpcCatalog.dialogue(NpcCatalog.HEALER).size() + 2, "Successful service retains approved dialogue, live balance and a Vietnamese confirmation page")
+	await _reveal_services(box)
 	_check(box.text_label.text.contains("Tịnh hóa hoàn tất"), "Confirmation describes permanent progress without inventing a damage bonus")
 	var loaded := SanctuaryProfile.new()
 	loaded.save_path = profile.save_path
@@ -107,14 +110,14 @@ func _run() -> void:
 	var regeneration_before: float = hub.player.energy.regeneration
 	hub.open_npc(NpcCatalog.HEALER)
 	box.advance()
-	_select(box, &"upgrade_mana_regen")
+	await _select(box, &"upgrade_mana_regen")
 	await _step(2)
 	_check(is_equal_approx(hub.player.energy.regeneration, regeneration_before + 2.0) and hub.economy.quote_upgrade(&"mana_regen")["level"] == 1, "Real regeneration service applies its permanent bonus to the Player energy pool")
 	box.close()
 	var capacity_before: int = hub.gear.inventory.catalyst_capacity
 	hub.open_npc(NpcCatalog.HEALER)
 	box.advance()
-	_select(box, &"upgrade_rune_capacity")
+	await _select(box, &"upgrade_rune_capacity")
 	await _step(2)
 	_check(hub.gear.inventory.catalyst_capacity == capacity_before + 1 and hub.player.resonance_controller.catalyst_a.runtime_state.opened_slots == capacity_before + 1, "Actual rune service opens the same extra slot in inventory and spell runtime")
 	_check(hub.gear.modal.slots[GearInventory.CATALYST_INDICES[3]].visible, "Rune modal exposes the purchased fourth Catalyst slot immediately")
@@ -132,7 +135,7 @@ func _run() -> void:
 	var coin_before: int = profile.coins
 	hub.open_npc(NpcCatalog.SMITH)
 	box.advance()
-	_select(box, &"smith_enhance")
+	await _select(box, &"smith_enhance")
 	await _step(2)
 	_check(hub.current_station == &"smith_enhance" and hub.station_content.get_node_or_null("EnhanceWeapon_%d" % weapon_uid) is Button, "Smith dialogue opens a real UID-addressed enhancement control")
 	(hub.station_content.get_node("EnhanceWeapon_%d" % weapon_uid) as Button).pressed.emit()
@@ -144,7 +147,7 @@ func _run() -> void:
 	var stones_after_before: int = profile.material_stash[&"enhancement_stone_2"]
 	hub.open_npc(NpcCatalog.SMITH)
 	box.advance()
-	_select(box, &"smith_stones")
+	await _select(box, &"smith_stones")
 	await _step(2)
 	(hub.station_content.get_node("CombineStone_1") as Button).pressed.emit()
 	await _step(2)
@@ -152,7 +155,7 @@ func _run() -> void:
 	hub.close_station()
 	hub.open_npc(NpcCatalog.SMITH)
 	box.advance()
-	_select(box, &"smith_forge")
+	await _select(box, &"smith_forge")
 	await _step(2)
 	_check(hub.station_content.get_node_or_null("ForgeButton_world_saber_very_rare") is Button and not (hub.station_content.get_node("ForgeButton_world_saber_very_rare") as Button).disabled, "Learned family blueprint exposes its actual VeryRare forge control")
 	_check((hub.station_content.get_node("ForgeButton_world_saber_legendary") as Button).disabled and (hub.station_content.get_node("ForgeButton_world_saber_divine") as Button).disabled, "Legendary/Divine stay unavailable without future special-boss Origin Godstone")
@@ -185,17 +188,21 @@ func _run() -> void:
 	hub.close_station()
 	hub.open_npc(NpcCatalog.HEALER)
 	box.advance()
-	_select(box, &"healer_consumables")
+	await _select(box, &"healer_consumables")
 	await _step(2)
 	var potions_before: int = hub.gear.inventory.consumables[&"potion"]
 	var current_health: float = hub.player.health.current_health
 	coin_before = profile.coins
-	(hub.station_content.get_node("BuyConsumable_potion") as Button).pressed.emit()
+	var potion_button: Button = hub.station_content.get_node_or_null("BuyConsumable_potion") as Button
+	_check(potion_button != null and not potion_button.disabled and hub.current_station == &"healer_consumables", "Actual healer choice opens an enabled potion control")
+	if potion_button != null: potion_button.pressed.emit()
 	await _step(2)
 	_check(hub.gear.inventory.consumables[&"potion"] == potions_before + 1 and profile.coins == coin_before - 10 and hub.player.health.current_health == current_health, "Actual healer purchase stores one potion without immediately healing")
 	var linen_before: int = profile.material_stash[&"linen_fiber"]
 	var bandages_before: int = hub.gear.inventory.consumables[&"bandage"]
-	(hub.station_content.get_node("CraftConsumable_bandage") as Button).pressed.emit()
+	var bandage_button: Button = hub.station_content.get_node_or_null("CraftConsumable_bandage") as Button
+	_check(bandage_button != null and not bandage_button.disabled, "Actual healer menu exposes the material-backed bandage control")
+	if bandage_button != null: bandage_button.pressed.emit()
 	await _step(2)
 	_check(profile.material_stash[&"linen_fiber"] == linen_before - 2 and hub.gear.inventory.consumables[&"bandage"] == bandages_before + 1, "Actual craft control consumes only the quoted stash ingredients")
 	hub.close_station()
@@ -203,7 +210,7 @@ func _run() -> void:
 	await _key(KEY_E)
 	_check(box.text_label.text == NpcCatalog.dialogue(NpcCatalog.WANDERER)[0], "Wanderer names floor4, Golem and its sigil core in the approved dialogue")
 	await _key(KEY_SPACE)
-	_select(box, &"bounty_accept")
+	await _select(box, &"bounty_accept")
 	await _step(2)
 	var accepted: Dictionary = hub.economy.call(&"quote_bounty", &"golem_hunt")
 	_check(accepted["accepted"] and not accepted["can_accept"] and not accepted["can_claim"] and bounties_requested == [&"golem_hunt"], "NPC accepts the single Golem bounty once and cannot claim it early")
@@ -212,7 +219,7 @@ func _run() -> void:
 	profile.record_boss_defeat("npc_test_receipt", &"golem")
 	hub.open_npc(NpcCatalog.WANDERER)
 	box.advance()
-	_select(box, &"bounty_claim")
+	await _select(box, &"bounty_claim")
 	await _step(2)
 	var claimed: Dictionary = hub.economy.call(&"quote_bounty", &"golem_hunt")
 	_check(claimed["claimed"] and not claimed["can_claim"] and claimed["reward_combo_id"] == WorldProgressionCatalog.BOUNTY_REWARD, "Actual claim unlocks only the authored combo reward and refuses a second claim")
@@ -277,8 +284,7 @@ func _verify_layout_matrix(hub: PrologueHub) -> void:
 		for id: StringName in [NpcCatalog.SMITH, NpcCatalog.HEALER, NpcCatalog.WANDERER]:
 			hub.open_npc(id)
 			await _step(2)
-			box.advance()
-			await _step(4)
+			await _reveal_services(box)
 			var bounds: Rect2 = root.get_visible_rect()
 			_check(box.choice_list.visible and not box.is_typing() and bounds.encloses(box.panel.get_global_rect()) and bounds.encloses(box.close_button.get_global_rect()) and bounds.encloses(box.hint.get_global_rect()) and bounds.encloses(box.portrait.get_global_rect()), "Revealed %s portrait/services keep the panel and footer inside %s" % [NpcCatalog.NAMES[id], extent])
 			var goodbye: Button = box.choice_list.get_node("Choice_goodbye") as Button
@@ -292,11 +298,25 @@ func _verify_layout_matrix(hub: PrologueHub) -> void:
 	root.content_scale_size = old_scale
 	await _step(4)
 
+func _select_while_hidden(box: DialogueBox, id: StringName) -> void:
+	var button: Button = box.choice_list.get_node_or_null("Choice_" + String(id)) as Button
+	if button != null: button.pressed.emit()
+
+func _reveal_services(box: DialogueBox) -> void:
+	for attempt: int in box.pages.size() * 2 + 2:
+		if box.page_index == box.pages.size() - 1 and not box.is_typing(): break
+		await _key(KEY_E)
+	await _step(3)
+
 func _select(box: DialogueBox, id: StringName) -> void:
-	for index: int in box.choices.size():
-		if StringName(box.choices[index].get("id", "")) == id:
-			(box.choice_list.get_child(index) as Button).pressed.emit()
-			return
+	await _reveal_services(box)
+	var button: Button = box.choice_list.get_node_or_null("Choice_" + String(id)) as Button
+	_check(box.is_open and box.choice_list.visible and button != null and not button.disabled, "Service %s is available on the actual final page" % id)
+	if button == null or button.disabled or not box.choice_list.visible: return
+	box.body_scroll.ensure_control_visible(button)
+	await _step(3)
+	_check(box.body_scroll.get_global_rect().encloses(button.get_global_rect()), "Service %s is reachable by real mouse input" % id)
+	await _mouse(MOUSE_BUTTON_LEFT, button.get_global_rect().get_center())
 
 func _key(code: int) -> void:
 	var event := InputEventKey.new()

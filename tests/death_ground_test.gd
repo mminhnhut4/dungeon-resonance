@@ -51,7 +51,7 @@ func _freeze_ai() -> void:
 
 func _kill_player() -> DamageResult:
 	var event := DamageEvent.new()
-	event.source_id = 987654
+	event.source_id = run.get_instance_id() # Live synthetic hostile owner across retry.
 	event.source_team_id = 2
 	event.target_id = run.player.get_instance_id()
 	event.attack_id = CombatIds.next_id()
@@ -104,12 +104,13 @@ func _test_grounded_defeat(label: String) -> void:
 
 
 func _test_platform_defeat(label: String) -> void:
-	run.player.relocate(Vector2(400, 550))
+	var support: Vector2 = run.room.traversal_points[&"west_gallery"]
+	run.player.relocate(support)
 	await _step(4)
-	_check(run.player.motor.is_grounded(), "%s: platform fixture rests at the authored 550px top" % label)
+	_check(run.player.motor.is_grounded(), "%s: platform fixture rests at the authored gallery top" % label)
 	_kill_player()
 	await _time(0.8)
-	_check(run.player.motor.is_grounded() and absf(run.player.global_position.y - 550.0) < 0.1, "%s: corpse remains on an elevated platform after room disable" % label)
+	_check(run.player.motor.is_grounded() and absf(run.player.global_position.y - support.y) < 0.1, "%s: corpse remains on an elevated platform after room disable" % label)
 	await _retry()
 
 
@@ -124,7 +125,7 @@ func _test_airborne_defeat(label: String) -> void:
 	run.player.reset_movement_at(Vector2(540, 640))
 	await _step(3)
 	var event := DamageEvent.new()
-	event.source_id = 987654
+	event.source_id = run.get_instance_id() # Live synthetic hostile owner across retry.
 	event.source_team_id = 2
 	event.target_id = run.player.get_instance_id()
 	event.attack_id = CombatIds.next_id()

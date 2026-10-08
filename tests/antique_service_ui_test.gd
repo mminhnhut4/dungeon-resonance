@@ -14,6 +14,8 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--hz="): Engine.physics_ticks_per_second = int(argument.trim_prefix("--hz="))
 	capture = OS.get_cmdline_user_args().has("--capture")
 	first_preview = OS.get_cmdline_user_args().has("--first-service-preview")
 	var allowed: String = OS.get_environment("DUNGEON_QA_DATA_ROOT").replace("\\", "/").trim_suffix("/")
@@ -71,11 +73,17 @@ func _run() -> void:
 			_check(hub.station_title.text.length() > 0 and hub.station_panel.get_theme_stylebox("panel") is StyleBoxTexture, "%s has antique frame and persistent title" % service)
 			if service == &"stash":
 				var rows: int = 0
+				var ids: Array[StringName] = []
+				var expected_ids: Array[StringName] = []
+				for id: StringName in MaterialCatalog.IDS:
+					if hub.profile.material_stash[id] > 0: expected_ids.append(id)
 				for child: Node in hub.station_content.get_children():
 					if child is ServiceItemCard:
 						rows += 1
+						ids.append(StringName(String(child.name).trim_prefix("WithdrawMaterial_")))
 						_check(child.item_title.text.length() > 0 and "Trong kho" in child.quantity_label.text, "Storage row has actual name/count and mapped image or pending state")
-				_check(rows == MaterialCatalog.IDS.size(), "All actual material catalog IDs have storage rows")
+				ids.sort(); expected_ids.sort()
+				_check(rows == expected_ids.size() and ids == expected_ids and not hub.station_content.has_node("WithdrawMaterial_origin_divine_stone"), "Storage shows every positive-stock catalog ID exactly once and omits empty stock")
 				var last: Control = hub.station_content.get_node("WithdrawMaterial_detox_root")
 				last.grab_focus()
 				await _frames(5)
@@ -111,15 +119,19 @@ func _run() -> void:
 				if child.get_combined_minimum_size().x > extent.x - 68: print("CRAFTING WIDE %s %s min=%s" % [child.get_class(),str(child.get_path()),str(child.get_combined_minimum_size())])
 		_check(crafting.item_list.item_count == hub.gear.inventory.items.size() and crafting.item_list.get_item_icon(0) != null, "Crafting projects owned items with contextual icons")
 		crafting.close()
-	# A denied transfer capability must remove the callback as well as disable UI.
-	# This is the same projection used by lineage-bound materials in cultivation.
+	# Temporary busy state is still an ordinary material action; the transaction
+	# owner rejects it. Lineage policy instead forbids the callback entirely.
 	hub.economy.set("_busy", true)
 	hub.open_station(&"stash")
 	await _frames(6)
 	var denied: Button = hub.station_content.get_node("WithdrawMaterial_metal") as Button
-	_check(denied.disabled and denied.get_signal_connection_list(&"pressed").is_empty(), "Rejected transfer capability creates a read-only row with no withdraw callback")
+	_check(denied.disabled and denied.get_signal_connection_list(&"pressed").size() == 1, "Busy ordinary transfer is disabled and retains its one guarded owner callback")
 	denied.pressed.emit()
 	_check(hub.profile.material_stash == stash_before, "Even explicit pressed emission on denied row cannot withdraw")
+	var lineage: Button = hub.station_content.get_node("WithdrawMaterial_aptitude_herb") as Button
+	_check(lineage.disabled and lineage.get_signal_connection_list(&"pressed").is_empty(), "Positive-stock lineage material has no ordinary-transfer callback")
+	lineage.pressed.emit()
+	_check(hub.profile.material_stash == stash_before, "Forced lineage row press preserves every banked material")
 	hub.close_station()
 	hub.economy.set("_busy", false)
 	_check(ItemArtCatalog.icon(&"aptitude_herb") == null and ItemArtCatalog.icon(&"aptitude_pill") == null, "New lineage IDs keep missing-art state instead of wrong material reuse")

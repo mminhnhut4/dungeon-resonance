@@ -15,6 +15,8 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--hz="): Engine.physics_ticks_per_second = int(argument.trim_prefix("--hz="))
 	baseline = OS.get_cmdline_user_args().has("--baseline")
 	capture = OS.get_cmdline_user_args().has("--capture")
 	destination = OS.get_environment("DUNGEON_QA_EVIDENCE_ROOT").replace("\\", "/")
@@ -72,7 +74,7 @@ func _run() -> void:
 					_check(card.tooltip_text.contains(card.detail_label.text), "Full description remains in tooltip")
 					_check(card.item_icon.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "Whole item art keeps its aspect ratio")
 					_check(card.get_global_rect().end.x <= hub.station_scroll.get_v_scroll_bar().global_position.x + 1, "Scroll thumb cannot cover a card or its action")
-					if service == &"merchant": _check("Đồng" in card.quantity_label.text, "Sale total or purchase price is visible before action")
+					if service == &"merchant": _check(_quoted_price_visible(card), "Actual quoted sale total or purchase price in Linh Thạch is visible before action")
 			if not baseline:
 				_check(int(hub.station_content.get("columns")) == 2, "Default storage/shop layout has two columns")
 				_check(hub.station_scroll.get_v_scroll_bar().visible and hub.station_scroll.get_v_scroll_bar().size.x >= 12, "One antique scroll thumb remains visibly usable")
@@ -97,7 +99,13 @@ func _run() -> void:
 				hub.station_scroll.scroll_vertical = 0
 				await _frames(4)
 			if service == &"stash":
-				_check(cards.size() == MaterialCatalog.IDS.size(), "All actual catalog materials retained")
+				var ids: Array[StringName] = []
+				var expected_ids: Array[StringName] = []
+				for id: StringName in MaterialCatalog.IDS:
+					if hub.profile.material_stash[id] > 0: expected_ids.append(id)
+				for card: ServiceItemCard in cards: ids.append(StringName(String(card.name).trim_prefix("WithdrawMaterial_")))
+				ids.sort(); expected_ids.sort()
+				_check(ids == expected_ids and not hub.station_content.has_node("WithdrawMaterial_origin_divine_stone"), "All positive-stock catalog materials retained exactly once; empty stock omitted")
 				if not baseline:
 					cards[0].grab_focus()
 					await _action(&"ui_right")
@@ -119,14 +127,19 @@ func _run() -> void:
 			await _frames(3)
 	_check(hub.profile.coins == coins_before and hub.profile.material_stash == stash_before and hub.gear.inventory.items.size() == count_before and hub.gear.inventory.equipped_weapon_uid == uid_before, "Layout inspection preserves every transaction value")
 	if not baseline:
-		# Denied lineage/transfer capability removes the original callback entirely.
+		# Busy ordinary actions retain a guarded callback. A lineage policy denial
+		# removes the callback; both cases must preserve the transaction values.
 		hub.economy.set("_busy", true)
 		hub.open_station(&"stash")
 		await _frames(5)
 		var denied := hub.station_content.get_node("WithdrawMaterial_metal") as Button
-		_check(denied.disabled and denied.get_signal_connection_list(&"pressed").is_empty(), "Denied transfer row is read-only and cannot receive a callback")
+		_check(denied.disabled and denied.get_signal_connection_list(&"pressed").size() == 1, "Busy ordinary row is disabled with one guarded owner callback")
 		denied.pressed.emit()
 		_check(hub.profile.material_stash == stash_before, "Explicit pressed on read-only row cannot transfer")
+		var lineage: Button = hub.station_content.get_node("WithdrawMaterial_aptitude_pill") as Button
+		_check(lineage.disabled and lineage.get_signal_connection_list(&"pressed").is_empty(), "Lineage policy denial has no ordinary transfer callback")
+		lineage.pressed.emit()
+		_check(hub.profile.material_stash == stash_before and hub.profile.coins == coins_before and hub.gear.inventory.items.size() == count_before, "Busy/lineage forced presses preserve materials, coins and UID count")
 		hub.close_station()
 		hub.economy.set("_busy", false)
 		# Native GUI input executes the existing shop callback exactly once.
@@ -151,6 +164,30 @@ func _run() -> void:
 	print("RESULT TwoColumnServiceUI baseline=%s checks=%d failures=%d captures=%d" % [baseline,checks,failures,captures])
 	await root.get_node("AudioManager").shutdown()
 	quit(0 if failures == 0 else 1)
+
+func _quoted_price_visible(card: ServiceItemCard) -> bool:
+	var key: String = String(card.name)
+	var quote: Dictionary
+	var price: int
+	if key.begins_with("SellMaterial_"):
+		quote = hub.economy.quote_material_sale(StringName(key.trim_prefix("SellMaterial_")))
+		price = int(quote["total"])
+	elif key.begins_with("SellBagMaterial_"):
+		quote = hub.economy.quote_bag_material_sale(StringName(key.trim_prefix("SellBagMaterial_")))
+		price = int(quote["total"])
+	elif key.begins_with("SellBagEquipment_"):
+		quote = hub.economy.quote_bag_equipment_sale(int(key.trim_prefix("SellBagEquipment_")))
+		price = int(quote["total"])
+	elif key.begins_with("BuyWeapon_"):
+		var stock: String = key.trim_prefix("BuyWeapon_")
+		var split: int = stock.rfind("_")
+		if split < 0: return false
+		quote = hub.economy.quote_buy(StringName(stock.substr(0, split)), int(stock.substr(split + 1)))
+		price = int(quote["coin_cost"])
+	else: return false
+	var expected := RegEx.new()
+	if expected.compile("(^|[^0-9])%d Linh Thạch($|[^0-9])" % price) != OK: return false
+	return price > 0 and card.quantity_label.is_visible_in_tree() and expected.search(card.quantity_label.text) != null
 
 func _frames(count: int) -> void:
 	for index: int in count: await process_frame

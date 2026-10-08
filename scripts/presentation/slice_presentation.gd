@@ -13,6 +13,7 @@ const FOOTSTEP_INTERVAL: float = 0.16
 const SLASH_SCENE: PackedScene = preload("res://scenes/vfx/slash_arc.tscn")
 const LIGHT: Texture2D = preload("res://assets/presentation/light_radial.png")
 const CAST_CUE = preload("res://scripts/presentation/rune_cast_cue.gd")
+const FIELD_VFX = preload("res://scripts/presentation/element_field_vfx.gd")
 var cast_cue: Node2D
 var atmosphere: DungeonAtmosphere
 var debug_overlay: DungeonDebugOverlay
@@ -37,6 +38,7 @@ var _step_tracking: bool = false
 var bound_actors: Dictionary[int, bool] = {}
 var light_owners: Dictionary[int, bool] = {}
 var projectile_vfx_owners: Dictionary[int, bool] = {}
+var field_vfx_owners: Dictionary[int, bool] = {}
 var campfire_owners: Dictionary[int, bool] = {}
 var scan_remaining: float = 0.0
 var impact_count: int = 0
@@ -89,7 +91,7 @@ func initialize(owner_world: Node2D, player: Player, combat_feedback: CombatFeed
 	actor.locomotion_state_machine.state_changed.connect(_on_locomotion)
 	executor.presentation_cast.connect(_on_spell)
 	executor.presentation_burst.connect(_on_explosion)
-	executor.presentation_contact.connect(_on_spell_contact)
+	executor.committed_contact.connect(_on_committed_spell_contact)
 	art_hud = ArtHUD.new()
 	art_hud.name = "ArtHUD"
 	add_child(art_hud)
@@ -112,6 +114,8 @@ func rebuild(boss_room: bool = false) -> void:
 	_last_vertical_speed = 0.0
 	_reset_footsteps()
 	atmosphere.rebuild(boss_room)
+	if world is WorldCampaign and is_instance_valid(world.room):
+		preload("res://scripts/presentation/existing_map_raster.gd").attach_campaign(world.room, world.stage, atmosphere.room_art)
 	if boss_room:
 		foyer_art.clear()
 	else:
@@ -124,7 +128,7 @@ func _on_node_added(node: Node) -> void:
 		return
 	# A queued Node argument can be freed before Godot dispatches the call.
 	# Resolve its ID only after checking this room's lifetime.
-	if node is Player or node is SlimeEnemy or node is BossGolem or node is TrainingDummy or node is SpellProjectile or node is TreasureChest or node is LootPickup or node is Campfire:
+	if node is Player or node is SlimeEnemy or node is BossGolem or node is TrainingDummy or node is SpellProjectile or node is ElementField or node is TreasureChest or node is LootPickup or node is Campfire:
 		_bind_added.call_deferred(node.get_instance_id())
 
 func _is_active() -> bool:
@@ -143,6 +147,8 @@ func _bind_added(target_id: int) -> void:
 		_bind_actor(node)
 	elif node is SpellProjectile:
 		_bind_projectile(node)
+	elif node is ElementField:
+		_bind_field(node)
 	elif node is TreasureChest:
 		_bind_prop(node)
 	elif node is LootPickup:
@@ -203,11 +209,13 @@ func _bind_actor(target: Node) -> void:
 		target.add_child(slime_skin)
 		slime_skin.bind(slime)
 	elif target is BossGolem:
+		preload("res://scripts/presentation/boss_skill_raster_helper.gd").attach(target as BossGolem)
 		(target as BossGolem).fsm.state_changed.connect(_on_boss_state.bind(target as BossGolem))
-		var skin := BossGolemSkin.new()
-		skin.name = "GolemStoneSkin"
-		target.add_child(skin)
-		skin.bind(target as BossGolem)
+		if not bool(target.get_meta(&"custom_boss_visual", false)):
+			var skin := BossGolemSkin.new()
+			skin.name = "GolemStoneSkin"
+			target.add_child(skin)
+			skin.bind(target as BossGolem)
 	elif target is TrainingDummy:
 		_bind_prop(target)
 	if not target.has_node("ElementAfflictionVFX"):
@@ -261,6 +269,8 @@ func _scan() -> void:
 			continue
 		if effect is SpellProjectile:
 			_bind_projectile(effect)
+		elif effect is ElementField:
+			_bind_field(effect)
 		var id: int = effect.get_instance_id()
 		if light_owners.has(id) or light_owners.size() >= MAX_PROJECTILE_LIGHTS:
 			continue
@@ -271,6 +281,8 @@ func _scan() -> void:
 			color = Color(1, 0.36, 0.08)
 		elif effect is SpellVisual:
 			color = (effect as SpellVisual).color
+		elif effect is ElementField:
+			color = (effect as ElementField).context.snapshot.color
 		var light := PointLight2D.new()
 		light.name = "ResonanceGlow"
 		light.texture = LIGHT
@@ -342,7 +354,7 @@ func _bind_projectile(projectile: Node) -> void:
 	if not _owns_target(projectile) or not is_instance_valid(executor) or executor.is_queued_for_deletion() or not executor.is_ancestor_of(projectile):
 		return
 	var id: int = projectile.get_instance_id()
-	if projectile_vfx_owners.has(id) or projectile_vfx_owners.size() >= MAX_PROJECTILE_TRAILS:
+	if projectile_vfx_owners.has(id) or projectile_vfx_owners.size() + field_vfx_owners.size() >= MAX_PROJECTILE_TRAILS:
 		return
 	var visual := SpellProjectileVFX.new()
 	visual.name = "SpellTrailVFX"
@@ -353,6 +365,24 @@ func _bind_projectile(projectile: Node) -> void:
 
 func _projectile_left(id: int) -> void:
 	projectile_vfx_owners.erase(id)
+
+func _bind_field(field: ElementField) -> void:
+	if not _owns_target(field) or not is_instance_valid(executor) or executor.is_queued_for_deletion() or not executor.is_ancestor_of(field):
+		return
+	var id: int = field.get_instance_id()
+	# Fields and projectile wakes share the existing room cap; no new light or
+	# particle owners are created by this purely drawn child.
+	if field_vfx_owners.has(id) or projectile_vfx_owners.size() + field_vfx_owners.size() >= MAX_PROJECTILE_TRAILS:
+		return
+	var visual: Node2D = FIELD_VFX.new()
+	visual.name = "ElementFieldVFX"
+	field.add_child(visual)
+	visual.bind(field)
+	field_vfx_owners[id] = true
+	field.tree_exiting.connect(_field_left.bind(id), CONNECT_ONE_SHOT)
+
+func _field_left(id: int) -> void:
+	field_vfx_owners.erase(id)
 
 func _physics_process(delta: float) -> void:
 	if is_instance_valid(actor) and not feedback.is_frozen():
@@ -456,6 +486,13 @@ func _on_explosion(location: Vector2, color: Color, element: StringName) -> void
 func _on_spell_contact(location: Vector2, color: Color, direction: Vector2) -> void:
 	spawn_impact(location, color, &"spell_contact", direction)
 
+func _on_committed_spell_contact(location: Vector2, color: Color, direction: Vector2, recipe_id: StringName, root_id: int, source_id: int) -> void:
+	var burst: ImpactBurst = spawn_impact(location, color, &"spell_contact", direction)
+	burst.configure_spell_art(recipe_id)
+	# Scalars stay with the finite paint owner; no actor or cast context is held.
+	burst.set_meta(&"committed_root_id", root_id)
+	burst.set_meta(&"committed_source_id", source_id)
+
 func _on_hit(event: DamageEvent, result: DamageResult, hurt: Hurtbox) -> void:
 	if result.blocked or result.actual_damage <= 0 or event.source_kind == DamageEvent.SourceKind.DOT:
 		return
@@ -486,6 +523,8 @@ func _on_hit(event: DamageEvent, result: DamageResult, hurt: Hurtbox) -> void:
 	# Keep the resolved element at contact: the Fire lance ends in a flame
 	# fracture, Ice in shards, Lightning in branches, all on accepted damage.
 	var burst: ImpactBurst = spawn_impact(hurt.global_position, color, element, event.attack_direction)
+	if not event.spell_id.is_empty():
+		burst.configure_spell_art(event.spell_id)
 	if event.melee_hit:
 		burst.configure_combat(event.cosmetic_quality, event.critical, event.cosmetic_combo_index)
 		burst.enable_melee_sparks()
@@ -544,4 +583,5 @@ func _exit_tree() -> void:
 	bound_actors.clear()
 	light_owners.clear()
 	projectile_vfx_owners.clear()
+	field_vfx_owners.clear()
 	campfire_owners.clear()

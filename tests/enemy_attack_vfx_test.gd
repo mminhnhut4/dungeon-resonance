@@ -143,7 +143,7 @@ func _stomp_live() -> void:
 	boss.add_child(skin)
 	skin.bind(boss)
 	var vfx: GolemStompVFX=skin.stomp_vfx
-	_check(vfx!=null and vfx.z_index<0 and skin.sprite.visible,"Stomp ground cue lives behind the readable boss PNG")
+	_check(vfx!=null and vfx.z_index<0 and skin.art_rig!=null and skin.art_rig.is_visible_in_tree() and not skin.sprite.visible and skin.art_rig.get_node("Torso/PaintedStone") is MeshInstance2D,"Stomp ground cue lives behind the visible static UV mesh body")
 	_check(vfx.material is CanvasItemMaterial and (vfx.material as CanvasItemMaterial).blend_mode==CanvasItemMaterial.BLEND_MODE_MIX,"Cracks/debris use normal alpha mix and no additive body flash")
 	var body: CollisionShape2D=boss.get_node("Body")
 	var shape_id: int=body.shape.get_instance_id()
@@ -254,7 +254,7 @@ func _cancel_and_teardown() -> void:
 	_check(vfx.impact_count==impacts and boss.shockwave_count==waves,"Cancelled prelaunch stomp cannot emit a fake impact or new wave")
 	skin.bind(boss)
 	skin.bind(boss)
-	_check(boss.fsm.state_changed.get_connections().size()==1,"Repeated skin binding leaves one stomp result listener")
+	_check(boss.fsm.state_changed.get_connections().size()==2,"Repeated skin binding leaves one stomp listener and one combat-pose listener")
 	var wave:=EnemyHazard.new()
 	wave.kind=&"wave"
 	wave.source_id=boss.get_instance_id()

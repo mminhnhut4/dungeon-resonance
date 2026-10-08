@@ -207,8 +207,14 @@ func _product_replay_and_death() -> void:
 	screen.close(); await _step()
 	_check(_state(flow.profile,hub.gear.inventory) == state and FileAccess.get_file_as_string(flow.profile.save_path) == bytes, "Opening/reading/replaying modal leaves profile bytes, bank and inventory unchanged")
 	var old_inventory: GearInventory = hub.gear.inventory
-	journal.bind_progress(flow.profile,old_inventory); journal.bind_progress(flow.profile,old_inventory)
-	_check(old_inventory.changed.get_connections().filter(func(connection: Dictionary) -> bool: return connection["callable"] == journal.refresh).size() == 1, "Rebinding has exactly one inventory listener")
+	var old_journal_id: int = journal.get_instance_id()
+	var journal_listener := Callable(journal,"_request_refresh")
+	var other_inventory_listeners: Array[Callable] = []
+	for connection: Dictionary in old_inventory.changed.get_connections():
+		var callback: Callable = connection["callable"]
+		if callback.get_object_id() != old_journal_id: other_inventory_listeners.append(callback)
+	for _index: int in 6: journal.bind_progress(flow.profile,old_inventory)
+	_check(old_inventory.changed.get_connections().filter(func(connection: Dictionary) -> bool: return connection["callable"] == journal_listener).size() == 1 and flow.profile.changed.get_connections().filter(func(connection: Dictionary) -> bool: return connection["callable"] == journal_listener).size() == 1 and other_inventory_listeners.all(func(callback: Callable) -> bool: return old_inventory.changed.is_connected(callback)), "Repeated binding keeps one journal refresh request per owner and preserves unrelated listeners")
 	old_inventory.unequip_equipment(0)
 	_check(_journal_row(journal,&"explored")["guide"]["status"] == "equip_needed", "Actual inventory signal refreshes guide immediately")
 	old_inventory.equip_equipment(kit.equipped_weapon_uid)
@@ -242,7 +248,7 @@ func _product_replay_and_death() -> void:
 	journal = (hub.gear.modal as InventoryScreen).journal
 	_check(journal.rows.size() == 7 and "+0 → +1" in _journal_row(journal,&"reward_collected")["guide"]["body"] and _journal_row(journal,&"explored")["done"], "Cold reload replays canonical old quests and derived follow-up against fresh current gear")
 	await _close()
-	_check(not old_inventory.changed.get_connections().any(func(connection: Dictionary) -> bool: return str(connection["callable"]).contains("QuestJournal")), "Deleted journal leaves no stale inventory callback")
+	_check(not old_inventory.changed.get_connections().any(func(connection: Dictionary) -> bool: return (connection["callable"] as Callable).get_object_id() == old_journal_id), "Deleted journal leaves no stale callback for its exact instance ID")
 
 func _run() -> void:
 	for argument: String in OS.get_cmdline_user_args():

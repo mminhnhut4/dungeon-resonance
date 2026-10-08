@@ -13,6 +13,7 @@ var gate_visual: Polygon2D
 var gate_open: bool
 var min_y: float
 var bounds: Rect2
+const ROUTE_PRESENTATION: Script = preload("res://scripts/presentation/pilgrimage_route_presentation.gd")
 
 func configure(id: StringName, route: StringName, opened: bool) -> bool:
 	var spec: Dictionary = ExteriorRouteCatalog.layout(id,route)
@@ -60,6 +61,11 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 		var art := PilgrimagePresentation.new()
 		add_child(art)
 		art.initialize(self)
+	elif room_id == &"o01_p02" and route_id in [ExteriorRouteCatalog.MAIN, ExteriorRouteCatalog.TUNNEL]:
+		var art: Node2D = ROUTE_PRESENTATION.new()
+		add_child(art)
+		art.initialize(self)
+	preload("res://scripts/presentation/existing_map_raster.gd").attach_exterior(self)
 	return true
 
 func _author_details() -> void:

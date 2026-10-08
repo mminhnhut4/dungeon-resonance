@@ -279,7 +279,7 @@ func _clear_hazards() -> void:
 
 func _damage(target: Hurtbox, amount: float, team: int = 1) -> DamageEvent:
 	var event := DamageEvent.new()
-	event.source_id = run.player.get_instance_id() if team == 1 else 987654
+	event.source_id = run.player.get_instance_id() if team == 1 else run.get_instance_id()
 	event.source_team_id = team
 	event.target_id = target.get_actor_id()
 	event.attack_id = CombatIds.next_id()

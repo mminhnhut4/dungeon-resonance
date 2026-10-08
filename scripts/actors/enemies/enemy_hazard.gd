@@ -13,6 +13,7 @@ var attack: AttackSnapshot
 var element: StringName = &""
 var hit_reaction: StringName = &""
 var reaction_impulse: Vector2 = Vector2.ZERO
+const BOSS_ORB_VISUAL: Script = preload("res://scripts/presentation/boss_orb_vfx.gd")
 
 
 func _ready() -> void:
@@ -35,6 +36,12 @@ func _ready() -> void:
 	hitbox.activate(attack, shape, Vector2.ZERO)
 	if kind == &"orb" and is_instance_valid(player):
 		direction = (player.global_position + Vector2(0, -18) - global_position).normalized()
+	if kind == &"orb" and source_id != 0 and is_instance_id_valid(source_id):
+		var source: Node = instance_from_id(source_id) as Node
+		if source is BossGolem and not source.is_queued_for_deletion() and get_tree().get_nodes_in_group(&"boss_orb_vfx").size() < BOSS_ORB_VISUAL.MAX_VISUALS:
+			var visual: Node2D = BOSS_ORB_VISUAL.new()
+			add_child(visual)
+			visual.bind(self)
 
 
 func _physics_process(delta: float) -> void:

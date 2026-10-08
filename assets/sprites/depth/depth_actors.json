@@ -1,0 +1,2197 @@
+{
+  "enemy": {
+    "faces_left": false,
+    "require_authored_pivots": true,
+    "row_frames": [
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_1.png",
+          "region": [
+            17,
+            347,
+            256,
+            300
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            113,
+            284
+          ],
+          "boot_source": [
+            126,
+            627
+          ],
+          "body_height": 260,
+          "role": "idle",
+          "solid_bounds": [
+            23,
+            367,
+            273,
+            627
+          ],
+          "solid_pixels": 29020,
+          "source_sha256": "1424bfe9886cab94bcb7ecc09116a9f58682f3e6e30baaab06bbf9ed26840a70"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_1.png",
+          "region": [
+            12,
+            320,
+            387,
+            412
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            167,
+            392
+          ],
+          "boot_source": [
+            175,
+            708
+          ],
+          "body_height": 375,
+          "role": "unused_primary_walk",
+          "solid_bounds": [
+            18,
+            336,
+            387,
+            708
+          ],
+          "solid_pixels": 57532,
+          "source_sha256": "0608b91d2cb5dcfeca9e5699f0e9172525cb99c26fee18ada8f73df9e5650434"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy1_2.png",
+          "region": [
+            0,
+            0,
+            1374,
+            1145
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            701,
+            1116
+          ],
+          "boot_source": [
+            697,
+            1112
+          ],
+          "body_height": 868,
+          "role": "telegraph",
+          "solid_bounds": [
+            278,
+            28,
+            1093,
+            1112
+          ],
+          "solid_pixels": 365073,
+          "source_sha256": "42cf0f55cdb32d0c2a9f1ffd8796cc4713a79562b144f4ee4da629b2a6b2e1b0"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy1_3.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            584,
+            933
+          ],
+          "boot_source": [
+            580,
+            929
+          ],
+          "body_height": 802,
+          "role": "attack",
+          "solid_bounds": [
+            108,
+            127,
+            1477,
+            929
+          ],
+          "solid_pixels": 385232,
+          "source_sha256": "0916b5da0026695545312714363fbf66183c2b4914bf9ad352368d35ec2070ba"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy1_4.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            728,
+            927
+          ],
+          "boot_source": [
+            724,
+            923
+          ],
+          "body_height": 827,
+          "role": "recover",
+          "solid_bounds": [
+            360,
+            96,
+            1257,
+            923
+          ],
+          "solid_pixels": 316167,
+          "source_sha256": "5d21cf07a0e302e88ca456e5e72a9dfe73e28239264ec97213c9b531e3e5a3f4"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy1_5.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            964,
+            919
+          ],
+          "boot_source": [
+            960,
+            915
+          ],
+          "body_height": 828,
+          "role": "hurt",
+          "solid_bounds": [
+            289,
+            87,
+            1236,
+            915
+          ],
+          "solid_pixels": 356642,
+          "source_sha256": "966b1c406314c593b7d267ce85092d8824d3d98a48dcfdb83a48327ec0e7bcae"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_2.png",
+          "region": [
+            15,
+            347,
+            270,
+            280
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            167,
+            235
+          ],
+          "boot_source": [
+            178,
+            578
+          ],
+          "body_height": 210,
+          "role": "idle",
+          "solid_bounds": [
+            20,
+            387,
+            279,
+            597
+          ],
+          "solid_pixels": 27641,
+          "source_sha256": "43e4b42dd9b102e5d86fca611debd1d429522af1d61bc49d5dc748fbac636290"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_2.png",
+          "region": [
+            30,
+            240,
+            304,
+            499
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            169,
+            402
+          ],
+          "boot_source": [
+            195,
+            638
+          ],
+          "body_height": 393,
+          "role": "unused_primary_walk",
+          "solid_bounds": [
+            36,
+            260,
+            332,
+            655
+          ],
+          "solid_pixels": 61592,
+          "source_sha256": "461e27afdea1a93d73115cad4f61380d654531edac9d7c8b85020645f8f6c026"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_2.png",
+          "region": [
+            550,
+            347,
+            199,
+            280
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            128,
+            251
+          ],
+          "boot_source": [
+            674,
+            594
+          ],
+          "body_height": 244,
+          "role": "telegraph",
+          "solid_bounds": [
+            561,
+            364,
+            742,
+            608
+          ],
+          "solid_pixels": 25234,
+          "source_sha256": "43e4b42dd9b102e5d86fca611debd1d429522af1d61bc49d5dc748fbac636290"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy2_3.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            779,
+            900
+          ],
+          "boot_source": [
+            775,
+            896
+          ],
+          "body_height": 803,
+          "role": "attack",
+          "solid_bounds": [
+            236,
+            96,
+            1359,
+            899
+          ],
+          "solid_pixels": 458290,
+          "source_sha256": "b0a93516dad00f650b0c7887b6e9d48dd01a6bca10747c330a4311833901bc2f"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy2_4.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            879,
+            956
+          ],
+          "boot_source": [
+            875,
+            952
+          ],
+          "body_height": 904,
+          "role": "recover",
+          "solid_bounds": [
+            159,
+            60,
+            1387,
+            964
+          ],
+          "solid_pixels": 449674,
+          "source_sha256": "28107326e569392d0c608939fa9921dd92d15fccc4ffdb5e996c58ee7f54d060"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy2_5.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            874,
+            789
+          ],
+          "boot_source": [
+            870,
+            785
+          ],
+          "body_height": 742,
+          "role": "hurt",
+          "solid_bounds": [
+            238,
+            142,
+            1293,
+            884
+          ],
+          "solid_pixels": 351311,
+          "source_sha256": "a039ec067ea752da7bd0772133daf73c89d8a6a546b433729257824c3e695ea6"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy3_0.png",
+          "region": [
+            0,
+            0,
+            1214,
+            1295
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            645,
+            1195
+          ],
+          "boot_source": [
+            641,
+            1191
+          ],
+          "body_height": 966,
+          "role": "idle",
+          "solid_bounds": [
+            53,
+            70,
+            1161,
+            1191
+          ],
+          "solid_pixels": 461902,
+          "source_sha256": "ec1349b8d6314861a585fc0774926c14aa7095ffa93b9a4e2548f7b793d600af"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_3.png",
+          "region": [
+            10,
+            312,
+            405,
+            397
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            174,
+            377
+          ],
+          "boot_source": [
+            180,
+            685
+          ],
+          "body_height": 305,
+          "role": "unused_primary_walk",
+          "solid_bounds": [
+            17,
+            330,
+            399,
+            688
+          ],
+          "solid_pixels": 55919,
+          "source_sha256": "8ce5525ae008e6bbd815dbc3c1c06c1e487bcfb8308ad88058704ca1ed4f7fde"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy3_2.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            795,
+            1007
+          ],
+          "boot_source": [
+            791,
+            1003
+          ],
+          "body_height": 753,
+          "role": "telegraph",
+          "solid_bounds": [
+            296,
+            16,
+            1423,
+            1003
+          ],
+          "solid_pixels": 403770,
+          "source_sha256": "c7c260d998201034944d5009c628e4fd199c1db8cf1e84dbc1d3e37538db69b2"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy3_3.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            662,
+            960
+          ],
+          "boot_source": [
+            658,
+            956
+          ],
+          "body_height": 787,
+          "role": "attack",
+          "solid_bounds": [
+            48,
+            38,
+            1506,
+            956
+          ],
+          "solid_pixels": 381438,
+          "source_sha256": "a49893c737520f79f8b959c3c4227cff84946f9c139469d6f88068df19cc041f"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy3_4.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            774,
+            960
+          ],
+          "boot_source": [
+            770,
+            956
+          ],
+          "body_height": 813,
+          "role": "recover",
+          "solid_bounds": [
+            337,
+            18,
+            1193,
+            956
+          ],
+          "solid_pixels": 312986,
+          "source_sha256": "7d10e6220ea1218f18d664d127b0d458cc98e808966bc97fff809c7db615c5a2"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy3_5.png",
+          "region": [
+            0,
+            0,
+            1254,
+            1254
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            791,
+            1101
+          ],
+          "boot_source": [
+            787,
+            1097
+          ],
+          "body_height": 782,
+          "role": "hurt",
+          "solid_bounds": [
+            83,
+            216,
+            1202,
+            1097
+          ],
+          "solid_pixels": 355675,
+          "source_sha256": "29c94fc7aa70b751e786e76089055d15a1f7db83de8651097bd65c49c893df81"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_4.png",
+          "region": [
+            16,
+            330,
+            248,
+            320
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            112,
+            297
+          ],
+          "boot_source": [
+            124,
+            623
+          ],
+          "body_height": 201,
+          "role": "idle",
+          "solid_bounds": [
+            22,
+            422,
+            253,
+            623
+          ],
+          "solid_pixels": 31222,
+          "source_sha256": "119edc7303a4b7ed16efcfa95663bd3ea47cb1052cce0575642f911323af19b1"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_4.png",
+          "region": [
+            10,
+            344,
+            407,
+            340
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            233,
+            319
+          ],
+          "boot_source": [
+            239,
+            659
+          ],
+          "body_height": 297,
+          "role": "unused_primary_walk",
+          "solid_bounds": [
+            17,
+            362,
+            395,
+            659
+          ],
+          "solid_pixels": 67991,
+          "source_sha256": "966b7149acd48f9eadcb888d9ad1e509abecddbbeec83463be6dc32257130472"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_4.png",
+          "region": [
+            496,
+            330,
+            239,
+            320
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            124,
+            299
+          ],
+          "boot_source": [
+            616,
+            625
+          ],
+          "body_height": 201,
+          "role": "telegraph",
+          "solid_bounds": [
+            503,
+            348,
+            727,
+            625
+          ],
+          "solid_pixels": 33416,
+          "source_sha256": "119edc7303a4b7ed16efcfa95663bd3ea47cb1052cce0575642f911323af19b1"
+        },
+        {
+          "path": "res://assets/sprites/depth/isolated/enemy4_3.png",
+          "region": [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            692,
+            950
+          ],
+          "boot_source": [
+            688,
+            946
+          ],
+          "body_height": 633,
+          "role": "field_cast",
+          "solid_bounds": [
+            340,
+            38,
+            1293,
+            946
+          ],
+          "solid_pixels": 344951,
+          "source_sha256": "0f40894cda35e0612e6362080739e5fece9cc07ddd47ca7f88138aa7ec8db1c1"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_4.png",
+          "region": [
+            1068,
+            330,
+            236,
+            320
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            112,
+            297
+          ],
+          "boot_source": [
+            1176,
+            623
+          ],
+          "body_height": 201,
+          "role": "recover",
+          "solid_bounds": [
+            1084,
+            435,
+            1295,
+            623
+          ],
+          "solid_pixels": 28465,
+          "source_sha256": "119edc7303a4b7ed16efcfa95663bd3ea47cb1052cce0575642f911323af19b1"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_enemy_4.png",
+          "region": [
+            1304,
+            330,
+            228,
+            320
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            123,
+            298
+          ],
+          "boot_source": [
+            1423,
+            624
+          ],
+          "body_height": 201,
+          "role": "hurt",
+          "solid_bounds": [
+            1313,
+            406,
+            1517,
+            624
+          ],
+          "solid_pixels": 24611,
+          "source_sha256": "119edc7303a4b7ed16efcfa95663bd3ea47cb1052cce0575642f911323af19b1"
+        }
+      ]
+    ],
+    "walk_row_frames": [
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_walk_1.png",
+          "region": [
+            12,
+            320,
+            387,
+            412
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            167,
+            392
+          ],
+          "boot_source": [
+            175,
+            708
+          ],
+          "body_height": 375,
+          "role": "walk0",
+          "solid_bounds": [
+            18,
+            336,
+            387,
+            708
+          ],
+          "solid_pixels": 57532,
+          "source_sha256": "0608b91d2cb5dcfeca9e5699f0e9172525cb99c26fee18ada8f73df9e5650434"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_1.png",
+          "region": [
+            400,
+            320,
+            365,
+            412
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            156,
+            395
+          ],
+          "boot_source": [
+            552,
+            711
+          ],
+          "body_height": 375,
+          "role": "walk1",
+          "solid_bounds": [
+            411,
+            339,
+            742,
+            711
+          ],
+          "solid_pixels": 49926,
+          "source_sha256": "0608b91d2cb5dcfeca9e5699f0e9172525cb99c26fee18ada8f73df9e5650434"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_1.png",
+          "region": [
+            778,
+            320,
+            402,
+            412
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            174,
+            393
+          ],
+          "boot_source": [
+            948,
+            709
+          ],
+          "body_height": 375,
+          "role": "walk2",
+          "solid_bounds": [
+            788,
+            340,
+            1165,
+            709
+          ],
+          "solid_pixels": 58265,
+          "source_sha256": "0608b91d2cb5dcfeca9e5699f0e9172525cb99c26fee18ada8f73df9e5650434"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_1.png",
+          "region": [
+            1181,
+            320,
+            355,
+            412
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            145,
+            396
+          ],
+          "boot_source": [
+            1322,
+            712
+          ],
+          "body_height": 375,
+          "role": "walk3",
+          "solid_bounds": [
+            1196,
+            338,
+            1522,
+            712
+          ],
+          "solid_pixels": 49843,
+          "source_sha256": "0608b91d2cb5dcfeca9e5699f0e9172525cb99c26fee18ada8f73df9e5650434"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_walk_2.png",
+          "region": [
+            30,
+            240,
+            304,
+            499
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            169,
+            402
+          ],
+          "boot_source": [
+            195,
+            638
+          ],
+          "body_height": 393,
+          "role": "walk0",
+          "solid_bounds": [
+            36,
+            260,
+            332,
+            655
+          ],
+          "solid_pixels": 61592,
+          "source_sha256": "461e27afdea1a93d73115cad4f61380d654531edac9d7c8b85020645f8f6c026"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_2.png",
+          "region": [
+            334,
+            240,
+            490,
+            499
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            308,
+            389
+          ],
+          "boot_source": [
+            638,
+            625
+          ],
+          "body_height": 393,
+          "role": "walk1",
+          "solid_bounds": [
+            338,
+            334,
+            814,
+            651
+          ],
+          "solid_pixels": 60198,
+          "source_sha256": "461e27afdea1a93d73115cad4f61380d654531edac9d7c8b85020645f8f6c026"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_2.png",
+          "region": [
+            825,
+            240,
+            386,
+            499
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            202,
+            335
+          ],
+          "boot_source": [
+            1023,
+            571
+          ],
+          "body_height": 393,
+          "role": "walk2",
+          "solid_bounds": [
+            837,
+            397,
+            1177,
+            718
+          ],
+          "solid_pixels": 49243,
+          "source_sha256": "461e27afdea1a93d73115cad4f61380d654531edac9d7c8b85020645f8f6c026"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_2.png",
+          "region": [
+            1212,
+            240,
+            324,
+            499
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            216,
+            383
+          ],
+          "boot_source": [
+            1424,
+            619
+          ],
+          "body_height": 393,
+          "role": "walk3",
+          "solid_bounds": [
+            1245,
+            321,
+            1518,
+            647
+          ],
+          "solid_pixels": 45855,
+          "source_sha256": "461e27afdea1a93d73115cad4f61380d654531edac9d7c8b85020645f8f6c026"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_walk_3.png",
+          "region": [
+            10,
+            312,
+            405,
+            397
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            174,
+            377
+          ],
+          "boot_source": [
+            180,
+            685
+          ],
+          "body_height": 305,
+          "role": "walk0",
+          "solid_bounds": [
+            17,
+            330,
+            399,
+            688
+          ],
+          "solid_pixels": 55919,
+          "source_sha256": "8ce5525ae008e6bbd815dbc3c1c06c1e487bcfb8308ad88058704ca1ed4f7fde"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_3.png",
+          "region": [
+            415,
+            312,
+            377,
+            397
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            209,
+            380
+          ],
+          "boot_source": [
+            620,
+            688
+          ],
+          "body_height": 305,
+          "role": "walk1",
+          "solid_bounds": [
+            428,
+            330,
+            776,
+            691
+          ],
+          "solid_pixels": 55936,
+          "source_sha256": "8ce5525ae008e6bbd815dbc3c1c06c1e487bcfb8308ad88058704ca1ed4f7fde"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_3.png",
+          "region": [
+            793,
+            312,
+            370,
+            397
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            191,
+            380
+          ],
+          "boot_source": [
+            980,
+            688
+          ],
+          "body_height": 305,
+          "role": "walk2",
+          "solid_bounds": [
+            809,
+            329,
+            1147,
+            690
+          ],
+          "solid_pixels": 52911,
+          "source_sha256": "8ce5525ae008e6bbd815dbc3c1c06c1e487bcfb8308ad88058704ca1ed4f7fde"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_3.png",
+          "region": [
+            1163,
+            312,
+            373,
+            397
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            206,
+            377
+          ],
+          "boot_source": [
+            1365,
+            685
+          ],
+          "body_height": 305,
+          "role": "walk3",
+          "solid_bounds": [
+            1178,
+            329,
+            1530,
+            688
+          ],
+          "solid_pixels": 54859,
+          "source_sha256": "8ce5525ae008e6bbd815dbc3c1c06c1e487bcfb8308ad88058704ca1ed4f7fde"
+        }
+      ],
+      [
+        {
+          "path": "res://assets/sprites/depth/depth_walk_4.png",
+          "region": [
+            10,
+            344,
+            407,
+            340
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            233,
+            319
+          ],
+          "boot_source": [
+            239,
+            659
+          ],
+          "body_height": 297,
+          "role": "walk0",
+          "solid_bounds": [
+            17,
+            362,
+            395,
+            659
+          ],
+          "solid_pixels": 67991,
+          "source_sha256": "966b7149acd48f9eadcb888d9ad1e509abecddbbeec83463be6dc32257130472"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_4.png",
+          "region": [
+            417,
+            344,
+            344,
+            340
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            218,
+            319
+          ],
+          "boot_source": [
+            631,
+            659
+          ],
+          "body_height": 297,
+          "role": "walk1",
+          "solid_bounds": [
+            441,
+            362,
+            750,
+            659
+          ],
+          "solid_pixels": 56246,
+          "source_sha256": "966b7149acd48f9eadcb888d9ad1e509abecddbbeec83463be6dc32257130472"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_4.png",
+          "region": [
+            762,
+            344,
+            412,
+            340
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            224,
+            322
+          ],
+          "boot_source": [
+            982,
+            662
+          ],
+          "body_height": 297,
+          "role": "walk2",
+          "solid_bounds": [
+            775,
+            362,
+            1147,
+            662
+          ],
+          "solid_pixels": 64736,
+          "source_sha256": "966b7149acd48f9eadcb888d9ad1e509abecddbbeec83463be6dc32257130472"
+        },
+        {
+          "path": "res://assets/sprites/depth/depth_walk_4.png",
+          "region": [
+            1174,
+            344,
+            362,
+            340
+          ],
+          "margin": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "pivot": [
+            200,
+            319
+          ],
+          "boot_source": [
+            1370,
+            659
+          ],
+          "body_height": 297,
+          "role": "walk3",
+          "solid_bounds": [
+            1201,
+            362,
+            1518,
+            659
+          ],
+          "solid_pixels": 55010,
+          "source_sha256": "966b7149acd48f9eadcb888d9ad1e509abecddbbeec83463be6dc32257130472"
+        }
+      ]
+    ],
+    "row_pivots": [
+      [
+        [
+          113,
+          284
+        ],
+        [
+          167,
+          392
+        ],
+        [
+          701,
+          1116
+        ],
+        [
+          584,
+          933
+        ],
+        [
+          728,
+          927
+        ],
+        [
+          964,
+          919
+        ]
+      ],
+      [
+        [
+          167,
+          235
+        ],
+        [
+          169,
+          402
+        ],
+        [
+          128,
+          251
+        ],
+        [
+          779,
+          900
+        ],
+        [
+          879,
+          956
+        ],
+        [
+          874,
+          789
+        ]
+      ],
+      [
+        [
+          645,
+          1195
+        ],
+        [
+          174,
+          377
+        ],
+        [
+          795,
+          1007
+        ],
+        [
+          662,
+          960
+        ],
+        [
+          774,
+          960
+        ],
+        [
+          791,
+          1101
+        ]
+      ],
+      [
+        [
+          112,
+          297
+        ],
+        [
+          233,
+          319
+        ],
+        [
+          124,
+          299
+        ],
+        [
+          692,
+          950
+        ],
+        [
+          112,
+          297
+        ],
+        [
+          123,
+          298
+        ]
+      ]
+    ],
+    "walk_row_pivots": [
+      [
+        [
+          167,
+          392
+        ],
+        [
+          156,
+          395
+        ],
+        [
+          174,
+          393
+        ],
+        [
+          145,
+          396
+        ]
+      ],
+      [
+        [
+          169,
+          402
+        ],
+        [
+          308,
+          389
+        ],
+        [
+          202,
+          335
+        ],
+        [
+          216,
+          383
+        ]
+      ],
+      [
+        [
+          174,
+          377
+        ],
+        [
+          209,
+          380
+        ],
+        [
+          191,
+          380
+        ],
+        [
+          206,
+          377
+        ]
+      ],
+      [
+        [
+          233,
+          319
+        ],
+        [
+          218,
+          319
+        ],
+        [
+          224,
+          322
+        ],
+        [
+          200,
+          319
+        ]
+      ]
+    ],
+    "clips": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1
+      ],
+      "telegraph": [
+        2
+      ],
+      "attack": [
+        3
+      ],
+      "recover": [
+        4
+      ],
+      "hurt": [
+        5
+      ],
+      "dead": [
+        5
+      ]
+    }
+  },
+  "boss": {
+    "faces_left": false,
+    "require_authored_pivots": true,
+    "frames": [
+      {
+        "path": "res://assets/sprites/depth/depth_boss_1.png",
+        "region": [
+          0,
+          335,
+          333,
+          385
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          165,
+          368
+        ],
+        "boot_source": [
+          161,
+          699
+        ],
+        "body_height": 345,
+        "role": "idle",
+        "solid_bounds": [
+          8,
+          353,
+          316,
+          699
+        ],
+        "solid_pixels": 73198,
+        "source_sha256": "4d2a2cd0967f2a67f1f21061dd7b89deef2ce3d74d21e5316dbca6064e805560"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_walk_5.png",
+        "region": [
+          24,
+          298,
+          403,
+          435
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          233,
+          414
+        ],
+        "boot_source": [
+          253,
+          708
+        ],
+        "body_height": 396,
+        "role": "unused_primary_walk",
+        "solid_bounds": [
+          30,
+          318,
+          418,
+          708
+        ],
+        "solid_pixels": 92753,
+        "source_sha256": "c171e3fa073b40065960333ba9e8f8e498d28dc25ade3e9c5e115444bbb4ba83"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_1.png",
+        "region": [
+          705,
+          410,
+          391,
+          310
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          217,
+          296
+        ],
+        "boot_source": [
+          918,
+          702
+        ],
+        "body_height": 345,
+        "role": "thrust_tell",
+        "solid_bounds": [
+          715,
+          427,
+          1076,
+          702
+        ],
+        "solid_pixels": 70558,
+        "source_sha256": "4d2a2cd0967f2a67f1f21061dd7b89deef2ce3d74d21e5316dbca6064e805560"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_1.png",
+        "region": [
+          1097,
+          378,
+          439,
+          342
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          179,
+          325
+        ],
+        "boot_source": [
+          1272,
+          699
+        ],
+        "body_height": 345,
+        "role": "thrust",
+        "solid_bounds": [
+          1106,
+          395,
+          1530,
+          699
+        ],
+        "solid_pixels": 67951,
+        "source_sha256": "4d2a2cd0967f2a67f1f21061dd7b89deef2ce3d74d21e5316dbca6064e805560"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_2.png",
+        "region": [
+          16,
+          349,
+          384,
+          381
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          182,
+          368
+        ],
+        "boot_source": [
+          194,
+          713
+        ],
+        "body_height": 345,
+        "role": "recover",
+        "solid_bounds": [
+          20,
+          366,
+          400,
+          713
+        ],
+        "solid_pixels": 80412,
+        "source_sha256": "cadf8ea9ca68a6834c4a8c5d75adf368f1bbd6a92bb1814d1e8ce196049aba69"
+      },
+      {
+        "path": "res://assets/sprites/depth/isolated/boss_5.png",
+        "region": [
+          0,
+          0,
+          1206,
+          1305
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          700,
+          1185
+        ],
+        "boot_source": [
+          696,
+          1181
+        ],
+        "body_height": 1077,
+        "role": "hurt",
+        "solid_bounds": [
+          55,
+          104,
+          1168,
+          1186
+        ],
+        "solid_pixels": 676834,
+        "source_sha256": "1be95f7112764065e470344cca8d0bb75a72a8e600f1afb8c40c8e9d2a74a56b"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_2.png",
+        "region": [
+          773,
+          255,
+          344,
+          480
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          179,
+          462
+        ],
+        "boot_source": [
+          948,
+          713
+        ],
+        "body_height": 345,
+        "role": "fan_tell",
+        "solid_bounds": [
+          778,
+          271,
+          1104,
+          717
+        ],
+        "solid_pixels": 90220,
+        "source_sha256": "cadf8ea9ca68a6834c4a8c5d75adf368f1bbd6a92bb1814d1e8ce196049aba69"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_2.png",
+        "region": [
+          1117,
+          368,
+          419,
+          363
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          233,
+          350
+        ],
+        "boot_source": [
+          1346,
+          714
+        ],
+        "body_height": 345,
+        "role": "phase2_idle",
+        "solid_bounds": [
+          1129,
+          385,
+          1518,
+          714
+        ],
+        "solid_pixels": 99533,
+        "source_sha256": "cadf8ea9ca68a6834c4a8c5d75adf368f1bbd6a92bb1814d1e8ce196049aba69"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_3.png",
+        "region": [
+          8,
+          370,
+          404,
+          310
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          238,
+          297
+        ],
+        "boot_source": [
+          242,
+          663
+        ],
+        "body_height": 345,
+        "role": "low_sweep_tell",
+        "solid_bounds": [
+          15,
+          387,
+          401,
+          663
+        ],
+        "solid_pixels": 70518,
+        "source_sha256": "2b1f0f91b5e5cc721539c3f7b6bca61373e061d08dfd79281d07f23574738288"
+      },
+      {
+        "path": "res://assets/sprites/depth/isolated/boss_9.png",
+        "region": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          654,
+          898
+        ],
+        "boot_source": [
+          650,
+          894
+        ],
+        "body_height": 900,
+        "role": "low_sweep",
+        "solid_bounds": [
+          131,
+          95,
+          1530,
+          917
+        ],
+        "solid_pixels": 580184,
+        "source_sha256": "e6dc7a30e45c60504e98767a2219464129a053a015e2a1faa0a0736306b982d2"
+      },
+      {
+        "path": "res://assets/sprites/depth/isolated/boss_10.png",
+        "region": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          864,
+          952
+        ],
+        "boot_source": [
+          860,
+          948
+        ],
+        "body_height": 850,
+        "role": "low_sweep_recover",
+        "solid_bounds": [
+          174,
+          43,
+          1361,
+          948
+        ],
+        "solid_pixels": 554609,
+        "source_sha256": "8bc02e7aaa2d99d23829b2d7d76127c9b72c55cf2d5ff844a3015e9c38ebd77a"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_boss_3.png",
+        "region": [
+          1169,
+          294,
+          367,
+          390
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          206,
+          374
+        ],
+        "boot_source": [
+          1371,
+          664
+        ],
+        "body_height": 345,
+        "role": "phase2_hurt",
+        "solid_bounds": [
+          1170,
+          311,
+          1522,
+          664
+        ],
+        "solid_pixels": 83763,
+        "source_sha256": "2b1f0f91b5e5cc721539c3f7b6bca61373e061d08dfd79281d07f23574738288"
+      }
+    ],
+    "walk_frames": [
+      {
+        "path": "res://assets/sprites/depth/depth_walk_5.png",
+        "region": [
+          24,
+          298,
+          403,
+          435
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          233,
+          414
+        ],
+        "boot_source": [
+          253,
+          708
+        ],
+        "body_height": 396,
+        "role": "walk0",
+        "solid_bounds": [
+          30,
+          318,
+          418,
+          708
+        ],
+        "solid_pixels": 92753,
+        "source_sha256": "c171e3fa073b40065960333ba9e8f8e498d28dc25ade3e9c5e115444bbb4ba83"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_walk_5.png",
+        "region": [
+          427,
+          298,
+          337,
+          435
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          163,
+          414
+        ],
+        "boot_source": [
+          586,
+          708
+        ],
+        "body_height": 396,
+        "role": "walk1",
+        "solid_bounds": [
+          436,
+          315,
+          751,
+          708
+        ],
+        "solid_pixels": 79417,
+        "source_sha256": "c171e3fa073b40065960333ba9e8f8e498d28dc25ade3e9c5e115444bbb4ba83"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_walk_5.png",
+        "region": [
+          764,
+          298,
+          404,
+          435
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          237,
+          415
+        ],
+        "boot_source": [
+          997,
+          709
+        ],
+        "body_height": 396,
+        "role": "walk2",
+        "solid_bounds": [
+          774,
+          317,
+          1156,
+          709
+        ],
+        "solid_pixels": 88119,
+        "source_sha256": "c171e3fa073b40065960333ba9e8f8e498d28dc25ade3e9c5e115444bbb4ba83"
+      },
+      {
+        "path": "res://assets/sprites/depth/depth_walk_5.png",
+        "region": [
+          1168,
+          298,
+          368,
+          435
+        ],
+        "margin": [
+          4,
+          4,
+          8,
+          8
+        ],
+        "pivot": [
+          176,
+          417
+        ],
+        "boot_source": [
+          1340,
+          711
+        ],
+        "body_height": 396,
+        "role": "walk3",
+        "solid_bounds": [
+          1179,
+          316,
+          1503,
+          711
+        ],
+        "solid_pixels": 78690,
+        "source_sha256": "c171e3fa073b40065960333ba9e8f8e498d28dc25ade3e9c5e115444bbb4ba83"
+      }
+    ],
+    "pivots": [
+      [
+        165,
+        368
+      ],
+      [
+        233,
+        414
+      ],
+      [
+        217,
+        296
+      ],
+      [
+        179,
+        325
+      ],
+      [
+        182,
+        368
+      ],
+      [
+        700,
+        1185
+      ],
+      [
+        179,
+        462
+      ],
+      [
+        233,
+        350
+      ],
+      [
+        238,
+        297
+      ],
+      [
+        654,
+        898
+      ],
+      [
+        864,
+        952
+      ],
+      [
+        206,
+        374
+      ]
+    ],
+    "walk_pivots": [
+      [
+        233,
+        414
+      ],
+      [
+        163,
+        414
+      ],
+      [
+        237,
+        415
+      ],
+      [
+        176,
+        417
+      ]
+    ],
+    "clips": {
+      "idle": [
+        0
+      ],
+      "walk": [
+        1
+      ],
+      "telegraph": [
+        2
+      ],
+      "attack": [
+        3
+      ],
+      "recover": [
+        4
+      ],
+      "hurt": [
+        5
+      ],
+      "dead": [
+        5
+      ],
+      "idle_phase2": [
+        7
+      ],
+      "telegraph_fan": [
+        6
+      ],
+      "attack_fan": [
+        6
+      ],
+      "telegraph_sweep": [
+        8
+      ],
+      "attack_sweep": [
+        9
+      ],
+      "recover_sweep": [
+        10
+      ],
+      "hurt_phase2": [
+        11
+      ]
+    }
+  }
+}

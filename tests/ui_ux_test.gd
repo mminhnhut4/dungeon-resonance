@@ -36,7 +36,7 @@ func _run() -> void:
 	print("UI ENV user_dir=%s executable=%s" % [OS.get_user_data_dir(), OS.get_executable_path()])
 	box.choice_selected.connect(func(id: StringName) -> void: choices_emitted.append(id))
 	hub.player.equipped_weapon.attack_committed.connect(func(_snapshot: AttackSnapshot) -> void: attacks += 1)
-	_check(screen.tabs.get_tab_count() == 3 and screen.bag_buttons.size() == 20 and screen.equipment_buttons.size() == 7, "Existing equipment/rune tabs and seven/20 cells remain; journal is additive")
+	_check(screen.tabs.get_tab_count() == 4 and screen.tabs.get_tab_control(0).name == "Trang bị" and screen.tabs.get_tab_control(1) == screen.rune_column and screen.tabs.get_tab_control(2) == screen.journal and screen.tabs.get_tab_control(3) == screen.carried_page and screen.slots.size() == 8 and screen.bag_buttons.size() == 20 and screen.equipment_buttons.size() == 7, "Equipment/rune/map tabs keep their routes and seven/20 cells; carried items append a fourth tab")
 	var spare: GearItem = inventory.add_equipment(GearInventory.COMMON_SWORD, GearItem.Quality.RARE)
 	var owned_count: int = inventory.items.size()
 	var original: int = inventory.equipped_weapon_uid
@@ -131,7 +131,15 @@ func _run() -> void:
 		screen.open()
 	await _key(KEY_ESCAPE)
 	_check(not screen.is_open and not screen.veil.visible and hub.player.controls_enabled and is_equal_approx(Engine.time_scale, 1.0), "Repeated open/close and Escape restore one time/control owner")
-	_check(screen.open_button.has_focus(), "Closing inventory restores focus to its visible trigger")
+	var closed_focus: Control = root.gui_get_focus_owner()
+	_check(screen.open_button.is_visible_in_tree() and screen.map_button.is_visible_in_tree() and screen.open_button.focus_mode == Control.FOCUS_NONE and screen.map_button.focus_mode == Control.FOCUS_NONE and (closed_focus == null or not screen.is_ancestor_of(closed_focus)), "Closing inventory reveals click launchers and releases hidden modal focus")
+	var closed_weapon_uid: int = inventory.equipped_weapon_uid
+	await _key(KEY_ENTER)
+	await _joy(JOY_BUTTON_A)
+	_check(not screen.is_open and inventory.equipped_weapon_uid == closed_weapon_uid and inventory.items.size() == owned_count, "Accept after closing cannot reopen a launcher or equip a hidden UID")
+	await _click(screen.open_button, MOUSE_BUTTON_LEFT)
+	_check(screen.is_open and screen.equipment_buttons[screen.selected_equipment_slot].has_focus(), "Visible inventory launcher still opens its equipment focus with a real click")
+	screen.close()
 	screen.open()
 	await _joy(JOY_BUTTON_B)
 	_check(not screen.is_open and hub.player.controls_enabled, "Controller B closes inventory without opening another modal")
@@ -152,9 +160,10 @@ func _run() -> void:
 	hub.profile.bounty_accepted = true
 	hub.profile.bounty_start_proofs = 2
 	hub.profile.boss_proofs[&"golem"] = 2
+	screen.open_map()
 	hub.profile.changed.emit()
 	journal.select_quest(&"golem_defeated")
-	_check("Golem" in journal.detail_title.text and journal.graph.objective_room == &"", "Known bounty reveals its title without inventing an exterior boss location")
+	_check("Lời hẹn của Vô Danh" in journal.detail_title.text and "Golem Cổ Bảo" in journal.objective_label.text and journal.graph.objective_room == &"", "Known bounty shows its owner title and Golem detail without inventing an exterior boss location")
 	hub.profile.boss_proofs[&"golem"] = 3
 	hub.profile.changed.emit()
 	_check(journal.rows.size() == OpeningProgress.IDS.size() and journal.tracker_text().is_empty(), "Quest rows remain governed by canonical milestones rather than bounty proof arithmetic")

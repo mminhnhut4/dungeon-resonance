@@ -54,7 +54,7 @@ func _run() -> void:
 
 func _event(target: Hurtbox, amount: float, critical: bool = false) -> DamageEvent:
 	var event := DamageEvent.new()
-	event.source_id = 987654
+	event.source_id = room.get_instance_id() # Live synthetic owner; do not acquire Player aggro.
 	event.source_team_id = 1
 	event.target_id = target.get_actor_id()
 	event.attack_id = CombatIds.next_id()
