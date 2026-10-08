@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-08",
+  "source_before_launcher": "9c6fe89706f396daa92ce5d258ca61dee37f88d3",
+  "repo": "https://github.com/mminhnhut4/dungeon-resonance",
+  "visibility_verified": "public",
+  "engine": "4.7.2.stable.official.ed1daf0bf",
+  "main": "res://scenes/maps/prologue_hub.tscn",
+  "github_zip_baseline": {
+    "files": 2434,
+    "crc": "PASS",
+    "manifest_hashes": "PASS",
+    "cache_before_import": false,
+    "fresh_import_exit": 0,
+    "diagnostics": []
+  },
+  "fresh_main_portal": {
+    "mode": "headless fixed-fps60; simulated physical D/E events; clean QA userdata",
+    "checks": 7,
+    "failures": 0,
+    "details": {
+      "before_e": {
+        "controls_enabled": true,
+        "dialogue_open": false,
+        "inventory_open": false,
+        "main": "res://scenes/maps/prologue_hub.tscn",
+        "nearest": "portal",
+        "player": "(2216.553, 639.9336)",
+        "portal": "(2210.0, 640.0)",
+        "profile_read_only": false,
+        "prompt": "E · Tiến vào Hầm Ngục (Tầng 1)",
+        "save_path": "user://sanctuary_v1.json",
+        "start": "(430.0, 640.0)",
+        "station_open": false,
+        "walk_frames": 336
+      },
+      "checks": 7,
+      "failures": 0
+    },
+    "entered_connected_opening": true,
+    "starter_uid_transfer_once": true,
+    "grants_teleport_progression_overrides": false,
+    "diagnostics": []
+  },
+  "standalone_component_reproduction": {
+    "scene": "res://scenes/hub/exterior_hub_room.tscn",
+    "campaign_receivers": 0,
+    "e_signal_received_once": true,
+    "transition": false,
+    "expected_failure_scenario_checks": 3,
+    "assertion_failures": 0,
+    "meaning": "Reproduces missing flow when component runs alone; does not establish the cause on the member computer"
+  },
+  "other_reused_zip_checks": {
+    "npc_dialogue": {
+      "checks": 104,
+      "failures": 0
+    },
+    "sect_routes": {
+      "checks": 276,
+      "failures": 0
+    },
+    "diagnostics": []
+  },
+  "new_launcher_check": {
+    "mode": "CHAY_GAME.cmd engine-path --check; headless import and fixed main startup",
+    "exit_code": 0,
+    "diagnostics": [],
+    "separate_playtest_data": true
+  },
+  "changes": [
+    "CHAY_GAME.cmd",
+    "team startup instructions",
+    "public repo metadata",
+    "source manifest",
+    "project journal"
+  ],
+  "gameplay_runtime_changed": false,
+  "full_strict_rerun": false,
+  "native_graphical_or_frame_time_test": false,
+  "friend_computer_cause": "UNCONFIRMED; user reports same engine version; no actual error log supplied",
+  "backup": "Full Git bundle at source_before_launcher retained outside checkout; prior GitHub ZIP retained",
+  "final_zip_verification": "Published receipt accompanies the new source ZIP; source manifest excludes itself to avoid a circular hash"
+}

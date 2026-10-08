@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "repo": "https://github.com/mminhnhut4/dungeon-resonance",
-  "visibility": "private",
+  "visibility": "public",
   "engine": "4.7.2.stable.official.ed1daf0bf",
   "main": "res://scenes/maps/prologue_hub.tscn",
   "manifest_excludes_self": true,
@@ -43,6 +43,12 @@
       "sha256": "70fc5e2642c721df47d3bde843c0ad74f498280b00cd5937a3ceb2d5ca2f03e1"
     },
     {
+      "path": "CHAY_GAME.cmd",
+      "git_blob": "1bc799eff8d12bcd1b38a811370ebc5fb2c5506c",
+      "bytes": 2311,
+      "sha256": "685acb29b764cd2a8c39562595fd6aec7b71d9438d94ab572ffac35a19e12291"
+    },
+    {
       "path": "CONTRIBUTING.md",
       "git_blob": "9118e2ed88de96ffbbe451209355d37373541c53",
       "bytes": 2156,
@@ -50,9 +56,9 @@
     },
     {
       "path": "README.md",
-      "git_blob": "9512a2171ae1ec77a42706730b5f706d38422b9a",
-      "bytes": 6976,
-      "sha256": "cd502369031c6d02358427393aed7c0cced8ee3ed860405453b6e1f0bf2d984e"
+      "git_blob": "e17142b07a346a625062cdd332efae803eca9c76",
+      "bytes": 7453,
+      "sha256": "fd3a365c4846557aef3cfd8027e5958dc4644cfe7fb38d2fd22e7f108ff8f35e"
     },
     {
       "path": "addons/AsepriteWizard/LICENSE",
@@ -8798,9 +8804,15 @@
     },
     {
       "path": "docs/team/GITHUB_STATUS.md",
-      "git_blob": "282754a1bedf3b108cc00a36e995ac3011c14bfd",
-      "bytes": 1079,
-      "sha256": "4874e7cb5153975721c13566044e19f8d24d0814d570631d6da3f6f8b294816b"
+      "git_blob": "6c79998df635a84861d7a36ede4688b941c717a8",
+      "bytes": 1381,
+      "sha256": "5ad14c95af98b65cabb9db6049cbbc0f7c8fa8553334a33caed1860726947203"
+    },
+    {
+      "path": "docs/team/HOW_TO_RUN_GAME.md",
+      "git_blob": "85f5466b0ba8e78eec528dfb72d97fec53df91e7",
+      "bytes": 3441,
+      "sha256": "f17ac05e418248b02cfae5761663f14d046fe3c5eefdb815b5d4e8f725a19fd7"
     },
     {
       "path": "docs/team/MAP_GUIDE.md",
@@ -8813,6 +8825,12 @@
       "git_blob": "eeb32cd0aeb03c7890ec3e6f8dbd7eca47967464",
       "bytes": 3631,
       "sha256": "e30b81a96daafb89a97878eb8836522f458414533332c68d424db1c95c8096b9"
+    },
+    {
+      "path": "docs/team/PORTAL_PACKAGE_VERIFICATION.json",
+      "git_blob": "05267881766782dd18e409fd9825ed052568a6b9",
+      "bytes": 2769,
+      "sha256": "cf42487e6cbccddc1f18435b5abf5c100b0adca13549c5a0d2afcebbb3f14b97"
     },
     {
       "path": "docs/team/PROJECT_AND_STORY.md",
@@ -8834,9 +8852,9 @@
     },
     {
       "path": "docs/team/START_HERE.md",
-      "git_blob": "b8127b813cc9dd0ef5d3cac03b1026463745b8d3",
-      "bytes": 5119,
-      "sha256": "89049015c96dd48bdf275d30df2b544f00c3d965c5cc3f9ac95528668dbff19c"
+      "git_blob": "e0b7404ec40af6bccae816cd8995b3b4b2b06b5b",
+      "bytes": 5442,
+      "sha256": "783efc04e814f0cfabb3001dbdd818f8c2efb87cf79e47cf799d070ade534dd4"
     },
     {
       "path": "docs/team/TASK_TEMPLATE.md",
@@ -9104,9 +9122,9 @@
     },
     {
       "path": "nhật ký vấp ngã/2026-10-08.md",
-      "git_blob": "c7ade65807870acde39d1191d9f2c690ceadb0a1",
-      "bytes": 14503,
-      "sha256": "23b5e4ece36a1f49369de8e7aa63cf142523e466fad91b278e46df6f285fd121"
+      "git_blob": "6484b6e105bf21c8c0f897e4197250fa54796cb7",
+      "bytes": 15927,
+      "sha256": "42d1835c1227b488207b06288d64dd0bdc7f56b9741af58bbb4c65ba44dbede2"
     },
     {
       "path": "nhật ký vấp ngã/README.md",
@@ -14605,5 +14623,5 @@
       "sha256": "dbb7f8a648e221fdaf988bcdb11887213a399e58121e0fd90d4d45d870371d1b"
     }
   ],
-  "checkpoint": "2026-10-08 current-source/story refresh; manifest represents Git blobs, self excluded"
+  "checkpoint": "2026-10-08 portal/source refresh; fixed-main launcher; hashes represent Git blobs; self excluded"
 }

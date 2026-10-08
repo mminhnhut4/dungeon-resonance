@@ -4,6 +4,8 @@ Nguồn main cập nhật ngày **2026-10-08**, sau khi ghép core và nhánh t�
 
 ## Mở lần đầu
 
+Để chơi thử trên Windows, ưu tiên **CHAY_GAME.cmd** cạnh project.godot: nhập đường dẫn Godot4.7.2 để chạy đúng main với save riêng. [Hướng dẫn khởi chạy và cổng E](HOW_TO_RUN_GAME.md). Các bước editor bên dưới dành cho thành viên phát triển.
+
 1. Clone repo được ghi trong [trạng thái GitHub](GITHUB_STATUS.md), hoặc giải nén ZIP vào một thư mục mới. Thành viên phát triển bằng Git nên clone; ZIP là snapshot để gửi và đối chiếu, không có lịch sử Git.
 2. Chuẩn bị Godot 4.7.2 từ [nguồn chính thức](https://godotengine.org/download/archive/). Gói không kèm engine/executable. Không nâng phiên bản hoặc đổi renderer riêng trên một nhánh nội dung.
 3. Import `project.godot`, chờ import xong; main là `scenes/maps/prologue_hub.tscn`. F5 mở Căn Cứ Lữ Khách. F6 chỉ chạy scene đang chọn; các scene Alpha/TestLevel cũ không thay main.
@@ -35,4 +37,4 @@ Bản hiện hành đã nối Golem→tầng4–8 và bốn map tông môn; hai 
 
 Gói giữ source gameplay, asset runtime, addons với license upstream, `.gd.uid`, `.import`, tài liệu và nguồn/provenance art cần cho asset test. `.godot`, save cá nhân, engine, game export và đa số log/ảnh QA lịch sử không nằm trong ZIP. Các link tới evidence ngoài máy trong báo cáo cũ có thể không mở được ở máy thành viên; evidence combat chọn lọc có trong [evidence](evidence/README.md).
 
-Repo private không tự cấp một license chung cho code/art dự án. Giữ license của addon/font và nguồn asset; nhóm dùng repo để cộng tác, không tự đổi giấy phép hoặc xuất bản game từ một PR nội dung. ZIP có `TEAM_SOURCE_MANIFEST.json` để đối chiếu SHA256 từng file và receipt đóng gói ở cạnh ZIP.
+Repo hiện public; việc công khai không tự cấp một license chung cho code/art dự án. Giữ license của addon/font và nguồn asset; nhóm dùng repo để cộng tác, không tự đổi giấy phép hoặc xuất bản game từ một PR nội dung. ZIP có `TEAM_SOURCE_MANIFEST.json` để đối chiếu SHA256 từng file và receipt đóng gói ở cạnh ZIP.
