@@ -31,9 +31,9 @@ static func default_config() -> Dictionary:
 		"aptitude_rate_bps": 100, "aptitude_cap": -1,
 		"stages": ["luyen_khi_i", "luyen_khi_ii", "luyen_khi_iii", "truc_co_so_ky"],
 		"stage_labels": ["Luyện Khí I", "Luyện Khí II", "Luyện Khí III", "Trúc Cơ sơ kỳ"],
-		"energy_thresholds": [12, 24, 40], "mastery_thresholds": [2, 5, 8],
-		"insight_thresholds": [1, 2, 3], "interim_dust_cost": 1,
-		"final_dust_cost": 2, "final_soul_cost": 5, "final_golem_proof": 1,
+		"energy_thresholds": [4, 8, 16], "mastery_thresholds": [1, 2, 4],
+		"insight_thresholds": [0, 1, 2], "interim_dust_cost": 0,
+		"final_dust_cost": 1, "final_soul_cost": 0, "final_golem_proof": 0,
 		"pill_dust_cost": 2, "herb_occurrence_bps": 2000,
 		"aptitude_gains": {"herb": 5, "pill": 8}
 	}
@@ -103,7 +103,7 @@ static func _valid_config(config: Variant) -> bool:
 	# gains/costs/thresholds may be tuned and remain part of the persisted config.
 	if not _integer(config.get("ticks_per_second"), 4, 4) or not _integer(config.get("training_session_ticks"), 8, 8) or config.get("training_resource") != "crystal": return false
 	for field: String in ["training_gain", "training_cost", "interim_dust_cost", "final_dust_cost", "final_soul_cost", "final_golem_proof", "pill_dust_cost"]:
-		if not _integer(config.get(field), 1, 10000): return false
+		if not _integer(config.get(field), 0 if field in ["interim_dust_cost", "final_soul_cost", "final_golem_proof"] else 1, 10000): return false
 	if not _integer(config.get("max_train_sessions"), 1, 8) or not _integer(config.get("max_npc_sessions"), 1, 6): return false
 	if not _integer(config.get("aptitude_rate_bps"), 1, 1000) or not _integer(config.get("herb_occurrence_bps"), 0, 10000): return false
 	if not (_integer(config.get("aptitude_cap"), -1, -1) or _integer(config.get("aptitude_cap"), 1, LIMIT)): return false
@@ -113,7 +113,7 @@ static func _valid_config(config: Variant) -> bool:
 		if not label is String or label.is_empty() or label.length() > 64 or "\n" in label or "\r" in label: return false
 	for field: String in ["energy_thresholds", "mastery_thresholds", "insight_thresholds"]:
 		if not config.get(field) is Array or config[field].size() != 3: return false
-		var previous: int = 0
+		var previous: int = -1 if field == "insight_thresholds" else 0
 		for threshold: Variant in config[field]:
 			if not _integer(threshold, previous + 1, 3 if field == "insight_thresholds" else LIMIT): return false
 			previous = int(threshold)

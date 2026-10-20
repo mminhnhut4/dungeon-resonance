@@ -41,6 +41,8 @@ func _fixture(label: String) -> Dictionary:
 	_check(profile.save() and profile.commit_cultivation(Cultivation.initial_proposal(Cultivation.new_progress(43),profile.material_stash,profile.souls,profile.boss_proofs)),label+": fixture enters sealed v2 using the real owner")
 	var inventory := GearInventory.new()
 	inventory.add_rune(&"poison")
+	inventory.materials[&"dust"] = 40
+	inventory.materials[&"crystal"] = 20
 	var economy := EconomySession.new(); economy.initialize(profile,inventory); economy.persist_safe_inventory = true
 	_check(economy._save_safe(),label+": original looted rune and safe inventory are durable")
 	var service = Service.new(); service.initialize(economy)
@@ -93,11 +95,12 @@ func _learning_and_crafting() -> void:
 	_check(profile.record_boss_defeat("rune_learning_controlled_boss") and service.learn(&"poison"),"Existing boss record unlocks poison without creating a new quest system")
 	var revision: int = profile.extension_revision(Service.SCOPE)
 	var receipts: Array = profile._retained_fields["event_extensions"]["namespaces"][Service.SCOPE]["receipts"].duplicate(true)
-	var dust: int = profile.material_stash[&"dust"]
-	var crystal: int = profile.material_stash[&"crystal"]
+	var dust: int = inventory.materials[&"dust"]
+	var crystal: int = inventory.materials[&"crystal"]
+	var stored_before: Dictionary = profile.material_stash.duplicate()
 	var souls: int = profile.souls
 	_check(revision == 5 and receipts.size() == 5 and service.craft(&"fire") and service.craft(&"fire"),"Five permanent lessons use five receipts; repeat craft succeeds independently")
-	_check(profile.material_stash[&"dust"] == dust-4 and profile.material_stash[&"crystal"] == crystal-2 and profile.souls == souls,"Each repeat rune consumes two dust and one crystal from the stash only")
+	_check(inventory.materials[&"dust"] == dust-4 and inventory.materials[&"crystal"] == crystal-2 and profile.material_stash == stored_before and profile.souls == souls,"Each repeat rune consumes two carried dust and one carried crystal while preserving stash and Souls")
 	_check(profile.extension_revision(Service.SCOPE) == revision and profile._retained_fields["event_extensions"]["namespaces"][Service.SCOPE]["receipts"] == receipts,"Repeat crafting does not consume extension receipt capacity")
 	var encoded: Dictionary = GearInventoryCodec.encode(inventory)
 	var cold: Dictionary = _cold(profile.save_path)
@@ -106,9 +109,9 @@ func _learning_and_crafting() -> void:
 	economy.hub_access = false
 	_check(not service.craft(&"fire"),"Dungeon ownership cannot craft through a stale hub service")
 	economy.hub_access = true
-	profile.material_stash[&"dust"] = 0
-	_check(not service.quote(&"fire")["can_craft"] and not service.craft(&"fire"),"Missing stash materials block repeat crafting")
-	profile.material_stash[&"dust"] = dust-4
+	inventory.materials[&"dust"] = 0
+	_check(not service.quote(&"fire")["can_craft"] and not service.craft(&"fire") and profile.material_stash == stored_before,"Missing carried materials block repeat crafting even with ingredients in storage")
+	inventory.materials[&"dust"] = dust-4
 	while inventory.items.size() < GearInventoryCodec.MAX_ITEMS:
 		inventory.add_item(&"rune",&"wind")
 		inventory.bag[&"wind"] += 1

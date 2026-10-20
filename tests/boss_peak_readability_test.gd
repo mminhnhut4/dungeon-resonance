@@ -109,7 +109,7 @@ func _test_phase(expected_phase: int) -> void:
 	skin.refresh_skin()
 	_check(lethal_result.killed and boss.fsm.get_state_id() == &"dead" and skin.core_light.energy == 0.0, "Phase%d real lethal hit enters death with no added peak core light" % expected_phase)
 	await _time(0.30)
-	_check(is_instance_valid(boss) and skin.modulate.a > 0.0 and skin.modulate.a < 0.7 and skin.core_light.energy <= 0.18, "Phase%d original death clock fades sprite and bounded core together" % expected_phase)
+	_check(is_instance_valid(boss) and skin.modulate.a > 0.5 and skin.modulate.a < 1.0 and skin.core_light.energy <= 0.18, "Phase%d finite death clock keeps collapse visible while core retains its original falloff" % expected_phase)
 	await _time(0.45)
 	_check(not is_instance_valid(boss) and not is_instance_id_valid(sprite_id) and not is_instance_id_valid(light_id), "Phase%d original death deadline releases sprite and core owners" % expected_phase)
 	level.combat_feedback.reset_feedback()

@@ -8,7 +8,9 @@ var screen: InventoryScreen
 var nav: QuestNavigator
 var path: String
 var samples: Array[Dictionary] = []
-func _initialize() -> void: _run.call_deferred()
+func _initialize() -> void:
+	Engine.physics_ticks_per_second = 120 if "--hz=120" in OS.get_cmdline_user_args() else 60
+	_run.call_deferred()
 func _check(ok: bool,label: String) -> void:
 	checks += 1; print(("PASS: " if ok else "FAIL: ")+label)
 	if not ok: failures += 1

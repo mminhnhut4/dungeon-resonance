@@ -1,6 +1,7 @@
 class_name SpellExecutor
 extends Node2D
 ## Finite spell execution; child effects never invoke this proc path recursively.
+const CHAIN_DAMAGE_FACTOR: float = 0.6
 
 @export var projectile_scene: PackedScene
 @export var firestorm_scene: PackedScene
@@ -120,16 +121,17 @@ func chain_from(position: Vector2, context: SpellContext) -> void:
 			break
 		context.visited_targets[next.get_actor_id()] = true
 		context.remaining_chain -= 1
-		var event: DamageEvent = context.snapshot.damage_event(next, CombatIds.next_id(), context.snapshot.damage * 0.6, true)
+		var event: DamageEvent = context.snapshot.damage_event(next, CombatIds.next_id(), context.snapshot.damage * CHAIN_DAMAGE_FACTOR, true)
 		event.knockback = Vector2.ZERO
 		var result: DamageResult = next.take_damage(event)
 		if not result.blocked:
 			chain_hit_count += 1
-			var visual := SpellVisual.new()
-			visual.color = Color(0.8, 0.65, 1.0)
-			visual.segments = [previous, next.global_position]
-			visual.feedback = combat_feedback
-			add_child(visual)
+			if result.actual_damage > 0.0 and get_tree().get_nodes_in_group(&"spell_entities").size() < maximum_spell_entities:
+				var visual := SpellVisual.new()
+				visual.color = Color(0.8, 0.65, 1.0)
+				visual.configure_chain(previous, next.global_position, context.snapshot.chain_targets - context.remaining_chain)
+				visual.feedback = combat_feedback
+				add_child(visual)
 		previous = next.global_position
 
 

@@ -32,6 +32,7 @@ var _configured_world_position: Vector2 = Vector2.ZERO
 var spell_recipe_id: StringName
 var _art_layers: Array[Sprite2D] = []
 var _art_ready: bool = false
+var compatibility_particles: CompatibilityParticleBurst
 
 
 func configure(world_position: Vector2, color: Color, element_id: StringName = &"physical", travel_direction: Vector2 = Vector2.UP) -> void:
@@ -85,6 +86,7 @@ func _ready() -> void:
 	_initialized = true
 	_update_tint()
 	_update_finisher()
+	compatibility_particles=CompatibilityParticleBurst.attach(particles)
 	queue_redraw()
 
 
@@ -164,6 +166,7 @@ func _update_tint() -> void:
 		behavior.scale_max = (10.0 if element == &"ice" else 7.0) / texture_width
 		particles.amount = mini(14, 10 + cosmetic_quality) if melee_sparks or element == &"physical" else 11 if element == &"poison" else 16
 		behavior.spread = 42.0 if melee_sparks or element == &"physical" else 65.0
+		if is_instance_valid(compatibility_particles):compatibility_particles.refresh_parameters()
 
 func _update_rendered_art() -> void:
 	if melee_sparks or element == &"physical":

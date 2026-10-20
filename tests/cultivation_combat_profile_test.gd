@@ -132,7 +132,13 @@ func _run() -> void:
 	check(flow.profile.cultivation_progress["actors"]["player"]["mastery"]==initial_mastery,"Product startup preserves every earned mastery point")
 	for field: String in ["actors","origins","harvested_nodes","seed","config"]:
 		check(Writer.canonical(flow.profile.cultivation_progress[field])==Writer.canonical(original["cultivation_progress"][field]),"Startup preserves cultivation "+field)
-	check(Writer.canonical(flow.profile.hub_inventory)==Writer.canonical(original.get("hub_inventory",{})),"Startup preserves saved inventory including all UID/loot metadata")
+	var original_ledger: Dictionary = original.get("hub_inventory",{})
+	var loaded_ledger: Dictionary = flow.profile.hub_inventory.duplicate(true)
+	if not original_ledger.has("equipment_positions"):
+		var legacy_inventory: GearInventory = GearInventoryCodec.decode(original_ledger)
+		check(loaded_ledger.get("equipment_positions",[]) == legacy_inventory.equipment_grid_uids(false),"Legacy startup derives only the new optional bag-position field from owned UIDs")
+		loaded_ledger.erase("equipment_positions")
+	check(Writer.canonical(loaded_ledger)==Writer.canonical(original_ledger),"Startup preserves every pre-existing inventory field including all UID/loot metadata")
 	check(Writer.canonical(flow.profile.material_stash)==Writer.canonical(original["material_stash"]),"Startup preserves copied material bank")
 	var backup: String=path+".cultivation_v1."+source_bytes.hex_encode().sha256_text()+".bak"
 	check(FileAccess.get_file_as_bytes(backup)==source_bytes,"Actual startup creates the exact immutable pre-migration backup")

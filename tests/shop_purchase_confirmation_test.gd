@@ -49,6 +49,7 @@ func _run() -> void:
 	await _potions()
 	await _soul_confirmation()
 	await _rune_services()
+	await _quantity_and_scroll()
 	hub.queue_free()
 	await _frames(6)
 	print("RESULT shop_purchase_confirmation checks=%d failures=%d hz=%d" % [checks,failures,Engine.physics_ticks_per_second])
@@ -239,34 +240,92 @@ func _rune_services() -> void:
 	hub._confirm_purchase(token)
 	_check(_ledger() == before,"Stale learning confirmation cannot repeat payment or the gift")
 	var fire := hub.station_content.get_node("RuneService_fire") as ServiceItemCard
-	_check(fire.disabled and fire.item_title.text.contains("Đã học") and fire.detail_label.text.contains("trong kho"),"Learned card switches to crafting and explains missing stored materials")
-	bank.material_stash[&"dust"] = 4
-	bank.material_stash[&"crystal"] = 2
+	_check(fire.disabled and fire.item_title.text.contains("Đã học") and fire.detail_label.text.contains("trong túi"),"Learned card switches to crafting and explains missing carried materials")
+	var stored_before: Dictionary = bank.material_stash.duplicate()
+	hub.gear.inventory.materials[&"dust"] = 4
+	hub.gear.inventory.materials[&"crystal"] = 2
 	hub._refresh_station()
 	await _frames(3)
 	await _click("RuneService_fire")
 	preview = hub.station_content.get_node("PurchaseItemPreview") as ServiceItemCard
-	_check(preview.quantity_label.text.contains("4/2") and preview.quantity_label.text.contains("2/1") and not preview.quantity_label.text.contains("Tàn Hồn"),"Crafting confirmation shows actual stash counts against both material costs")
-	bank.material_stash[&"dust"] = 0
+	_check(preview.quantity_label.text.contains("4/2") and preview.quantity_label.text.contains("2/1") and not preview.quantity_label.text.contains("Tàn Hồn"),"Crafting confirmation shows actual carried counts against both material costs")
+	hub.gear.inventory.materials[&"dust"] = 0
 	before = _ledger()
 	await _click("ConfirmPurchase")
-	_check(_ledger() == before,"Crafting rechecks stash after preview without creating a rune")
-	bank.material_stash[&"dust"] = 4
+	_check(_ledger() == before,"Crafting rechecks carried ingredients after preview without creating a rune")
+	hub.gear.inventory.materials[&"dust"] = 4
 	hub._refresh_station()
 	await _frames(3)
 	await _click("RuneService_fire")
 	before = _ledger()
 	await _click("ConfirmPurchase")
-	_check(bank.material_stash[&"dust"] == 2 and bank.material_stash[&"crystal"] == 1 and bank.souls == before["souls"] and hub.gear.inventory.bag[&"fire"] == runes+2,"Explicit crafting consumes stored ingredients once and grants one extra rune")
+	_check(hub.gear.inventory.materials[&"dust"] == 2 and hub.gear.inventory.materials[&"crystal"] == 1 and bank.material_stash == stored_before and bank.souls == before["souls"] and hub.gear.inventory.bag[&"fire"] == runes+2,"Explicit crafting consumes carried ingredients once, preserves storage and grants one extra rune")
 	hub.close_station()
 	_check(hub.player.controls_enabled,"Closing rune service restores player controls")
+
+func _quantity_and_scroll() -> void:
+	hub.gear.inventory.materials[&"crystal"] = 12
+	bank.material_stash[&"crystal"] = 29
+	bank.coins = 3000
+	_check(hub.economy._save_safe(), "Seed distinct bag and storage quantities through the owner")
+	hub.open_station(&"merchant")
+	await _frames(12)
+	hub.station_scroll.scroll_vertical = 550
+	await _frames(3)
+	var origin: int = hub.station_scroll.scroll_vertical
+	hub._buy_weapon(&"common_sword", GearItem.Quality.COMMON)
+	await _frames(8)
+	var comparison := hub.station_content.get_node_or_null("ShopEquipmentStats") as Label
+	_check(comparison != null and comparison.text.contains("SO VỚI ĐANG MẶC") and comparison.text.contains("Sát thương"), "Purchase has the same real stat and equipment comparison as inventory")
+	await _click("CancelPurchase")
+	await _frames(8)
+	_check(absi(hub.station_scroll.scroll_vertical - origin) <= 1, "Cancel restores original list scroll rather than the top")
+	hub._buy_weapon(&"common_sword", GearItem.Quality.COMMON)
+	await _frames(8)
+	await _click("ConfirmPurchase")
+	await _frames(8)
+	_check(absi(hub.station_scroll.scroll_vertical - origin) <= 1, "Successful purchase preserves original list position")
+	# Mac exposes the shared quantity control directly in the sale list.
+	# Keep PC's partial/all-type and scroll assertions against that UI.
+	var amount := hub.station_content.get_node("SaleQuantity/Amount") as SpinBox
+	amount.value = 13
+	await _frames(8)
+	var sell := hub.station_content.get_node("SellBagMaterial_crystal") as Button
+	_check(sell.disabled, "Quantity above owned count cannot sell")
+	amount = hub.station_content.get_node("SaleQuantity/Amount") as SpinBox
+	amount.value = 5
+	await _frames(8)
+	var coins: int = bank.coins
+	hub.station_scroll.ensure_control_visible(hub.station_content.get_node("SellBagMaterial_crystal"))
+	await _frames(4)
+	origin = hub.station_scroll.scroll_vertical
+	await _click("SellBagMaterial_crystal")
+	await _frames(8)
+	_check(hub.gear.inventory.materials[&"crystal"] == 7 and bank.material_stash[&"crystal"] == 29 and bank.coins == coins + 5 * MaterialCatalog.SELL_PRICES[&"crystal"], "Partial sale uses only the selected bag quantity, never storage")
+	_check(absi(hub.station_scroll.scroll_vertical - origin) <= 1, "Partial sale preserves original list position")
+	amount = hub.station_content.get_node("SaleQuantity/Amount") as SpinBox
+	amount.value = 7
+	await _frames(8)
+	_check(hub.gear.inventory.materials[&"crystal"] == 7, "Selecting all owned units does not immediately sell")
+	await _click("SellBagMaterial_crystal")
+	await _frames(8)
+	_check(hub.gear.inventory.materials[&"crystal"] == 0 and bank.material_stash[&"crystal"] == 29, "All sells exactly one material type from the bag")
+	_check(not hub.economy.sell_bag_material(&"crystal", 7), "Exhausted stack cannot replay a stale quantity")
+	_check(absi(hub.station_scroll.scroll_vertical - mini(origin, int(hub.station_scroll.get_v_scroll_bar().max_value - hub.station_scroll.size.y))) <= 2, "Removing an exhausted stack preserves the reachable list position")
+	hub.close_station()
 
 func _click(name: String) -> void:
 	var button: Button = hub.station_content.get_node_or_null(NodePath(name)) as Button
 	_check(button != null and not button.disabled,"Accessible station button: "+name)
 	if button == null or button.disabled: return
-	hub.station_scroll.ensure_control_visible(button)
-	await _frames(3)
+	# Wait for deferred container/scroll restoration, then bring the requested
+	# control into view. A fixed three frames can observe the previous card size.
+	for _index: int in 8:
+		await _frames(1)
+		if hub._station_layout_pending: continue
+		hub.station_scroll.ensure_control_visible(button)
+		await _frames(1)
+		if hub.station_scroll.get_global_rect().encloses(button.get_global_rect()): break
 	_check(hub.station_scroll.get_global_rect().encloses(button.get_global_rect()),"Station button is reachable within the scroll viewport: "+name)
 	var at: Vector2 = button.get_global_rect().get_center()
 	await _click_at(at)

@@ -6,6 +6,7 @@ const IDS: Array[StringName] = [&"metal", &"dust", &"crystal", &"slime_essence",
 const MAX_COUNT: int = 999999
 const CRYSTAL_SELL_PRICE: int = 5
 const CRYSTALS_PER_ENEMY: int = 1
+const WORLD_CHEST_POOL: Array[StringName]=[&"metal",&"dust",&"crystal",&"healing_herb",&"linen_fiber",&"detox_root",&"enhancement_stone_1",&"enhancement_stone_2"]
 const DISPLAY_NAMES: Dictionary = {&"metal": "Mảnh Kim Loại Cổ", &"dust": "Bột Tinh Thể Phép", &"crystal": "Tinh Thạch", &"slime_essence": "Tinh Chất Slime", &"enhancement_stone_1": "Đá Cường Hóa cấp 1", &"enhancement_stone_2": "Đá Cường Hóa cấp 2", &"enhancement_stone_3": "Đá Cường Hóa cấp 3", &"enhancement_stone_4": "Đá Cường Hóa cấp 4", &"enhancement_stone_5": "Đá Cường Hóa cấp 5", &"enhancement_stone_6": "Đá Cường Hóa cấp 6", &"origin_divine_stone": "Bản Nguyên Thần Thạch", &"armor_scrap": "Giáp Phế Liệu", &"healing_herb": "Thảo Dược Hồi Sinh Lực", &"linen_fiber": "Sợi Vải Lanh", &"detox_root": "Rễ Thảo Dược Giải Độc", &"aptitude_herb": "Dược Thảo Dưỡng Căn", &"aptitude_pill": "Đan Dưỡng Căn"}
 # Only approved prototype entries are sellable; adding a name never adds a price.
 const SELL_PRICES: Dictionary = {&"crystal": CRYSTAL_SELL_PRICE, &"slime_essence": 3}

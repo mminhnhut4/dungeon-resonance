@@ -1,5 +1,5 @@
 {
-  "status": "offline_artwork_candidate_not_game_integrated",
+  "status": "runtime_part2_painted_source_followthrough",
   "canvas": [
     448,
     320
@@ -4304,7 +4304,462 @@
         320
       ],
       "columns": 6
+    },
+    {
+      "id": "committed_sweep",
+      "count": 8,
+      "seconds": 0.18,
+      "loop": false,
+      "frames": [
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            368.94949501883036,
+            214.45737911986362
+          ],
+          "opacity": 1,
+          "index": 0,
+          "file": "committed_sweep_source/active_00.png",
+          "rect": [
+            0,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": -24,
+          "body_lean_radians": -0.06
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.14285714285714285,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            367.3210634008414,
+            224.17480114677693
+          ],
+          "opacity": 1,
+          "index": 1,
+          "file": "committed_sweep_source/active_01.png",
+          "rect": [
+            448,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": -20,
+          "body_lean_radians": -0.025
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.2857142857142857,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            363.61825747601563,
+            238.4789448329544
+          ],
+          "opacity": 1,
+          "index": 2,
+          "file": "committed_sweep_source/active_02.png",
+          "rect": [
+            896,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": -14,
+          "body_lean_radians": 0.015
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.42857142857142855,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            358.4405457516011,
+            252.31768031025135
+          ],
+          "opacity": 1,
+          "index": 3,
+          "file": "committed_sweep_source/active_03.png",
+          "rect": [
+            1344,
+            0,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": -8,
+          "body_lean_radians": 0.05
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.5714285714285714,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            351.8446563207565,
+            265.5393874968369
+          ],
+          "opacity": 1,
+          "index": 4,
+          "file": "committed_sweep_source/active_04.png",
+          "rect": [
+            0,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": -2,
+          "body_lean_radians": 0.08
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.7142857142857143,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            345.3164383481362,
+            275.98138639711266
+          ],
+          "opacity": 1,
+          "index": 5,
+          "file": "committed_sweep_source/active_05.png",
+          "rect": [
+            448,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": 3,
+          "body_lean_radians": 0.07
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 0.8571428571428571,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            346.6945904540043,
+            273.93920308717696
+          ],
+          "opacity": 1,
+          "index": 6,
+          "file": "committed_sweep_source/active_06.png",
+          "rect": [
+            896,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": 2,
+          "body_lean_radians": 0.04
+        },
+        {
+          "clip": "committed_sweep",
+          "normalized_time": 1.0,
+          "root": [
+            168,
+            292
+          ],
+          "foot_front": [
+            190.0,
+            292.0
+          ],
+          "foot_back": [
+            148.0,
+            292.0
+          ],
+          "front_boot_contact": [
+            190.0,
+            292.0
+          ],
+          "back_boot_contact": [
+            148.0,
+            292.0
+          ],
+          "contact_front": true,
+          "contact_back": true,
+          "saber_hand": [
+            229.0,
+            196.0
+          ],
+          "sword_hand": [
+            229.0,
+            196.0
+          ],
+          "saber_base": [
+            229.0,
+            196.0
+          ],
+          "saber_tip": [
+            349.3429330506376,
+            269.7842426590513
+          ],
+          "opacity": 1,
+          "index": 7,
+          "file": "committed_sweep_source/active_07.png",
+          "rect": [
+            1344,
+            320,
+            448,
+            320
+          ],
+          "duration": 0.0225,
+          "angle_degrees": 0,
+          "body_lean_radians": 0
+        }
+      ],
+      "atlas": "committed_sweep_atlas.png",
+      "atlas_size": [
+        1792,
+        640
+      ],
+      "columns": 4
     }
   ],
-  "gameplay_authority": "existing actor state_time and actual travelled X; this exporter never calls damage or mutates hitboxes"
+  "gameplay_authority": "existing actor state_time and actual travelled X; this exporter never calls damage or mutates hitboxes",
+  "part2_provenance": {
+    "method": "bounded offline articulation/deformation of the existing painted attack_sweep frame2; no image model or new painted views",
+    "source_atlas": "attack_sweep_atlas.png",
+    "source_atlas_sha256": "dbf5975c079e991d2d123fea7ef96855b019934d3af0749cca846aac26f6cb18",
+    "source_frame": 2,
+    "source_metadata_sha256": "ade79e50f9cba544c697739354b28652dce7cb83f08d2bc3fcc0f6c01f33d69e",
+    "root_unchanged": true,
+    "gameplay_window_seconds": 0.18
+  }
 }

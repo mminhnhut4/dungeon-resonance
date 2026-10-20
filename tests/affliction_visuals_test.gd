@@ -78,7 +78,8 @@ func test_system() -> void:
 		status.clear()
 		visual.refresh_visual()
 		await _step(1)
-	_check(visual.get_child_count() == child_count and child_count == 2, "Repeated conditions reuse the same two finite emitters")
+	var expected_children: int = 3 if CompatibilityParticleBurst.supported() else 2
+	_check(visual.get_child_count() == child_count and child_count == expected_children, "Repeated conditions reuse the two sources and at most one bounded Compatibility burn emitter")
 	_check(int(Performance.get_monitor(Performance.OBJECT_COUNT)) <= objects_before, "Repeated burn/poison leave no retained objects after warm-up")
 	_check(int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)) <= resources_before, "Repeated burn/poison leave no retained resources after warm-up")
 	print("STRESS: affliction objects=%d->%d resources=%d->%d" % [objects_before, int(Performance.get_monitor(Performance.OBJECT_COUNT)), resources_before, int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT))])

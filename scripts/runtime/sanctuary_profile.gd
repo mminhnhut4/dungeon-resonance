@@ -267,13 +267,51 @@ func compact_cultivation_receipts() -> bool:
 	changed.emit()
 	return true
 
+func ease_opening_cultivation() -> bool:
+	if read_only or not _ensure_writer() or not CultivationState.valid(cultivation_progress, material_stash): return _compaction_failed("invalid_cultivation_tuning_source")
+	var config: Dictionary = cultivation_progress["config"]
+	# Preserve already completed tracks and explicitly customized curricula.
+	if int(cultivation_progress["actors"]["player"]["stage"]) >= 3: return true
+	var legacy: Dictionary = {"energy_thresholds":[12,24,40], "mastery_thresholds":[2,5,8], "insight_thresholds":[1,2,3], "interim_dust_cost":1, "final_dust_cost":2, "final_soul_cost":5, "final_golem_proof":1}
+	for key: String in legacy:
+		if config[key] != legacy[key]: return true
+	var original: PackedByteArray = FileAccess.get_file_as_bytes(save_path)
+	var digest: String = original.hex_encode().sha256_text()
+	if original.is_empty() or digest != _writer.expected_hash: return _compaction_failed("profile_changed_reload_required")
+	var disk: Variant = _read_json(save_path)
+	if not _validate_payload(disk, true) or CommitWriter.canonical(disk.get("cultivation_progress")) != CommitWriter.canonical(cultivation_progress): return _compaction_failed("tuning_source_invalid")
+	var backup: String = save_path + ".cultivation_easy_v1." + digest + ".bak"
+	if FileAccess.file_exists(backup):
+		if FileAccess.get_file_as_bytes(backup) != original: return _compaction_failed("tuning_backup_conflict")
+	else:
+		if _copy_file(save_path, backup + ".tmp") != OK or FileAccess.get_file_as_bytes(backup + ".tmp") != original: return _compaction_failed("tuning_backup_write_failed")
+		if _rename_file(backup + ".tmp", backup) != OK: return _compaction_failed("tuning_backup_publish_failed")
+		if FileAccess.get_file_as_bytes(backup) != original: return _compaction_failed("tuning_backup_verify_failed")
+	var previous: Dictionary = cultivation_progress
+	cultivation_progress = previous.duplicate(true)
+	var current: Dictionary = CultivationState.default_config()
+	for key: String in ["energy_thresholds", "mastery_thresholds", "insight_thresholds", "interim_dust_cost", "final_dust_cost", "final_soul_cost", "final_golem_proof"]:
+		cultivation_progress["config"][key] = current[key]
+	if not CultivationState.valid(cultivation_progress, material_stash) or not _save_with_context():
+		cultivation_progress = previous
+		return false
+	last_commit["cultivation_backup_path"] = backup
+	changed.emit()
+	return true
+
+func cultivation_materials(carried: GearInventory = null) -> Dictionary:
+	var result: Dictionary = material_stash.duplicate()
+	if carried != null:
+		for id: StringName in [&"crystal", &"dust"]: result[id] = carried.materials.get(id, 0)
+	return result
+
 func _compaction_failed(reason: String) -> bool:
 	last_commit={"ok":false,"status":"rejected","error":reason}
 	return false
 
-func commit_cultivation(proposal: Dictionary, fence: Dictionary = {}, guard: Callable = Callable(), ability_choice: String = "") -> bool:
+func commit_cultivation(proposal: Dictionary, fence: Dictionary = {}, guard: Callable = Callable(), ability_choice: String = "", carried: GearInventory = null) -> bool:
 	if read_only or not proposal.get("ok",false): return false
-	var gate: Dictionary = _cultivation_proposal_gate(proposal)
+	var gate: Dictionary = _cultivation_proposal_gate(proposal,carried)
 	if not gate.get("ok",false):
 		last_commit={"ok":false,"status":"rejected","error":gate.get("error","invalid_proposal")}
 		return false
@@ -302,36 +340,54 @@ func commit_cultivation(proposal: Dictionary, fence: Dictionary = {}, guard: Cal
 	var previous_materials: Dictionary[StringName,int] = material_stash.duplicate()
 	var previous_souls: int = souls
 	var previous_version: int = profile_version
+	var previous_hub_inventory: Dictionary = hub_inventory
+	var previous_carried: Dictionary = carried.materials.duplicate() if carried != null else {}
 	cultivation_progress=proposal["progress"].duplicate(true)
 	for id: StringName in MaterialCatalog.IDS: material_stash[id]=int(proposal["materials"].get(id,0))
+	if carried != null:
+		# Ordinary costs belong to the safe carried inventory. Herb/pill lineage
+		# stays in the canonical bank; neither source is copied into the other.
+		for id: StringName in [&"crystal",&"dust"]:
+			carried.materials[id]=int(proposal["materials"].get(id,0))
+			material_stash[id]=previous_materials[id]
+		hub_inventory=GearInventoryCodec.encode(carried)
 	souls=int(proposal["souls"]); profile_version=2
 	if not _save_with_context(fence,guard):
 		_retained_fields=previous_extensions
 		cultivation_progress=previous; material_stash=previous_materials
 		souls=previous_souls; profile_version=previous_version
+		hub_inventory=previous_hub_inventory
+		if carried != null:
+			for id: StringName in [&"crystal",&"dust"]: carried.materials[id]=int(previous_carried.get(id,0))
 		return false
 	changed.emit()
+	if carried != null: carried.changed.emit()
 	return true
 
 func commit_cultivation_proposal(proposal: Dictionary, fence: Dictionary = {}, guard: Callable = Callable(), ability_choice: String = "") -> bool:
 	return commit_cultivation(proposal,fence,guard,ability_choice)
 
-func _cultivation_proposal_gate(proposal: Dictionary) -> Dictionary:
+func _cultivation_proposal_gate(proposal: Dictionary, carried: GearInventory = null) -> Dictionary:
 	if not _json_data(proposal) or not CultivationState._hex_digest(proposal.get("source_sha256")) or not proposal.get("event") is Dictionary or not proposal.get("request") is Dictionary: return {"ok":false,"error":"proposal_identity_required"}
 	if not cultivation_progress.is_empty() and not CultivationState.valid(cultivation_progress,material_stash): return {"ok":false,"error":"invalid_live_cultivation"}
 	var event: Dictionary = proposal["event"]
 	if not CultivationState._keys(event,["id","kind","arguments_sha256"]) or not CultivationState._event_id(event.get("id")) or not CultivationState._hex_digest(event.get("arguments_sha256")) or event["arguments_sha256"]!=CommitWriter.canonical(CultivationState._normalize(proposal["request"])).sha256_text(): return {"ok":false,"error":"invalid_proposal_identity"}
+	var source_materials: Dictionary = material_stash.duplicate()
+	if carried != null:
+		if event["kind"] not in ["train","breakthrough","craft_pill"] or hub_inventory_quarantined or not GearInventoryCodec.valid(GearInventoryCodec.encode(carried)):
+			return {"ok":false,"error":"invalid_cultivation_carried_source"}
+		for id: StringName in [&"crystal",&"dust"]: source_materials[id]=int(carried.materials.get(id,0))
 	# A committed receipt is authoritative. Never publish its old snapshot.
 	for receipt: Dictionary in cultivation_progress.get("receipts",[]):
 		if receipt["id"]==event["id"]:
 			return {"ok":true,"replay":true} if receipt["kind"]==event["kind"] and receipt["arguments_sha256"]==event["arguments_sha256"] else {"ok":false,"error":"event_conflict"}
-	if proposal["source_sha256"]!=CultivationState.source_fingerprint(cultivation_progress,material_stash,souls,boss_proofs): return {"ok":false,"error":"stale_cultivation_source"}
+	if proposal["source_sha256"]!=CultivationState.source_fingerprint(cultivation_progress,source_materials,souls,boss_proofs): return {"ok":false,"error":"stale_cultivation_source"}
 	var expected: Dictionary
 	if event["kind"]=="initialize":
 		if profile_version!=1 or not cultivation_progress.is_empty() or not proposal.get("progress") is Dictionary: return {"ok":false,"error":"cultivation_already_initialized"}
-		expected=CultivationState.initial_proposal(proposal["progress"],material_stash,souls,boss_proofs)
+		expected=CultivationState.initial_proposal(proposal["progress"],source_materials,souls,boss_proofs)
 	else:
-		expected=CultivationState.propose(cultivation_progress,material_stash,souls,boss_proofs,event["kind"],proposal["request"],event["id"])
+		expected=CultivationState.propose(cultivation_progress,source_materials,souls,boss_proofs,event["kind"],proposal["request"],event["id"])
 	if not expected.get("ok",false) or expected.get("already_committed",false): return {"ok":false,"error":"invalid_uncommitted_proposal"}
 	for key: String in ["progress","materials","souls","event","request","source_sha256"]:
 		if CommitWriter.canonical(proposal.get(key))!=CommitWriter.canonical(expected[key]): return {"ok":false,"error":"proposal_snapshot_mismatch"}
@@ -371,17 +427,22 @@ func record_courier_contact(source: String) -> bool:
 	state["contact_recorded"]=true; state["contact_source"]=source
 	return commit_extension_event("courier","courier_contact_v1",{},0,state,extension_revision("courier")).get("ok",false)
 
-func quote_courier_choice(choice: StringName) -> Dictionary:
+func quote_courier_choice(choice: StringName, carried: GearInventory = null) -> Dictionary:
 	var state: Dictionary = courier_objectives()
 	var same: bool = not state.is_empty() and state["outcome"]==String(choice)
-	var allowed: bool = not read_only and profile_version==2 and choice in [&"prepare",&"help"] and not state.is_empty() and state["accepted"] and state["contact_recorded"] and (same or (state["outcome"]=="" and material_stash[&"dust"]>=1))
-	return {"available":allowed,"already_committed":same,"materials_cost":{&"dust":1} if choice==&"help" else {},"souls_cost":0,"tuning_status":"proposal_not_final","consequence":"Góp 1 Bột Phép cho trạm tiếp tế Thanh Vy · 0 Tàn Hồn / vải" if choice==&"help" else "Giữ 1 Bột Phép trong kho để tự chuẩn bị · Không tăng chỉ số tức thời"}
+	var source: Dictionary = carried.materials if carried != null else material_stash
+	var dust: Variant = source.get(&"dust", 0)
+	var allowed: bool = not read_only and (carried == null or not hub_inventory_quarantined) and profile_version==2 and choice in [&"prepare",&"help"] and not state.is_empty() and state["accepted"] and state["contact_recorded"] and (same or (state["outcome"]=="" and MaterialCatalog.valid_count(dust) and int(dust)>=1))
+	var consequence: String = "Góp 1 Bột Phép cho trạm tiếp tế Thanh Vy · 0 Tàn Hồn / vải" if choice==&"help" else "Giữ 1 Bột Phép trong kho để tự chuẩn bị · Không tăng chỉ số tức thời"
+	if carried != null:
+		consequence = "Dùng 1 Bột Phép trong túi góp cho trạm tiếp tế Thanh Vy · 0 Tàn Hồn / vải" if choice==&"help" else "Giữ 1 Bột Phép trong túi để tự chuẩn bị · Không tăng chỉ số tức thời"
+	return {"available":allowed,"already_committed":same,"materials_cost":{&"dust":1} if choice==&"help" else {},"souls_cost":0,"tuning_status":"proposal_not_final","consequence":consequence}
 
-func commit_courier_choice(choice: StringName) -> bool:
-	var quote: Dictionary = quote_courier_choice(choice)
+func commit_courier_choice(choice: StringName, carried: GearInventory = null) -> bool:
+	var quote: Dictionary = quote_courier_choice(choice,carried)
 	if not quote["available"]: return false
 	var state: Dictionary = courier_objectives(); state["outcome"]=String(choice)
-	return commit_extension_event("courier","opening_courier_supply_v1",quote["materials_cost"],0,state,extension_revision("courier")).get("ok",false)
+	return commit_extension_event("courier","opening_courier_supply_v1",quote["materials_cost"],0,state,extension_revision("courier"),{},Callable(),carried).get("ok",false)
 
 func courier_choice_event() -> Dictionary:
 	var state: Dictionary = courier_objectives()
@@ -471,14 +532,17 @@ func migrate_legacy_event_scope(scope_id: String, legacy_key: String, validator:
 	changed.emit()
 	return {"ok":true,"status":"migrated"}
 
-func commit_extension_event(scope_id: String, event_id: String, materials_cost: Dictionary, souls_cost: int, next_state: Dictionary, expected_revision: int = 0, fence: Dictionary = {}, guard: Callable = Callable()) -> Dictionary:
+func commit_extension_event(scope_id: String, event_id: String, materials_cost: Dictionary, souls_cost: int, next_state: Dictionary, expected_revision: int = 0, fence: Dictionary = {}, guard: Callable = Callable(), carried: GearInventory = null) -> Dictionary:
 	# Social/sect/styles data share this owner. A receipt and its cost cannot split.
+	if scope_id=="tan_dang_mon_v1": return {"ok":false,"status":"rejected","error":"sect_requires_npc_transaction"}
 	if not extension_transactions_available(scope_id): return {"ok":false,"status":"extension_quarantined","error":"unsupported_or_corrupt_scope"}
 	if _extension_validators.has(scope_id) and _extension_validators[scope_id].call(next_state.duplicate(true))!=true: return {"ok":false,"status":"extension_quarantined","error":"invalid_proposed_scope"}
 	if scope_id=="npc_social" and (fence.get("kind")!="npc_social" or not guard.is_valid() or not _social_fence_reader.is_valid()): return {"ok":false,"status":"rejected","error":"social_life_fence_required"}
 	if read_only or profile_version!=2 or not _extension_id(scope_id,32) or not _extension_id(event_id,128) or not _json_data(next_state) or CommitWriter.canonical(next_state).length()>16384 or not MaterialCatalog.valid_count(souls_cost): return {"ok":false,"status":"rejected","error":"invalid_event_or_profile_not_ready"}
+	if carried != null and hub_inventory_quarantined: return {"ok":false,"status":"rejected","error":"carried_inventory_quarantined"}
 	for id: Variant in materials_cost:
 		if StringName(str(id)) not in MaterialCatalog.IDS or not MaterialCatalog.valid_count(materials_cost[id]): return {"ok":false,"status":"rejected","error":"invalid_cost"}
+		if carried != null and int(materials_cost[id]) > 0 and MaterialCatalog.material_policy(StringName(str(id)))["lineage_bound"]: return {"ok":false,"status":"rejected","error":"lineage_cost_requires_owner"}
 	var extensions: Dictionary = _retained_fields.get("event_extensions",{"schema_version":1,"namespaces":{}}).duplicate(true)
 	if not _valid_extensions(extensions): return {"ok":false,"status":"quarantined","error":"invalid_extensions"}
 	var current: Dictionary = extensions["namespaces"].get(scope_id,{"revision":0,"state":{},"receipts":[]})
@@ -488,21 +552,88 @@ func commit_extension_event(scope_id: String, event_id: String, materials_cost: 
 			return {"ok":true,"status":"already_committed","revision":receipt["revision"]} if receipt["arguments_sha256"]==args_hash else {"ok":false,"status":"rejected","error":"event_conflict"}
 	if int(current["revision"])!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=8): return {"ok":false,"status":"rejected","error":"revision_or_capacity"}
 	if souls<souls_cost: return {"ok":false,"status":"rejected","error":"insufficient_souls"}
+	var source: Dictionary = carried.materials if carried != null else material_stash
 	for id: Variant in materials_cost:
-		if material_stash.get(StringName(str(id)),0)<int(materials_cost[id]): return {"ok":false,"status":"rejected","error":"insufficient_materials"}
+		var amount: Variant = source.get(StringName(str(id)),0)
+		if not MaterialCatalog.valid_count(amount) or int(amount)<int(materials_cost[id]): return {"ok":false,"status":"rejected","error":"insufficient_materials"}
 	var previous: Dictionary = _retained_fields.duplicate(true)
 	var previous_bank: Dictionary[StringName,int] = material_stash.duplicate()
+	var previous_carried: Dictionary = carried.materials.duplicate() if carried != null else {}
+	var previous_positions: Array[int] = []
+	if carried != null: previous_positions.assign(carried.equipment_positions)
+	var previous_ledger: Dictionary = hub_inventory
 	var previous_souls: int = souls
 	current=current.duplicate(true); current["revision"]+=1
 	current["state"]=next_state.duplicate(true)
 	current["receipts"].append({"id":event_id,"arguments_sha256":args_hash,"revision":current["revision"]})
 	extensions["namespaces"][scope_id]=current
 	_retained_fields["event_extensions"]=extensions
-	for id: Variant in materials_cost: material_stash[StringName(str(id))]-=int(materials_cost[id])
+	for id: Variant in materials_cost: source[StringName(str(id))]-=int(materials_cost[id])
 	souls-=souls_cost
+	if carried != null: hub_inventory=GearInventoryCodec.encode(carried)
 	if not _save_with_context(fence,guard):
 		_retained_fields=previous; material_stash=previous_bank; souls=previous_souls
+		if carried != null:
+			carried.materials.assign(previous_carried)
+			carried.equipment_positions.assign(previous_positions)
+			hub_inventory=previous_ledger
 		return last_commit.duplicate(true)
+	changed.emit()
+	return {"ok":true,"status":"committed","revision":current["revision"]}
+
+## Bounded sect transaction: receipt/contribution/core/lamp/knowledge and the
+## canonical NPC snapshot share one journal. No inventory UID or Souls reward.
+func commit_npc_extension_event(scope_id: String, event_id: String, next_state: Dictionary, expected_revision: int, npc_owner: NpcWorldState, npc_proposal: Dictionary, knowledge_recipe: String = "", assist_materials: Dictionary = {}) -> Dictionary:
+	var refused: Dictionary = {"ok":false,"status":"rejected","error":"invalid_sect_transaction"}
+	if scope_id!="tan_dang_mon_v1" or read_only or profile_version!=2 or npc_owner==null or npc_owner.read_only or npc_owner.compound_locked or not _ensure_writer() or _writer.busy: return refused
+	if not _extension_validators.has(scope_id) or not extension_transactions_available(scope_id) or _extension_validators[scope_id].call(next_state.duplicate(true))!=true: return {"ok":false,"status":"extension_quarantined","error":"invalid_sect_scope"}
+	if not _extension_id(event_id,128) or not _json_data(next_state) or CommitWriter.canonical(next_state).length()>16384 or knowledge_recipe not in ["","firestorm"]: return refused
+	if npc_owner.save_path!=save_path+".npc_v1.json" or not NpcWorldState.valid_sect_proposal(npc_proposal): return refused
+	var extensions: Dictionary = _retained_fields.get("event_extensions",{"schema_version":1,"namespaces":{}}).duplicate(true)
+	if not _valid_extensions(extensions): return refused
+	var current: Dictionary = extensions["namespaces"].get(scope_id,{"revision":0,"state":{},"receipts":[]})
+	var args_hash: String = CommitWriter.canonical([scope_id,next_state,npc_proposal["edits"],knowledge_recipe,assist_materials]).sha256_text()
+	for receipt: Dictionary in current["receipts"]:
+		if receipt["id"]==event_id:
+			return {"ok":true,"status":"already_committed","revision":receipt["revision"]} if receipt["arguments_sha256"]==args_hash else {"ok":false,"status":"rejected","error":"event_conflict"}
+	if current["revision"]!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=8) or not npc_owner.sect_proposal_matches(npc_proposal): return {"ok":false,"status":"rejected","error":"stale_sect_proposal_or_capacity"}
+	# Knowledge already available never consumes sect credit through this API.
+	if not knowledge_recipe.is_empty() and (discovered_recipes.has(&"firestorm") or archived_recipes.has(&"firestorm")): return {"ok":false,"status":"rejected","error":"recipe_already_known"}
+	var assistance_count: int = 0
+	for id: String in npc_proposal["edits"]:
+		if npc_proposal["edits"][id].get("consume_assistance",false): assistance_count+=1
+	if not assist_materials.is_empty():
+		if assist_materials!={"linen_fiber":2} or assistance_count!=1 or not MaterialCatalog.valid_count(material_stash.get(&"linen_fiber")) or material_stash[&"linen_fiber"]>MaterialCatalog.MAX_COUNT-2: return refused
+	elif assistance_count>0: return refused
+	var previous_fields: Dictionary = _retained_fields.duplicate(true)
+	var previous_discovered: Array[StringName] = discovered_recipes.duplicate()
+	var previous_archived: Array[StringName] = archived_recipes.duplicate()
+	var previous_stash: Dictionary[StringName,int] = material_stash.duplicate()
+	current=current.duplicate(true); current["revision"]+=1
+	current["state"]=next_state.duplicate(true)
+	current["receipts"].append({"id":event_id,"arguments_sha256":args_hash,"revision":current["revision"]})
+	extensions["namespaces"][scope_id]=current
+	_retained_fields["event_extensions"]=extensions
+	if not knowledge_recipe.is_empty():
+		discovered_recipes.append(&"firestorm"); archived_recipes.append(&"firestorm")
+	if not assist_materials.is_empty(): material_stash[&"linen_fiber"]+=2
+	npc_owner.compound_locked=true
+	last_save_ok=false
+	last_commit=_writer.commit_npc(_export_payload(),npc_proposal,npc_owner.sect_proposal_matches.bind(npc_proposal))
+	if not last_commit.get("ok",false):
+		_retained_fields=previous_fields; discovered_recipes.assign(previous_discovered); archived_recipes.assign(previous_archived); material_stash=previous_stash
+		read_only=last_commit.get("status")=="quarantined"
+		npc_owner.read_only=npc_owner.read_only or read_only
+		npc_owner.compound_locked=read_only
+		npc_owner.last_save_ok=false
+		return last_commit.duplicate(true)
+	# No external signal until both primary after-images are verified and loaded.
+	if not npc_owner.apply_after_commit(npc_proposal):
+		read_only=true; npc_owner.read_only=true
+		last_commit={"ok":false,"status":"quarantined","error":"npc_publication_requires_reload","recovery_required":true}
+		return last_commit.duplicate(true)
+	npc_owner.compound_locked=false
+	last_save_ok=true
 	changed.emit()
 	return {"ok":true,"status":"committed","revision":current["revision"]}
 

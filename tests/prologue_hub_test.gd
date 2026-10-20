@@ -22,6 +22,9 @@ func _run() -> void:
 	current_scene = flow
 	await _step(15)
 	var hub: PrologueHub = flow.active_scene as PrologueHub
+	# Legacy QA mode bypasses World mode persistence; opt its real owner in
+	# before testing the current save-backed bag service contract.
+	hub.economy.persist_safe_inventory = true
 	hub.feedback.hit_stop_seconds = 0.0
 	flow.profile.coins = 0
 	flow.profile.souls = 0
@@ -120,28 +123,27 @@ func _run() -> void:
 	hub.gear.inventory.materials[&"crystal"] = 3
 	_check(hub.economy.deposit_all() and flow.profile.material_stash[&"crystal"] == 3 and hub.gear.inventory.materials[&"crystal"] == 0, "Storage uses the save-backed EconomySession transaction")
 	hub.gear.inventory.materials[&"slime_essence"] = 2
-	hub.economy.deposit_all()
+	hub.economy._save_safe()
 	hub.player.relocate(hub.stations[&"merchant"].global_position)
 	await _key(KEY_E)
-	# ServiceItemCard retains the authored action NodePath; its accessible
-	# caption now includes the whole-stash action and the material title.
-	var sell_essence: Button = hub.station_content.get_node_or_null("SellMaterial_slime_essence") as Button
+	# Merchant actions quote carried materials; deposited supplies stay at home.
+	var sell_essence: Button = hub.station_content.get_node_or_null("SellBagMaterial_slime_essence") as Button
 	_check(hub.station_open and sell_essence != null and not sell_essence.disabled, "E at Kael exposes the approved essence sale through real GUI")
 	if not hub.station_open or sell_essence == null or sell_essence.disabled:
 		await _abort_fixture(flow)
 		return
 	sell_essence.pressed.emit()
-	_check(flow.profile.coins == 6 and flow.profile.material_stash[&"slime_essence"] == 0 and flow.profile.material_stash[&"crystal"] == 3, "Kael button sells only selected stored material once at its prototype price")
+	_check(flow.profile.coins == 3 and hub.gear.inventory.materials[&"slime_essence"] == 1 and flow.profile.material_stash[&"slime_essence"] == 0 and flow.profile.material_stash[&"crystal"] == 3, "Kael button sells one selected carried unit at its quoted price and leaves storage intact")
 	hub.close_station()
 	var damaged: GearItem = hub.gear.inventory.add_equipment(GearInventory.STARTER_CLOTHING[2])
 	damaged.broken = true
 	damaged.source = &"drop"
 	damaged.loot_rolled = true
 	damaged.drop_bonus = 0.04
-	damaged.affix_id = &"speed"
+	damaged.affix_id = &"stride"
 	damaged.affix_value = 0.02
-	flow.profile.material_stash[&"metal"] = 2
-	flow.profile.material_stash[&"dust"] = 1
+	hub.gear.inventory.materials[&"metal"] = 2
+	hub.gear.inventory.materials[&"dust"] = 1
 	flow.profile.save()
 	hub.player.relocate(hub.stations[&"blacksmith"].global_position)
 	await _key(KEY_E)
@@ -149,19 +151,19 @@ func _run() -> void:
 	for node: Node in hub.station_content.get_children():
 		if node is Button and node.text.begins_with("Sửa "):
 			repair = node
-	_check(hub.station_open and repair != null and not repair.disabled, "E at the smith shows a repair quote using stored materials")
+	_check(hub.station_open and repair != null and not repair.disabled, "E at the smith shows a repair quote using carried materials")
 	if not hub.station_open or repair == null or repair.disabled:
 		await _abort_fixture(flow)
 		return
 	repair.pressed.emit()
-	_check(not damaged.broken and damaged.loot_rolled and damaged.drop_bonus == 0.04 and damaged.affix_value == 0.02 and flow.profile.material_stash[&"metal"] == 0 and flow.profile.material_stash[&"dust"] == 0, "Smith GUI repairs the same UID without rerolling or duplicating its saved loot state")
+	_check(not damaged.broken and damaged.loot_rolled and damaged.drop_bonus == 0.04 and damaged.affix_value == 0.02 and hub.gear.inventory.materials[&"metal"] == 0 and hub.gear.inventory.materials[&"dust"] == 0, "Smith GUI repairs the same UID without rerolling or duplicating its saved loot state")
 	hub.close_station()
 	owned = hub.gear.inventory.items.size()
 	rare.source = &"drop"
 	rare.loot_rolled = true
 	rare.drop_bonus = 0.03
-	rare.affix_id = &"speed"
-	rare.affix_value = 0.04
+	rare.affix_id = &"stride"
+	rare.affix_value = 0.02
 	hub.gear.inventory.materials[&"metal"] = 2
 	hub.gear.inventory.consumables[&"potion"] = 3
 	var original_inventory: GearInventory = hub.gear.inventory
@@ -176,15 +178,16 @@ func _run() -> void:
 	_check(campaign.gear.inventory != original_inventory and campaign.gear.inventory.items[rare.uid] != rare and campaign.gear.inventory.items[rare.uid].equipment_definition == rare.equipment_definition, "Prepared run clones mutable UID items while sharing immutable authored resources")
 	_check(original_inventory.items.is_empty() and original_inventory.total_shards() == 0 and original_inventory.consumables[&"potion"] == 0 and campaign.gear.inventory.consumables[&"potion"] == 3, "Starting a run moves all carried UID gear, shards and consumables out of the Hub exactly once")
 	var copied_rare: GearItem = campaign.gear.inventory.items[rare.uid]
-	_check(copied_rare.source == rare.source and copied_rare.loot_rolled and copied_rare.drop_bonus == 0.03 and copied_rare.affix_id == rare.affix_id and copied_rare.affix_value == 0.04, "Hub-to-run clone retains the frozen source, bonus and affix of each UID")
+	_check(copied_rare.source == rare.source and copied_rare.loot_rolled and copied_rare.drop_bonus == 0.03 and copied_rare.affix_id == rare.affix_id and copied_rare.affix_value == 0.02, "Hub-to-run clone retains the frozen source, bonus and affix of each UID")
 	copied_rare.affix_value = 0.01
-	_check(rare.affix_value == 0.04, "Changing a disposable run roll never changes the Hub-owned preparation item")
+	_check(rare.affix_value == 0.02, "Changing a disposable run roll never changes the Hub-owned preparation item")
 	_check(campaign.gear.inventory.equipped_weapon_uid == rare.uid and campaign.gear.inventory.slots[0] == &"fire" and campaign.gear.inventory.slots[1] == &"wind", "Prepared equipment and Catalyst slots carry into the run")
 	_check(campaign.gear.inventory.materials[&"crystal"] == 0 and flow.profile.material_stash[&"crystal"] == 3 and campaign.gear.inventory.materials[&"metal"] == 2 and original_inventory.materials[&"metal"] == 0, "Stored resources stay home and carried material moves into the run only once")
 	_check(campaign.player.health.minimum_health == 0.0 and campaign.gear.loot.crystal_drops_enabled and campaign.gear.loot.prologue_drops_enabled, "Dungeon damage is lethal again and its approved opt-in drops are enabled")
 	campaign.player.health.apply_damage(10000.0)
 	await _time(1.4)
 	hub = flow.active_scene as PrologueHub
+	if hub != null: hub.economy.persist_safe_inventory = true
 	_check(hub != null and hub.from_defeat and hub.player.health.current_health == 115.0, "Defeat returns to the selected new Hub with a healthy starter kit")
 	_check(hub.gear.inventory.items.size() == 8 and not hub.claim_test_chest() and not hub.gear.inventory.items.has(rare.uid), "Death loses carried test gear; once-per-session chest stays claimed and a fresh seven-piece starter kit remains playable")
 	_check(hub.gear.inventory.items[hub.gear.inventory.equipped_weapon_uid].quality == GearItem.Quality.COMMON and hub.gear.inventory.slots.all(func(id: StringName) -> bool: return id == &""), "Defeat resets worn equipment and sockets instead of keeping the dead run build")
@@ -205,8 +208,8 @@ func _run() -> void:
 	found_gear.broken = true
 	found_gear.loot_rolled = true
 	found_gear.drop_bonus = 0.05
-	found_gear.affix_id = &"speed"
-	found_gear.affix_value = 0.03
+	found_gear.affix_id = &"stride"
+	found_gear.affix_value = 0.02
 	var gear_pickup: LootPickup = campaign.gear.loot.spawn_gear(found_gear, campaign.player.global_position)
 	_check(gear_pickup.collect() and campaign.gear.inventory.items.has(found_gear.uid), "Actual run pickup owns the frozen broken gear before victory")
 	var potion_pickup: LootPickup = campaign.gear.loot.spawn(&"consumable", &"potion", campaign.player.global_position, 2)
@@ -225,18 +228,19 @@ func _run() -> void:
 	_check(campaign.portal_active and campaign.win(), "Actual Boss death enables the existing victory portal")
 	await _time(2.2)
 	hub = flow.active_scene as PrologueHub
+	if hub != null: hub.economy.persist_safe_inventory = true
 	_check(hub != null and not hub.from_defeat and hub.gear.inventory.materials[&"metal"] == 4, "Victory returns to the new Hub and brings its carried materials once")
 	_check(hub.gear.inventory.items.size() == won_gear_count and hub.gear.inventory.items.has(found_gear.uid) and hub.gear.inventory.consumables[&"potion"] == 2 and hub.gear.inventory.total_shards() == shard_count_before + 1, "Victory returns remainder gear, rune and consumable ownership exactly once")
 	var returned: GearItem = hub.gear.inventory.items[found_gear.uid]
-	_check(returned != found_gear and returned.broken and returned.loot_rolled and returned.source == &"drop" and returned.drop_bonus == 0.05 and returned.affix_value == 0.03 and returned.equipment_definition == found_gear.equipment_definition, "Won broken gear retains frozen roll while returning an independent runtime item")
+	_check(returned != found_gear and returned.broken and returned.loot_rolled and returned.source == &"drop" and returned.drop_bonus == 0.05 and returned.affix_value == 0.02 and returned.equipment_definition == found_gear.equipment_definition, "Won broken gear retains frozen roll while returning an independent runtime item")
 	ui = hub.gear.modal as InventoryScreen
 	ui.open()
 	_check(ui.bag_uids.size() > 20 and ui.bag_uids.has(found_gear.uid), "Victory overflow remains visible in the owned equipment grid instead of silently disappearing")
 	ui._change_page(1)
 	_check(ui.page == 1 and ui.bag_buttons[0].text != "·", "Second inventory page exposes overflow equipment")
 	ui.close()
-	flow.profile.material_stash[&"metal"] = 2
-	flow.profile.material_stash[&"dust"] = 1
+	hub.gear.inventory.materials[&"metal"] = 2
+	hub.gear.inventory.materials[&"dust"] = 1
 	flow.profile.save()
 	hub.player.relocate(hub.stations[&"blacksmith"].global_position)
 	await _key(KEY_E)
@@ -249,7 +253,7 @@ func _run() -> void:
 		await _abort_fixture(flow)
 		return
 	repair.pressed.emit()
-	_check(not returned.broken and returned.drop_bonus == 0.05 and returned.affix_value == 0.03 and hub.gear.inventory.items.size() == won_gear_count, "Full pickup -> win -> Hub -> repair cycle preserves UID and frozen attributes without duplicates")
+	_check(not returned.broken and returned.drop_bonus == 0.05 and returned.affix_value == 0.02 and hub.gear.inventory.items.size() == won_gear_count, "Full pickup -> win -> Hub -> repair cycle preserves UID and frozen attributes without duplicates")
 	hub.close_station()
 	var materials: int = hub.gear.inventory.materials[&"metal"]
 	flow.show_hub()
@@ -257,6 +261,7 @@ func _run() -> void:
 	_check((flow.active_scene as PrologueHub).gear.inventory.materials[&"metal"] == materials, "Repeated Hub navigation cannot award victory materials twice")
 	_check((flow.active_scene as PrologueHub).gear.inventory.items.size() == won_gear_count and (flow.active_scene as PrologueHub).gear.inventory.consumables[&"potion"] == 2, "Repeated Hub navigation cannot duplicate won gear or consumables")
 	hub = flow.active_scene as PrologueHub
+	if hub != null: hub.economy.persist_safe_inventory = true
 	hub.open_station(&"stash")
 	await _step(4)
 	var viewport_extent: Vector2 = root.get_visible_rect().size
@@ -296,6 +301,7 @@ func _run() -> void:
 	print("STRESS: Prologue cycles objects=%d->%d resources=%d->%d" % [objects_before, objects_after, resources_before, resources_after])
 	_check(objects_after <= objects_before and resources_after <= resources_before, "Six Hub/prepared-campaign cycles retain no additional owners/resources after warm-up")
 	hub = flow.active_scene as PrologueHub
+	if hub != null: hub.economy.persist_safe_inventory = true
 	hub.open_station(&"stash")
 	flow.queue_free()
 	await _step(6)

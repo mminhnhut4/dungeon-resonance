@@ -36,7 +36,7 @@ func _run() -> void:
 	print("UI ENV user_dir=%s executable=%s" % [OS.get_user_data_dir(), OS.get_executable_path()])
 	box.choice_selected.connect(func(id: StringName) -> void: choices_emitted.append(id))
 	hub.player.equipped_weapon.attack_committed.connect(func(_snapshot: AttackSnapshot) -> void: attacks += 1)
-	_check(screen.tabs.get_tab_count() == 4 and screen.tabs.get_tab_control(0).name == "Trang bị" and screen.tabs.get_tab_control(1) == screen.rune_column and screen.tabs.get_tab_control(2) == screen.journal and screen.tabs.get_tab_control(3) == screen.carried_page and screen.slots.size() == 8 and screen.bag_buttons.size() == 20 and screen.equipment_buttons.size() == 7, "Equipment/rune/map tabs keep their routes and seven/20 cells; carried items append a fourth tab")
+	_check(screen.tabs.get_tab_count() == 4 and screen.tabs.get_tab_control(0).name == "Hành trang" and screen.tabs.get_tab_control(1) == screen.rune_column and screen.tabs.get_tab_control(2) == screen.journal and screen.tabs.get_tab_control(3) == screen.carried_page and screen.slots.size() == 8 and screen.bag_buttons.size() == 20 and screen.equipment_buttons.size() == 7, "Equipment/rune/map tabs keep their routes and seven/20 cells; carried items append a fourth tab")
 	var spare: GearItem = inventory.add_equipment(GearInventory.COMMON_SWORD, GearItem.Quality.RARE)
 	var owned_count: int = inventory.items.size()
 	var original: int = inventory.equipped_weapon_uid
@@ -156,7 +156,13 @@ func _run() -> void:
 	_check(paused and not box.is_open and is_equal_approx(Engine.time_scale, 1.0), "Paused dialogue cancellation preserves pause and releases only its own time claim")
 	paused = false
 	var journal: QuestJournal = screen.journal
-	_check(journal.rows.size() == 6 and journal.tracker_text().is_empty() and not screen.tracker.visible, "Unified page reads canonical opening milestones without a gameplay tracker")
+	_check(journal.rows.size() == 7 and journal.tracker_text().is_empty() and not screen.tracker.visible,"Unified page reads six opening milestones plus the optional Tàn Đăng entry without a gameplay tracker")
+	var row_ids: Array[StringName] = []
+	var tan_dang_row: Dictionary = {}
+	for row: Dictionary in journal.rows:
+		row_ids.append(StringName(row["id"]))
+		if row["id"] == &"tan_dang_q1": tan_dang_row = row
+	_check(OpeningProgress.IDS.all(func(id: StringName) -> bool: return row_ids.count(id) == 1) and row_ids.count(&"tan_dang_q1") == 1 and tan_dang_row.get("card",{}).get("optional",false) and tan_dang_row.get("target") == ExteriorRouteCatalog.HUB and not tan_dang_row.get("done",true) and not tan_dang_row.get("next",true),"Exactly one optional unaccepted Tàn Đăng Q1 preserves every canonical opening ID")
 	hub.profile.bounty_accepted = true
 	hub.profile.bounty_start_proofs = 2
 	hub.profile.boss_proofs[&"golem"] = 2
@@ -166,7 +172,7 @@ func _run() -> void:
 	_check("Lời hẹn của Vô Danh" in journal.detail_title.text and "Golem Cổ Bảo" in journal.objective_label.text and journal.graph.objective_room == &"", "Known bounty shows its owner title and Golem detail without inventing an exterior boss location")
 	hub.profile.boss_proofs[&"golem"] = 3
 	hub.profile.changed.emit()
-	_check(journal.rows.size() == OpeningProgress.IDS.size() and journal.tracker_text().is_empty(), "Quest rows remain governed by canonical milestones rather than bounty proof arithmetic")
+	_check(journal.rows.size() == OpeningProgress.IDS.size()+1 and journal.rows.filter(func(row: Dictionary) -> bool: return StringName(row["id"]) in OpeningProgress.IDS).size() == OpeningProgress.IDS.size() and journal.tracker_text().is_empty(),"Canonical milestones plus one optional story row remain independent of bounty proof arithmetic")
 	screen.open_map()
 	await _frames(4)
 	await _capture("quest_ready")

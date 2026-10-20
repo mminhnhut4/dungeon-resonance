@@ -9,6 +9,7 @@ var bag_buttons: Array[Button] = []
 var bag_uids: Array[int] = []
 var status: Label
 var balances: Label
+var _carried_sort: int = 0
 var carried_page: VBoxContainer
 var _balance_profile: SanctuaryProfile
 var tooltip: PanelContainer
@@ -35,10 +36,20 @@ var _progress_world: WeakRef
 var _map_held: Dictionary = {}
 var _map_detail_axis: float = 0.0
 var _map_scroll_tick: int = 0
+var sort_bag_button: Button
+var sell_all_bag_button: Button
+var bag_confirmation: VBoxContainer
+var _bag_sale_offer: Dictionary = {}
+var _bag_sale_serial: int = 0
+
 
 
 func _ready() -> void:
 	super._ready()
+	# Gameplay loot publishes even while this modal is closed. Keep the owner's
+	# signals live for HUD/navigation, but rebuild this UI only when displayed.
+	inventory.changed.disconnect(refresh)
+	inventory.changed.connect(_inventory_changed)
 	AntiqueSkin.apply_panel(panel)
 	veil = ColorRect.new()
 	veil.color = Color(0.025, 0.045, 0.065, 0.82)
@@ -62,9 +73,10 @@ func _ready() -> void:
 	shell.add_child(content_scroll)
 	tabs = TabContainer.new()
 	tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_scroll.add_child(tabs)
 	var equipment_page := VBoxContainer.new()
-	equipment_page.name = "Trang bị"
+	equipment_page.name = "Hành trang"
 	equipment_page.add_theme_constant_override("separation", 12)
 	tabs.add_child(equipment_page)
 	var title := Label.new()
@@ -81,6 +93,27 @@ func _ready() -> void:
 	help.add_theme_color_override("font_color", DungeonUI.MUTED)
 	help.add_theme_font_size_override("font_size", 15)
 	equipment_page.add_child(help)
+	var bag_actions := VBoxContainer.new()
+	equipment_page.add_child(bag_actions)
+	sort_bag_button = Button.new()
+	sort_bag_button.name = "SortInventoryBag"
+	sort_bag_button.text = "Sắp xếp túi · Loại → phẩm cấp → cường hóa"
+	sort_bag_button.tooltip_text = "Gom theo ô trang bị; phẩm cấp và cường hóa cao trước, sau đó mã món và UID. Giữ nguyên món đồ và các ô đang mặc."
+	sort_bag_button.pressed.connect(_sort_bag)
+	sort_bag_button.mouse_entered.connect(_hide_tooltip)
+	sort_bag_button.focus_entered.connect(_hide_tooltip)
+	bag_actions.add_child(sort_bag_button)
+	sell_all_bag_button = Button.new()
+	sell_all_bag_button.name = "SellAllInventoryBag"
+	sell_all_bag_button.text = "Bán tất cả đồ đủ điều kiện trong túi…"
+	sell_all_bag_button.pressed.connect(_request_bag_sale)
+	sell_all_bag_button.mouse_entered.connect(_hide_tooltip)
+	sell_all_bag_button.focus_entered.connect(_hide_tooltip)
+	bag_actions.add_child(sell_all_bag_button)
+	bag_confirmation = VBoxContainer.new()
+	bag_confirmation.name = "BagSaleConfirmation"
+	bag_actions.add_child(bag_confirmation)
+	bag_confirmation.hide()
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
 	equipment_page.add_child(row)
@@ -113,13 +146,19 @@ func _ready() -> void:
 	var right := VBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(right)
-	right.add_child(DungeonUI.label("TÚI ĐỒ · 20 ô", 16, DungeonUI.JADE))
+	right.add_child(DungeonUI.label("TRANG BỊ DỰ PHÒNG · 20 ô", 16, DungeonUI.JADE))
 	var grid := GridContainer.new()
 	bag_grid = grid
 	grid.columns = 5
 	grid.add_theme_constant_override("h_separation", 7)
 	grid.add_theme_constant_override("v_separation", 7)
 	right.add_child(grid)
+	var sort_options := OptionButton.new()
+	sort_options.name = "SortEquipment"
+	sort_options.allow_reselect = true
+	for label: String in ["Sắp xếp · Loại", "Sắp xếp · Phẩm cấp", "Sắp xếp · Tên"]: sort_options.add_item(label)
+	sort_options.item_selected.connect(_sort_bag)
+	right.add_child(sort_options)
 	for index: int in 20:
 		var button: Button = _item_button(Vector2(100, 73))
 		button.add_theme_constant_override("icon_max_width", 32)
@@ -158,7 +197,7 @@ func _ready() -> void:
 	tabs.add_child(journal)
 	# Append after journal to preserve the existing map tab index/input routes.
 	carried_page = VBoxContainer.new()
-	carried_page.name = "Vật phẩm"
+	carried_page.name = "Túi đồ"
 	carried_page.add_theme_constant_override("separation", 10)
 	tabs.add_child(carried_page)
 	tabs.tab_changed.connect(_tab_changed)
@@ -251,6 +290,7 @@ func open() -> void:
 
 
 func close() -> void:
+	_cancel_bag_sale()
 	var was_open: bool = is_open
 	super.close()
 	_map_detail_axis = 0.0
@@ -265,8 +305,16 @@ func close() -> void:
 	_update_tracker()
 
 
+func _inventory_changed() -> void:
+	# open() performs a synchronous refresh before input/focus presentation.
+	# Explicit refresh() calls retain their existing synchronous contract.
+	if is_open:
+		refresh()
+
+
 func refresh() -> void:
 	super.refresh()
+	if is_instance_valid(acquisition_hint): acquisition_hint.text = acquisition_hint.text.replace("chế thêm dùng vật liệu trong kho", "chế thêm dùng nguyên liệu đang mang").replace("chế thêm dùng vật liệu trong túi", "chế thêm dùng nguyên liệu đang mang")
 	if equipment_buttons.is_empty():
 		return
 	bag_uids = inventory.equipment_grid_uids()
@@ -284,10 +332,121 @@ func refresh() -> void:
 		var damage: float = player.equipped_weapon.definition.base_damage * player.equipped_weapon.damage_multiplier
 		status.text = "HP tối đa %d · Giáp %s · Sức đánh cơ bản %s\nĐang chọn ô %s · Hover / focus món đồ để xem chỉ số và so sánh." % [roundi(player.health.maximum_health), String.num(player.hurtbox.damage_resolver.armor_rating, 1), String.num(damage, 1), SLOT_NAMES[selected_equipment_slot]]
 	_refresh_balances()
+	_refresh_bag_actions()
 	_refresh_carried_items()
 	if journal != null: journal.refresh()
 	_update_tracker()
 	_resize.call_deferred()
+
+
+func _bag_economy() -> EconomySession:
+	var world: Node = _progress_world.get_ref() as Node if _progress_world != null else null
+	if not is_instance_valid(world): return null
+	for property: Dictionary in world.get_property_list():
+		if property.get("name", "") != "economy": continue
+		var owner: EconomySession = world.get("economy") as EconomySession
+		if owner != null and owner.inventory == inventory and owner.profile == _balance_profile:
+			return owner
+	return null
+
+
+func _requires_saved_bag() -> bool:
+	var world: Node = _progress_world.get_ref() as Node if _progress_world != null else null
+	return is_instance_valid(world) and world.has_method("open_station")
+
+
+func _refresh_bag_actions() -> void:
+	if not is_instance_valid(sort_bag_button): return
+	var owner: EconomySession = _bag_economy()
+	sort_bag_button.disabled = not _bag_sale_offer.is_empty() or not inventory.has_method("sort_equipment_bag") or (owner == null and _requires_saved_bag())
+	if owner != null: sort_bag_button.disabled = sort_bag_button.disabled or owner.profile.read_only or owner.profile.hub_inventory_quarantined or not owner.persist_safe_inventory or not owner.hub_access or owner._busy
+	sell_all_bag_button.disabled = true
+	if owner != null and owner.has_method("quote_sell_all_bag"):
+		var quote: Dictionary = owner.call("quote_sell_all_bag")
+		sell_all_bag_button.disabled = not _bag_sale_offer.is_empty() or not quote.get("can_sell", false)
+		sell_all_bag_button.tooltip_text = "%d món đủ điều kiện · %d Linh Thạch. Chọn để xem trước và xác nhận." % [quote.get("item_count", 0), quote.get("total", 0)]
+	else:
+		sell_all_bag_button.tooltip_text = "Về căn cứ để bán từ hành trang hoặc gặp Kael."
+
+
+func _sort_bag(mode: int = -1) -> void:
+	if not is_open or not _bag_sale_offer.is_empty(): return
+	var owner: EconomySession = _bag_economy()
+	var ok: bool = false
+	if owner != null and owner.has_method("sort_bag"):
+		ok = bool(owner.call("sort_bag", mode))
+	elif owner == null and not _requires_saved_bag() and inventory.has_method("sort_equipment_bag"):
+		if mode in [0, 1, 2]: inventory.sort_equipment(mode)
+		else: inventory.call("sort_equipment_bag")
+		ok = true
+	page = 0
+	refresh()
+	status.text = "Đã sắp xếp hành trang. Giữ UID và ô đang mặc." if ok else "Chưa sắp xếp được; thứ tự cũ được giữ. Kiểm tra trạng thái lưu."
+
+
+func _request_bag_sale() -> void:
+	if not is_open or not _bag_sale_offer.is_empty(): return
+	var owner: EconomySession = _bag_economy()
+	if owner == null or not owner.has_method("quote_sell_all_bag"): return
+	var quote: Dictionary = owner.call("quote_sell_all_bag")
+	if not quote.get("can_sell", false): return
+	_bag_sale_serial += 1
+	_bag_sale_offer = quote.duplicate(true)
+	_bag_sale_offer["token"] = _bag_sale_serial
+	_hide_tooltip()
+	var summary_label: Label = DungeonUI.label(bulk_sale_summary(quote, inventory), 15, DungeonUI.WARM)
+	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bag_confirmation.add_child(summary_label)
+	var confirm := Button.new()
+	confirm.name = "ConfirmBagSale"
+	confirm.text = "Xác nhận bán %d món · +%d Linh Thạch" % [quote["item_count"], quote["total"]]
+	confirm.pressed.connect(_confirm_bag_sale.bind(String(quote["signature"]), _bag_sale_serial))
+	bag_confirmation.add_child(confirm)
+	var cancel := Button.new()
+	cancel.name = "CancelBagSale"
+	cancel.text = "Hủy · Giữ hành trang"
+	cancel.pressed.connect(_cancel_bag_sale)
+	bag_confirmation.add_child(cancel)
+	bag_confirmation.show()
+	_refresh_bag_actions()
+	_focus_bag_cancel.call_deferred(_bag_sale_serial)
+
+
+func _focus_bag_cancel(token: int) -> void:
+	if not is_open or _bag_sale_offer.is_empty() or int(_bag_sale_offer.get("token", -1)) != token: return
+	var cancel: Control = bag_confirmation.get_node_or_null("CancelBagSale") as Control
+	if is_instance_valid(cancel) and cancel.is_inside_tree(): cancel.grab_focus()
+
+
+static func bulk_sale_summary(quote: Dictionary, source: GearInventory) -> String:
+	var lines: Array[String] = ["BÁN TỪ TÚI · %d món → %d Linh Thạch" % [quote.get("item_count", 0), quote.get("total", 0)]]
+	for uid: int in quote.get("equipment_uids", []):
+		var item: GearItem = source.items.get(uid)
+		if item != null: lines.append("• %s · %s" % [_item_name(item), GearItem.NAMES[item.quality]])
+	for id: StringName in quote.get("materials", {}):
+		lines.append("• %s ×%d" % [MaterialCatalog.DISPLAY_NAMES.get(id, String(id)), quote["materials"][id]])
+	lines.append("Giữ đồ đang mặc, đồ cường hóa, bùa, vật phẩm nhiệm vụ và các món được bảo vệ. Chỉ bán danh sách trên; vật liệu trong kho được giữ nguyên.")
+	return "\n".join(lines)
+
+
+func _confirm_bag_sale(signature: String, token: int) -> void:
+	if not is_open or _bag_sale_offer.is_empty() or int(_bag_sale_offer.get("token", -1)) != token or String(_bag_sale_offer.get("signature", "")) != signature: return
+	var owner: EconomySession = _bag_economy()
+	# Clear before dispatch: an old button cannot sell a second time.
+	_cancel_bag_sale()
+	var ok: bool = owner != null and owner.has_method("sell_all_bag") and bool(owner.call("sell_all_bag", signature))
+	refresh()
+	status.text = "Đã bán danh sách được xác nhận. Linh Thạch đã được lưu." if ok else "Chưa bán: túi hoặc báo giá đã đổi, hoặc chưa lưu được. Hãy xem lại danh sách trước khi xác nhận."
+
+
+func _cancel_bag_sale() -> void:
+	_bag_sale_offer.clear()
+	if not is_instance_valid(bag_confirmation): return
+	for child: Node in bag_confirmation.get_children():
+		bag_confirmation.remove_child(child)
+		child.queue_free()
+	bag_confirmation.hide()
+	_refresh_bag_actions()
 
 
 func _refresh_balances() -> void:
@@ -302,11 +461,21 @@ func _refresh_carried_items() -> void:
 		carried_page.remove_child(node)
 		node.queue_free()
 	carried_page.add_child(DungeonUI.label("VẬT PHẨM ĐANG MANG", 18, DungeonUI.WARM))
-	var hint: Label = DungeonUI.label("Đồ nhặt vào hành trang. Cất vật liệu tại kho hoặc bán món hợp lệ cho Kael; Tàn Hồn là tài nguyên riêng.", 14)
+	var hint: Label = DungeonUI.label("Trang bị ở Hành trang; vật liệu và thuốc ở đây. Dịch vụ dùng đồ trong túi. Chết chỉ mất nguyên liệu mới nhặt; giữ trang bị, bùa, thuốc còn lại và tiền.", 14)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	carried_page.add_child(hint)
+	var sorting := OptionButton.new()
+	sorting.name = "SortCarriedItems"
+	for label: String in ["Sắp xếp · Tên", "Sắp xếp · Số lượng"]: sorting.add_item(label)
+	sorting.selected = _carried_sort
+	sorting.item_selected.connect(func(mode: int) -> void: _carried_sort = mode; _refresh_carried_items())
+	carried_page.add_child(sorting)
 	var found: bool = false
-	for id: StringName in MaterialCatalog.IDS:
+	var material_ids: Array[StringName] = MaterialCatalog.IDS.duplicate()
+	material_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		if _carried_sort == 1 and inventory.materials.get(a,0) != inventory.materials.get(b,0): return inventory.materials.get(a,0) > inventory.materials.get(b,0)
+		return String(MaterialCatalog.DISPLAY_NAMES[a]).naturalnocasecmp_to(String(MaterialCatalog.DISPLAY_NAMES[b])) < 0)
+	for id: StringName in material_ids:
 		var count: int = inventory.materials.get(id, 0)
 		if count <= 0: continue
 		found = true
@@ -314,15 +483,35 @@ func _refresh_carried_items() -> void:
 		card.name = "BagMaterial_" + String(id)
 		card.set_display_only()
 		carried_page.add_child(card)
-	for id: StringName in inventory.consumables:
+	var consumable_ids: Array = inventory.consumables.keys()
+	consumable_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		if _carried_sort == 1 and inventory.consumables[a] != inventory.consumables[b]: return inventory.consumables[a] > inventory.consumables[b]
+		return ItemArtCatalog.display_name(a).naturalnocasecmp_to(ItemArtCatalog.display_name(b)) < 0)
+	for id: StringName in consumable_ids:
 		var count: int = inventory.consumables[id]
 		if count <= 0: continue
 		found = true
-		var card: ServiceItemCard = ServiceItemCard.create(ItemArtCatalog.icon(id), ItemArtCatalog.display_name(id), "Vật phẩm tiêu hao trong hành trang", "Số lượng %d" % count, "", Callable(), false)
+		var card: ServiceItemCard = ServiceItemCard.create(ItemArtCatalog.icon(id), ItemArtCatalog.display_name(id), "Đồ tiêu hao trong túi · C → Sinh tồn để dùng trong hầm ngục", "Số lượng %d" % count, "", Callable(), false)
 		card.name = "BagConsumable_" + String(id)
 		card.set_display_only()
 		carried_page.add_child(card)
-	if not found: carried_page.add_child(DungeonUI.label("Chưa có vật liệu hoặc vật phẩm tiêu hao đang mang.", 15))
+	for id: StringName in inventory.bag:
+		var count: int = inventory.bag[id]
+		if count <= 0: continue
+		found = true
+		var card: ServiceItemCard = ServiceItemCard.create(ItemArtCatalog.icon(id), "Bùa " + str(RuneLearningService.NAMES.get(id, id)), "Bùa chưa gắn · mở tab Bùa để ghép", "Số lượng %d" % count, "Ghép bùa", func() -> void: tabs.current_tab = 1, false)
+		card.name = "BagRune_" + String(id)
+		carried_page.add_child(card)
+	if _balance_profile != null:
+		for id: StringName in [&"aptitude_herb", &"aptitude_pill"]:
+			var count: int = _balance_profile.material_stash.get(id, 0)
+			if count <= 0: continue
+			found = true
+			var card: ServiceItemCard = ServiceItemCard.create(ItemArtCatalog.icon(id), MaterialCatalog.DISPLAY_NAMES[id], "Túi tu luyện · giữ nguồn gốc · dùng ở Sân Luyện", "Số lượng %d" % count, "", Callable(), false)
+			card.name = "BagBound_" + String(id)
+			card.set_display_only()
+			carried_page.add_child(card)
+	if not found: carried_page.add_child(DungeonUI.label("Chưa có vật liệu, bùa hoặc đồ tiêu hao đang mang.", 15))
 
 func _schedule_layout() -> void:
 	if is_inside_tree() and not is_queued_for_deletion():
@@ -346,7 +535,7 @@ func _fill_button(button: Button, uid: int, empty_text: String) -> void:
 	button.add_theme_color_override("font_color", DungeonUI.TEXT)
 
 
-func _item_name(item: GearItem) -> String:
+static func _item_name(item: GearItem) -> String:
 	if item.broken:
 		return ItemArtCatalog.gear_name(item)
 	if item.equipment_definition != null:
@@ -367,7 +556,7 @@ func _bag_input(event: InputEvent, index: int) -> void:
 
 
 func _equip_bag(index: int) -> void:
-	if not is_open: return
+	if not is_open or not _bag_sale_offer.is_empty(): return
 	var offset: int = page * 20 + index
 	if offset < bag_uids.size():
 		var uid: int = bag_uids[offset]
@@ -385,7 +574,7 @@ func _equipment_input(event: InputEvent, slot: int) -> void:
 
 
 func _unequip_selected() -> void:
-	if not is_open: return
+	if not is_open or not _bag_sale_offer.is_empty(): return
 	var ok: bool = inventory.unequip_equipment(selected_equipment_slot)
 	status.text = "Đã tháo. Tay không có đòn đấm cơ bản." if ok and selected_equipment_slot == 0 else "Đã tháo trang bị." if ok else "Ô trống hoặc túi đã đầy; trang bị được giữ nguyên."
 
@@ -450,9 +639,15 @@ func _show_tooltip(uid: int) -> void:
 	if item == null:
 		_hide_tooltip()
 		return
-	var data: EquipmentData = item.equipment_definition
 	tooltip_name.text = "%s · %s" % [_item_name(item), GearItem.NAMES[item.quality]]
 	tooltip_name.add_theme_color_override("font_color", DungeonUI.WARM)
+	tooltip_body.text = item_details(item, inventory) + "\n\n" + comparison_text(item, inventory, player)
+	tooltip.show()
+	_place_tooltip.call_deferred()
+
+
+static func item_details(item: GearItem, source: GearInventory) -> String:
+	var data: EquipmentData = item.equipment_definition
 	var details: String = ""
 	if item.enhancement_level > 0:
 		details += "Cường hóa +%d · +%d%% sát thương nền\n" % [item.enhancement_level, item.enhancement_level * 3]
@@ -473,10 +668,9 @@ func _show_tooltip(uid: int) -> void:
 			var value: float = totals[stat]
 			details += "%s: %s%s\n" % [stat, "+" if value > 0 else "", String.num(value, 2)]
 		details += "HP / Năng lượng tăng mức tối đa; không tự hồi đầy. Tốc chạy và chí mạng tính theo điểm phần trăm.\n"
-	details += _weapon_details(item)
-	tooltip_body.text = "%s\n%s%s\n\n%s" % [SLOT_NAMES[inventory.equipment_slot(uid)], details if details != "" else "Không cộng chỉ số trang bị.\n", data.description if data != null else "", _comparison_text(item)]
-	tooltip.show()
-	_place_tooltip.call_deferred()
+	details += weapon_details(item, source)
+	var slot: int = data.slot_type if data != null else EquipmentData.SLOT_KINDS.find(item.kind)
+	return "%s\n%s%s" % [SLOT_NAMES[clampi(slot, 0, SLOT_NAMES.size() - 1)], details if details != "" else "Không cộng chỉ số trang bị.\n", data.description if data != null else ""]
 
 
 func _hide_tooltip() -> void:
@@ -491,6 +685,7 @@ func _change_page(step: int) -> void:
 
 
 func _tab_changed(_index: int) -> void:
+	_cancel_bag_sale()
 	_hide_tooltip()
 	# Nested quest/detail scrolls own focus; the outer scroll must retain the header.
 	content_scroll.follow_focus = _index != 2
@@ -571,6 +766,10 @@ func _input(event: InputEvent) -> void:
 			else: open_map()
 		get_viewport().set_input_as_handled()
 		return
+	if is_open and not _bag_sale_offer.is_empty() and (event.is_action_pressed(&"ui_cancel") or event.is_action_pressed(&"inventory")):
+		_cancel_bag_sale()
+		get_viewport().set_input_as_handled()
+		return
 	if is_open and DungeonUI.dispatch_controller(get_viewport(), event, _controller_axes):
 		get_viewport().set_input_as_handled()
 		return
@@ -627,9 +826,14 @@ func _place_tooltip() -> void:
 
 
 func _comparison_text(item: GearItem) -> String:
-	var slot: int = inventory.equipment_slot(item.uid)
+	return comparison_text(item, inventory, player)
+
+
+static func comparison_text(item: GearItem, inventory: GearInventory, player: Player = null, equip_hint: bool = true) -> String:
+	var slot: int = item.equipment_definition.slot_type if item.equipment_definition != null else EquipmentData.SLOT_KINDS.find(item.kind)
+	if slot < 0 or slot >= inventory.equipment_uids.size(): return "Không có ô trang bị tương ứng."
 	var worn_uid: int = inventory.equipped_weapon_uid if slot == 0 else inventory.equipment_uids[slot]
-	if item.uid == worn_uid: return "ĐANG TRANG BỊ · Chuột phải / Backspace để tháo."
+	if item.uid > 0 and item.uid == worn_uid: return "ĐANG TRANG BỊ · Chuột phải / Backspace để tháo."
 	if not item.can_equip(): return "CHƯA THỂ MẶC · Đến Thiết Lão để sửa hoặc rèn phục hồi."
 	var worn: GearItem = inventory.items.get(worn_uid)
 	var incoming: Dictionary = _comparison_values(item)
@@ -645,11 +849,11 @@ func _comparison_text(item: GearItem) -> String:
 	if item.kind == &"weapon":
 		lines.append("Sát thương vũ khí so sánh riêng phần nền; bonus các món khác giữ nguyên.")
 		lines.append("Ô bùa trên vũ khí: %d → %d" % [mini(3,1 + (worn.bonus_slots() if worn != null else 0)),mini(3,1+item.bonus_slots())])
-	lines.append("Click / Enter / A · Trang bị. Cuộn chuột để xem thêm.")
+	if equip_hint: lines.append("Click / Enter / A · Trang bị. Cuộn chuột để xem thêm.")
 	return "\n".join(lines)
 
 
-func _comparison_values(item: GearItem) -> Dictionary:
+static func _comparison_values(item: GearItem) -> Dictionary:
 	var result: Dictionary = {"HP": 0.0, "Giáp": 0.0, "Năng lượng": 0.0, "Sát thương trang bị": 0.0, "Tốc chạy %": 0.0, "Chí mạng %": 0.0, "Sát thương vũ khí": 0.0}
 	if item == null or not item.can_equip(): return result
 	var data: EquipmentData = item.equipment_definition
@@ -676,6 +880,10 @@ func _comparison_values(item: GearItem) -> Dictionary:
 
 
 func _weapon_details(item: GearItem) -> String:
+	return weapon_details(item, inventory)
+
+
+static func weapon_details(item: GearItem, inventory: GearInventory) -> String:
 	if item.kind != &"weapon": return ""
 	var data: EquipmentData = item.equipment_definition
 	var moveset: WeaponDefinition = data.moveset if data != null else null
@@ -729,6 +937,7 @@ func _bind_progress() -> void:
 	_balance_profile = source
 	if source != null and not source.changed.is_connected(_refresh_balances): source.changed.connect(_refresh_balances)
 	_refresh_balances()
+	_refresh_bag_actions()
 	journal.bind_progress(source, inventory)
 	_progress_world = weakref(ancestor) if ancestor != null else null
 	journal.context_provider = _map_context

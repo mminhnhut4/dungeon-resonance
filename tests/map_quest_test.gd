@@ -44,7 +44,8 @@ func _run() -> void:
 	var opening: Dictionary = profile.opening_progress.duplicate(true)
 	var writes: int = profile.saves
 	var transitions: int = world.transition_count
-	_check(journal.rows.size() == 6 and journal.rows[0]["next"] and journal.rows[0]["id"] == &"explored", "Reads the six canonical milestones in their existing order")
+	var current_rows: Array[Dictionary]=journal.projection_rows()
+	_check(current_rows[0]["id"]==PowerProgressionGuide.ID and current_rows[1]["next"] and current_rows[1]["id"] == &"explored" and current_rows.any(func(row: Dictionary) -> bool: return row["id"] == &"tan_dang_q1" and row["card"]["optional"] and not row["next"]), "Adds read-only power entry while preserving canonical opening order and optional Tan Dang goal")
 	_check(journal.tracker_text().is_empty() and not screen.tracker.visible, "Gameplay has no persistent quest overlay")
 	_check(screen.panel.get_theme_stylebox("panel") is StyleBoxTexture, "Map panel uses shared antique artwork instead of a flat background override")
 	_check(journal.objective_label.get_theme_color("font_color") == AntiqueSkin.TEXT, "Map/Quest body inherits the shared readable ivory token")
@@ -69,7 +70,7 @@ func _run() -> void:
 		journal.refresh()
 		journal.select_quest(&"qa_long")
 		await _step(4)
-		_check(journal.rows.size() == 7 and journal.objective_label.text.length() > 2000 and journal.objective_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "Long Vietnamese detail wraps without data truncation at %s" % extent)
+		_check(journal.rows.any(func(row: Dictionary) -> bool:return row["id"]==&"qa_long") and journal.objective_label.text.length() > 2000 and journal.objective_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "Long Vietnamese detail wraps without data truncation at %s" % extent)
 		_check(journal.detail_scroll.get_v_scroll_bar().max_value > journal.detail_scroll.size.y, "Long detail uses its own scroll region at %s" % extent)
 		_check(journal.graph.objective_room == &"", "Unknown extension target cannot reveal a map pin")
 		journal.detail_scroll.scroll_vertical = 0

@@ -27,7 +27,11 @@ func _check(condition: bool, label: String) -> void:
 		print("PASS: " + label)
 
 func _fixture(seed_value: int = 4) -> Dictionary:
-	return {"progress": Model.new_progress(seed_value), "materials": {"crystal": 20, "dust": 10, "aptitude_herb": 0, "aptitude_pill": 0}, "souls": 25, "proofs": {"golem": 1}}
+	# Retain the original paid curriculum as a legacy-save contract. The new
+	# easier curriculum is exercised separately by bag_cultivation_test.
+	var progress: Dictionary = Model.new_progress(seed_value)
+	progress["config"].merge({"energy_thresholds":[12,24,40], "mastery_thresholds":[2,5,8], "insight_thresholds":[1,2,3], "interim_dust_cost":1, "final_dust_cost":2, "final_soul_cost":5, "final_golem_proof":1}, true)
+	return {"progress": progress, "materials": {"crystal": 20, "dust": 10, "aptitude_herb": 0, "aptitude_pill": 0}, "souls": 25, "proofs": {"golem": 1}}
 
 func _canonical(value: Variant) -> String:
 	return JSON.stringify(value, "", true, true)

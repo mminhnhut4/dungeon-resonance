@@ -28,6 +28,7 @@ func _run() -> void:
 func _schedules() -> void:
 	var state := NpcWorldState.new()
 	var twin := NpcWorldState.new()
+	var initial_records: Dictionary = state.records.duplicate(true)
 	var visited: Dictionary = {}
 	var phase: Dictionary = {}
 	for id: String in NpcPilotCatalog.IDS:
@@ -42,9 +43,24 @@ func _schedules() -> void:
 			var record: Dictionary = state.records[id]
 			var stop: Dictionary = NpcPilotCatalog.stop(id,int(record["schedule_index"]))
 			if record["mode"] in ["work","rest"] and is_equal_approx(record["x"],stop["x"]): visited[id][int(record["schedule_index"])] = true
-			bounds_ok = bounds_ok and int(record["remaining"]) <= 12
+			if id in NpcPilotCatalog.SCHEMA_FOUR_IDS: bounds_ok = bounds_ok and int(record["remaining"]) <= 12
 	_check(state.snapshot() == twin.snapshot() and NpcWorldState.valid(state.snapshot()), "Five minutes of authored time remains deterministic and valid")
 	_check(bounds_ok,"Ordinary stops last at most three seconds instead of uniform eight-second waits")
+	for id: String in NpcPilotCatalog.TAN_DANG_IDS:
+		# The owner now adds finite living facts and activates a room-specific
+		# route. With no active room, its complete current record must freeze.
+		_check(state.records[id] == initial_records[id] and state.living_view(id)["event_phase"] == "none","Inactive quest resident preserves its complete authored life and routine: "+id)
+		var active := NpcWorldState.new()
+		var before: Dictionary = active.records[id].duplicate(true)
+		active.set_active_room(before["room"])
+		active.advance_ticks(1)
+		var record: Dictionary = active.records[id]
+		var point: Dictionary = TanDangLivingCatalog.stop(id,record["room"],int(record["schedule_index"]))
+		var expected_remaining: int = int(before["remaining"]) if id == TanDangLivingCatalog.DU else int(before["remaining"])-1
+		_check(active.tick == 1 and record["remaining"] == expected_remaining and record["x"] == before["x"] and record["schedule_index"] == before["schedule_index"] and not point.is_empty() and NpcWorldState.valid(active.snapshot()),"Active room advances exactly one authored owner clock; uncured Dư remains beside the core: "+id)
+		for other: String in NpcPilotCatalog.TAN_DANG_IDS:
+			if initial_records[other]["room"] != before["room"]:
+				_check(active.records[other] == initial_records[other],"Activating "+id+" cannot advance an off-room Tàn Đăng resident: "+other)
 	for id: String in NpcPilotCatalog.IDS:
 		_check(visited[id].size() == NpcPilotCatalog.SCHEDULES[id].size(), "%s reaches each purposeful stop" % id)
 	var traveler_stops: Array = NpcPilotCatalog.SCHEDULES["pilot_traveler"]
@@ -69,6 +85,7 @@ func _migrate_and_resume() -> void:
 	legacy["tick"] = 90
 	legacy["records"].erase("pilot_bridge_keeper")
 	for new_id: String in NpcPilotCatalog.CULTIVATOR_IDS: legacy["records"].erase(new_id)
+	for new_id: String in NpcPilotCatalog.TAN_DANG_IDS: legacy["records"].erase(new_id)
 	for id: String in NpcPilotCatalog.LEGACY_IDS:
 		var record: Dictionary = legacy["records"][id]
 		record.erase("schedule_index")
@@ -90,18 +107,18 @@ func _migrate_and_resume() -> void:
 	file.store_string(JSON.stringify(legacy))
 	file.close()
 	var original_bytes: String = FileAccess.get_file_as_string(state.save_path)
-	_check(state.load_state() and not state.read_only and state.records.size() == 10,"Validated v1 durably adds bridge and four cultivator identities exactly once")
+	_check(state.load_state() and not state.read_only and state.records.size() == 13,"Validated v1 durably adds bridge, four legacy cultivators and three sect identities exactly once")
 	var migrated: Dictionary = state.records["pilot_traveler"].duplicate(true)
 	_check(migrated["legacy_death"] == old["death"] and ["trust","fear","debt","greeted","x","target","episode","room"].all(func(field: String) -> bool: return migrated[field] == old[field]),"Migration preserves every old historical death, relation, coordinate and episode")
-	_check(migrated["mode"] == "recovering" and migrated["hp"] == 1 and migrated["death"].is_empty(),"New policy withdraws the same old identity without erasing its history")
+	_check(migrated["mode"] == "dead" and migrated["hp"] == 0 and migrated["death"] == old["death"],"Permanent-death migration preserves the same old terminal life and complete tombstone")
 	_check(FileAccess.get_file_as_string(state.save_path + ".bak") == original_bytes and FileAccess.get_file_as_string(state.save_path + ".pre_nonlethal_v1.json") == original_bytes,"Migration retains both rotating and immutable original-byte backups")
-	_check(state.save() and NpcWorldState.valid(state.snapshot()) and state.snapshot()["npc_schema"] == 4,"Subsequent save uses schema4 through the existing owner writer")
+	_check(state.save() and NpcWorldState.valid(state.snapshot()) and state.snapshot()["npc_schema"] == NpcWorldState.SCHEMA,"Subsequent save uses schema5 through the existing owner writer")
 	_check(FileAccess.get_file_as_string(state.save_path + ".pre_nonlethal_v1.json") == original_bytes,"Ordinary backup rotation never replaces the immutable migration source")
 	var loaded := NpcWorldState.new()
 	loaded.save_path = state.save_path
 	_check(loaded.load_state() and loaded.snapshot() == state.snapshot(),"New schedule cursors and archived tombstone survive cold reload")
 	for _index: int in 100: loaded.advance_ticks(8)
-	_check(loaded.records["pilot_traveler"]["legacy_death"] == old["death"] and loaded.records["pilot_traveler"]["hp"] == 1 and loaded.records["pilot_traveler"]["mode"] == "recovering","Migrated history remains exact while elapsed time cannot heal the resident")
+	_check(loaded.records["pilot_traveler"] == migrated and loaded.records["pilot_traveler"]["legacy_death"] == old["death"],"Elapsed time preserves the complete migrated terminal record without resurrection")
 	var id: String = "pilot_bridge_keeper"
 	var before: Dictionary = state.records[id].duplicate(true)
 	_check(state.begin_talk(id) and state.save(),"Save can capture a bridge resident interrupted mid-walk")
@@ -114,7 +131,7 @@ func _migrate_and_resume() -> void:
 	_check(not state.decide(id,token,true) and not state.decide(id,token,true,true) and state.records[id]["mode"] == "recovering","No legacy execution confirmation can finish the new injury")
 	loaded = NpcWorldState.new()
 	loaded.save_path = state.save_path
-	_check(loaded.load_state() and loaded.records[id]["mode"] == "recovering" and loaded.records["pilot_traveler"]["mode"] == "recovering","New and legacy injuries both wait for an expedition return")
+	_check(loaded.load_state() and loaded.records[id]["mode"] == "recovering" and loaded.records["pilot_traveler"] == migrated,"New nonlethal injury waits for expedition; historical terminal life remains unchanged")
 	var malformed: Dictionary = state.snapshot()
 	malformed["records"]["pilot_pilgrim"]["schedule_index"] = 99
 	_check(not NpcWorldState.valid(malformed),"Unknown schedule cursor cannot reach actors or replace a save")
@@ -214,7 +231,7 @@ func _presentation_and_cleanup() -> void:
 		for room: StringName in [&"o01_p01",&"o01_p02",&"o01_p03"]:
 			hub.enter_exterior(room,&"main",&"west",false)
 			await _step(3)
-			var expected: int = 2 if room in [&"o01_p01",&"o01_p02"] else 1
+			var expected: int = 2 if room in [&"o01_p01",&"o01_p02"] else 3
 			_check(get_nodes_in_group(&"npc_pilot_actor").size() == expected and population.actors.size() == expected,"Repeat visit keeps the exact authored actor count for %s" % room)
 		hub.enter_exterior(&"o01_p02",&"guard_corridor",&"west",false)
 		await _step(3)

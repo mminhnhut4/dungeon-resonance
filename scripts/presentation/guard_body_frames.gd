@@ -46,7 +46,7 @@ static func _load_bank() -> bool:
 			textures.append(texture)
 		if textures.size()!=int(entry["count"]): return _invalid("clip count")
 		built[StringName(entry["id"]) ]={"metadata":entry,"textures":textures}
-	for required: StringName in [&"idle",&"walk",&"windup_sweep",&"attack_sweep",&"recover",&"hurt",&"death"]:
+	for required: StringName in [&"idle",&"walk",&"windup_sweep",&"attack_sweep",&"committed_sweep",&"recover",&"hurt",&"death"]:
 		if not built.has(required): return _invalid("missing clip "+String(required))
 	_bank=built # Shared immutable textures/JSON; never per-actor clocks.
 	return true
@@ -116,8 +116,15 @@ func seek_actor(walk_phase_radians: float,facing: float,moving: bool,force_sampl
 		else:
 			committed_frame=roundi(selected_progress/PRE_STRIKE_WINDUP*5.0)
 	elif state==&"attack":
-		committed_frame=2 # Forward/down strike from the first active timestamp.
-	var entry: Dictionary=_bank[clip_id]
+		# Every active frame starts in the physical strike band. The original
+		# overhead donor remains reserved for late windup, never for damage.
+		committed_frame=mini(7,floori(selected_progress*8.0))
+	elif state==&"hurt":
+		committed_frame=1 if selected_progress<0.55 else 2
+	elif state==&"dead":
+		committed_frame=mini(5,floori(selected_progress*7.5))
+	var bank_clip: StringName=&"committed_sweep" if state==&"attack" else clip_id
+	var entry: Dictionary=_bank[bank_clip]
 	var textures: Array[AtlasTexture]=entry["textures"]
 	frame_index=committed_frame if committed_frame>=0 else mini(textures.size()-1,floori(selected_progress*textures.size())) if loop else roundi(selected_progress*(textures.size()-1))
 	frame_data=entry["metadata"]["frames"][frame_index]

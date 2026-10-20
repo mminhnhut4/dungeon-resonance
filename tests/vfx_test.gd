@@ -80,7 +80,7 @@ func _test_boss_skin() -> void:
 	boss_actor.fsm.transition_to(&"dead")
 	boss_actor.state_time = 0.3
 	skin.refresh_skin()
-	_check(is_equal_approx(skin.modulate.a, 0.5) and skin.core_light.energy < 0.6, "Death fades the whole skin and its core light on the original boss clock")
+	_check(is_equal_approx(skin.modulate.a, 1.0-smoothstep(0.18,0.6,0.3)) and skin.core_light.energy < 0.6, "Accepted Part2 body fade starts after the collapse while core light keeps its original death clock")
 	var skin_id: int = skin.get_instance_id()
 	boss_actor.queue_free()
 	await _step(3)

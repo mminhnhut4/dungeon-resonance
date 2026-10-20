@@ -1,0 +1,910 @@
+{
+  "version": 1,
+  "grid": [
+    4,
+    3
+  ],
+  "draw_height": 60,
+  "walk_cycle_distance": 48,
+  "actors": {
+    "tan_dang_moc_yen": {
+      "texture": "moc_yen.png",
+      "source_facing": "right",
+      "body_height_px": 342,
+      "frames": [
+        {
+          "region": [
+            91,
+            20,
+            184,
+            354
+          ],
+          "pivot": [
+            101.0,
+            348
+          ],
+          "stance_contact": [
+            68.0,
+            348
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            97,
+            26,
+            269,
+            368
+          ],
+          "opaque_pixels": 35475
+        },
+        {
+          "region": [
+            470,
+            31,
+            219,
+            341
+          ],
+          "pivot": [
+            106.0,
+            335
+          ],
+          "stance_contact": [
+            147.0,
+            335
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            476,
+            37,
+            683,
+            366
+          ],
+          "opaque_pixels": 36720
+        },
+        {
+          "region": [
+            828,
+            33,
+            233,
+            337
+          ],
+          "pivot": [
+            132.0,
+            331
+          ],
+          "stance_contact": [
+            180.0,
+            331
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            834,
+            39,
+            1055,
+            364
+          ],
+          "opaque_pixels": 38569
+        },
+        {
+          "texture": "moc_yen_steps.png",
+          "region": [
+            55,
+            89,
+            715,
+            840
+          ],
+          "pivot": [
+            357.5,
+            834
+          ],
+          "stance_contact": [
+            549.5,
+            834
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.391304347826087,
+          "source_core_bbox": [
+            61,
+            95,
+            764,
+            923
+          ],
+          "opaque_pixels": 293742
+        },
+        {
+          "texture": "moc_yen_steps.png",
+          "region": [
+            776,
+            89,
+            748,
+            847
+          ],
+          "pivot": [
+            374.0,
+            841
+          ],
+          "stance_contact": [
+            279.0,
+            841
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.391304347826087,
+          "source_core_bbox": [
+            782,
+            95,
+            1518,
+            930
+          ],
+          "opaque_pixels": 291698
+        },
+        {
+          "region": [
+            468,
+            383,
+            226,
+            319
+          ],
+          "pivot": [
+            108.0,
+            313
+          ],
+          "stance_contact": [
+            193.0,
+            313
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            474,
+            389,
+            688,
+            696
+          ],
+          "opaque_pixels": 36235
+        },
+        {
+          "region": [
+            821,
+            390,
+            265,
+            310
+          ],
+          "pivot": [
+            139.0,
+            304
+          ],
+          "stance_contact": [
+            56.5,
+            304
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            827,
+            396,
+            1080,
+            694
+          ],
+          "opaque_pixels": 41117
+        },
+        {
+          "region": [
+            49,
+            715,
+            310,
+            278
+          ],
+          "pivot": [
+            143.0,
+            272
+          ],
+          "stance_contact": [
+            37.0,
+            272
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            55,
+            721,
+            353,
+            987
+          ],
+          "opaque_pixels": 41565
+        },
+        {
+          "region": [
+            427,
+            714,
+            311,
+            284
+          ],
+          "pivot": [
+            149.0,
+            278
+          ],
+          "stance_contact": [
+            51.0,
+            278
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            433,
+            720,
+            732,
+            992
+          ],
+          "opaque_pixels": 43154
+        },
+        {
+          "region": [
+            821,
+            390,
+            265,
+            310
+          ],
+          "pivot": [
+            139.0,
+            304
+          ],
+          "stance_contact": [
+            56.5,
+            304
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            827,
+            396,
+            1080,
+            694
+          ],
+          "opaque_pixels": 41117
+        },
+        {
+          "region": [
+            823,
+            716,
+            267,
+            283
+          ],
+          "pivot": [
+            137.0,
+            277
+          ],
+          "stance_contact": [
+            211.5,
+            277
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            829,
+            722,
+            1084,
+            993
+          ],
+          "opaque_pixels": 40165
+        },
+        {
+          "region": [
+            1185,
+            780,
+            308,
+            212
+          ],
+          "pivot": [
+            159.0,
+            206
+          ],
+          "stance_contact": [
+            101.0,
+            206
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            1191,
+            786,
+            1487,
+            986
+          ],
+          "opaque_pixels": 34028
+        }
+      ]
+    },
+    "tan_dang_lam_tuoc": {
+      "texture": "lam_tuoc.png",
+      "source_facing": "right",
+      "body_height_px": 304,
+      "frames": [
+        {
+          "region": [
+            119,
+            31,
+            183,
+            316
+          ],
+          "pivot": [
+            73.0,
+            310
+          ],
+          "stance_contact": [
+            38.0,
+            310
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            125,
+            37,
+            296,
+            341
+          ],
+          "opaque_pixels": 27804
+        },
+        {
+          "region": [
+            476,
+            30,
+            222,
+            316
+          ],
+          "pivot": [
+            100.0,
+            310
+          ],
+          "stance_contact": [
+            165.0,
+            310
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            482,
+            36,
+            692,
+            340
+          ],
+          "opaque_pixels": 29689
+        },
+        {
+          "region": [
+            856,
+            28,
+            229,
+            318
+          ],
+          "pivot": [
+            104.0,
+            312
+          ],
+          "stance_contact": [
+            75.0,
+            312
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            862,
+            34,
+            1079,
+            340
+          ],
+          "opaque_pixels": 30470
+        },
+        {
+          "texture": "lam_tuoc_steps.png",
+          "region": [
+            80,
+            159,
+            664,
+            734
+          ],
+          "pivot": [
+            332.0,
+            728
+          ],
+          "stance_contact": [
+            530.0,
+            728
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.41412742382271467,
+          "source_core_bbox": [
+            86,
+            165,
+            738,
+            887
+          ],
+          "opaque_pixels": 196797
+        },
+        {
+          "texture": "lam_tuoc_steps.png",
+          "region": [
+            829,
+            163,
+            665,
+            736
+          ],
+          "pivot": [
+            332.5,
+            730
+          ],
+          "stance_contact": [
+            260.5,
+            730
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.41412742382271467,
+          "source_core_bbox": [
+            835,
+            169,
+            1488,
+            893
+          ],
+          "opaque_pixels": 193998
+        },
+        {
+          "region": [
+            457,
+            373,
+            246,
+            311
+          ],
+          "pivot": [
+            119.0,
+            305
+          ],
+          "stance_contact": [
+            187.0,
+            305
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            463,
+            379,
+            697,
+            678
+          ],
+          "opaque_pixels": 33197
+        },
+        {
+          "region": [
+            835,
+            355,
+            247,
+            328
+          ],
+          "pivot": [
+            125.0,
+            322
+          ],
+          "stance_contact": [
+            115.0,
+            322
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            841,
+            361,
+            1076,
+            677
+          ],
+          "opaque_pixels": 36723
+        },
+        {
+          "region": [
+            1190,
+            376,
+            304,
+            305
+          ],
+          "pivot": [
+            154.0,
+            299
+          ],
+          "stance_contact": [
+            195.0,
+            299
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            1196,
+            382,
+            1488,
+            675
+          ],
+          "opaque_pixels": 35324
+        },
+        {
+          "region": [
+            61,
+            690,
+            332,
+            309
+          ],
+          "pivot": [
+            131.0,
+            303
+          ],
+          "stance_contact": [
+            46.0,
+            303
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            67,
+            696,
+            387,
+            993
+          ],
+          "opaque_pixels": 39151
+        },
+        {
+          "region": [
+            456,
+            707,
+            274,
+            292
+          ],
+          "pivot": [
+            120.0,
+            286
+          ],
+          "stance_contact": [
+            50.0,
+            286
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            462,
+            713,
+            724,
+            993
+          ],
+          "opaque_pixels": 33278
+        },
+        {
+          "region": [
+            858,
+            716,
+            224,
+            283
+          ],
+          "pivot": [
+            102.0,
+            277
+          ],
+          "stance_contact": [
+            51.0,
+            277
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            864,
+            722,
+            1076,
+            993
+          ],
+          "opaque_pixels": 32987
+        },
+        {
+          "region": [
+            1209,
+            784,
+            285,
+            208
+          ],
+          "pivot": [
+            135.0,
+            202
+          ],
+          "stance_contact": [
+            221.0,
+            202
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            1215,
+            790,
+            1488,
+            986
+          ],
+          "opaque_pixels": 27264
+        }
+      ]
+    },
+    "tan_dang_du_hanh": {
+      "texture": "du_hanh.png",
+      "source_facing": "right",
+      "body_height_px": 311,
+      "frames": [
+        {
+          "region": [
+            121,
+            25,
+            152,
+            323
+          ],
+          "pivot": [
+            71.0,
+            317
+          ],
+          "stance_contact": [
+            31.0,
+            317
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            127,
+            31,
+            267,
+            342
+          ],
+          "opaque_pixels": 27391
+        },
+        {
+          "region": [
+            477,
+            24,
+            194,
+            326
+          ],
+          "pivot": [
+            99.0,
+            320
+          ],
+          "stance_contact": [
+            54.0,
+            320
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            483,
+            30,
+            665,
+            344
+          ],
+          "opaque_pixels": 28208
+        },
+        {
+          "region": [
+            867,
+            28,
+            201,
+            322
+          ],
+          "pivot": [
+            93.0,
+            316
+          ],
+          "stance_contact": [
+            50.0,
+            316
+          ],
+          "support_role": "right",
+          "source_core_bbox": [
+            873,
+            34,
+            1062,
+            344
+          ],
+          "opaque_pixels": 28635
+        },
+        {
+          "texture": "du_hanh_steps.png",
+          "region": [
+            133,
+            108,
+            657,
+            788
+          ],
+          "pivot": [
+            328.5,
+            782
+          ],
+          "stance_contact": [
+            455.0,
+            782
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.39948453608247425,
+          "source_core_bbox": [
+            139,
+            114,
+            784,
+            890
+          ],
+          "opaque_pixels": 196101
+        },
+        {
+          "texture": "du_hanh_steps.png",
+          "region": [
+            845,
+            108,
+            633,
+            797
+          ],
+          "pivot": [
+            316.5,
+            791
+          ],
+          "stance_contact": [
+            202.0,
+            791
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.39948453608247425,
+          "source_core_bbox": [
+            851,
+            114,
+            1472,
+            899
+          ],
+          "opaque_pixels": 199150
+        },
+        {
+          "region": [
+            473,
+            376,
+            239,
+            306
+          ],
+          "pivot": [
+            103.0,
+            300
+          ],
+          "stance_contact": [
+            165.0,
+            300
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            479,
+            382,
+            706,
+            676
+          ],
+          "opaque_pixels": 31585
+        },
+        {
+          "region": [
+            835,
+            359,
+            229,
+            320
+          ],
+          "pivot": [
+            125.0,
+            314
+          ],
+          "stance_contact": [
+            34.0,
+            314
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            841,
+            365,
+            1058,
+            673
+          ],
+          "opaque_pixels": 36166
+        },
+        {
+          "region": [
+            1131,
+            407,
+            401,
+            273
+          ],
+          "pivot": [
+            213.0,
+            267
+          ],
+          "stance_contact": [
+            33.0,
+            267
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            1137,
+            413,
+            1526,
+            674
+          ],
+          "opaque_pixels": 33413
+        },
+        {
+          "texture": "du_hanh_follow.png",
+          "region": [
+            28,
+            236,
+            1213,
+            830
+          ],
+          "pivot": [
+            606.5,
+            824
+          ],
+          "stance_contact": [
+            823.0,
+            824
+          ],
+          "support_role": "left",
+          "scale_multiplier": 0.31907090464547677,
+          "source_core_bbox": [
+            34,
+            242,
+            1235,
+            1060
+          ],
+          "opaque_pixels": 344311
+        },
+        {
+          "region": [
+            469,
+            692,
+            253,
+            305
+          ],
+          "pivot": [
+            107.0,
+            299
+          ],
+          "stance_contact": [
+            40.0,
+            299
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            475,
+            698,
+            716,
+            991
+          ],
+          "opaque_pixels": 33030
+        },
+        {
+          "region": [
+            844,
+            708,
+            221,
+            289
+          ],
+          "pivot": [
+            116.0,
+            283
+          ],
+          "stance_contact": [
+            51.0,
+            283
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            850,
+            714,
+            1059,
+            991
+          ],
+          "opaque_pixels": 34173
+        },
+        {
+          "region": [
+            1194,
+            789,
+            298,
+            209
+          ],
+          "pivot": [
+            150.0,
+            203
+          ],
+          "stance_contact": [
+            280.0,
+            203
+          ],
+          "support_role": "both",
+          "source_core_bbox": [
+            1200,
+            795,
+            1486,
+            992
+          ],
+          "opaque_pixels": 34362
+        }
+      ]
+    }
+  }
+}

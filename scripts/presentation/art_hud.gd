@@ -80,10 +80,7 @@ func _build_ui() -> void:
 	player_frame = _texture(player_panel, "PlayerFrame", PLAYER_FRAME, Vector2.ZERO, Vector2(360, 120))
 	hp_text = _label(player_panel, Vector2(48, 59), Vector2(86, 22), 11)
 	energy_text = _label(player_panel, Vector2(228, 59), Vector2(90, 22), 11)
-	for index: int in 3:
-		var icon: TextureRect = _texture(player_panel, "RuneSlot%d" % (index + 1), SHIELD_ICON, Vector2(44 + index * 52, 119), Vector2(44, 44))
-		icon.mouse_filter = Control.MOUSE_FILTER_PASS
-		rune_icons.append(icon)
+	_sync_rune_slots(3)
 	soul_text = _label(player_panel, Vector2(44, 168), Vector2(300, 24), 16)
 	soul_text.name = "SoulBalance"
 	soul_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -184,6 +181,23 @@ func _process(_delta: float) -> void:
 	refresh_hud()
 
 
+func _sync_rune_slots(count: int) -> void:
+	if rune_icons.size() == count: return
+	while rune_icons.size() > count:
+		var removed: TextureRect = rune_icons.pop_back()
+		player_panel.remove_child(removed)
+		removed.queue_free()
+	while rune_icons.size() < count:
+		var icon: TextureRect = _texture(player_panel, "RuneSlot%d" % (rune_icons.size() + 1), SHIELD_ICON, Vector2.ZERO, Vector2(44, 44))
+		icon.mouse_filter = Control.MOUSE_FILTER_PASS
+		rune_icons.append(icon)
+	# Up to five keep the original 44px art; larger authored capacities still fit.
+	var edge: float = minf(44.0, (296.0 - 8.0 * (count - 1)) / count)
+	for index: int in count:
+		rune_icons[index].position = Vector2(44 + index * (edge + 8), 119)
+		rune_icons[index].size = Vector2(edge, edge)
+
+
 func refresh_hud() -> void:
 	if player_panel == null:
 		return
@@ -199,7 +213,9 @@ func refresh_hud() -> void:
 	hp_text.text = "%d / %d" % [roundi(player.health.current_health), roundi(player.health.maximum_health)]
 	energy_text.text = "%d / %d" % [roundi(player.energy.current), roundi(player.energy.maximum)]
 	energy_bar.tooltip_text = "Năng lượng · Lướt và phép dùng chung"
-	var installed: Array[RuneData] = player.resonance_controller.catalyst_a.runtime_state.installed_runes
+	var catalyst: CatalystRuntime = player.resonance_controller.catalyst_a.runtime_state
+	var installed: Array[RuneData] = catalyst.installed_runes
+	_sync_rune_slots(maxi(3, maxi(catalyst.opened_slots, installed.size())))
 	rune_ids.clear()
 	for index: int in rune_icons.size():
 		var rune: RuneData = installed[index] if index < installed.size() else null

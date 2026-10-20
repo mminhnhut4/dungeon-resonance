@@ -100,11 +100,18 @@ func _product_social_and_courier() -> void:
 	# Seed57 has both existing authored herb sources under unchanged tuning.
 	# Other recovery/migration fixtures keep their previous seed4 and costs.
 	var fixture: SanctuaryProfile = _fixture("product",57)
+	var carried: GearInventory = HubPreparation.starter_inventory()
+	carried.materials[&"linen_fiber"] = 8
+	carried.materials[&"dust"] = 10
+	carried.materials[&"crystal"] = 20
+	fixture.hub_inventory = GearInventoryCodec.encode(carried)
+	_check(fixture.save(), "Product fixture persists actual carried supplies before GameFlow loads")
 	var hub: ExteriorHub = await _open(fixture.save_path)
 	_check(hub != null and flow.profile.social_transactions_available() and hub.courier != null, "Actual main scene enables reviewed social and courier owners")
 	if hub == null: await _cleanup(); return
 	var actor_id: int = hub.player.get_instance_id()
 	var ledger: Dictionary = GearInventoryCodec.encode(hub.gear.inventory)
+	var stash_before: Dictionary = flow.profile.material_stash.duplicate()
 	_check(hub.enter_exterior(&"o01_p01"), "Product travels to the actual social resident room")
 	await _step()
 	var pop: NpcPopulation = hub.npc_population
@@ -113,11 +120,12 @@ func _product_social_and_courier() -> void:
 	_check(pop.interact(ID) and _has(hub.dialogue,&"pilot_help"), "Living resident offers reviewed cloth alternative through real dialogue")
 	var npc_bytes: PackedByteArray = FileAccess.get_file_as_bytes(life.save_path)
 	await _choose(hub,&"pilot_help",true)
-	_check(flow.profile.material_stash[&"linen_fiber"] == 6 and NpcSocialProgress.helped(OpeningSocialRuntime.state(flow.profile),ID), "Confirmation commits exactly two cloth and one canonical life receipt")
+	_check(hub.gear.inventory.materials[&"linen_fiber"] == 6 and flow.profile.material_stash == stash_before and NpcSocialProgress.helped(OpeningSocialRuntime.state(flow.profile),ID), "Confirmation commits exactly two carried cloth and one canonical life receipt with storage unchanged")
+	ledger["materials"][&"linen_fiber"] -= 2
 	_check(FileAccess.get_file_as_bytes(life.save_path) == npc_bytes, "Social commit does not rewrite the NPC primary sidecar")
 	await _shot("social_help_committed")
 	pop._choice_selected(&"pilot_help")
-	_check(flow.profile.material_stash[&"linen_fiber"] == 6, "Duplicate living callback cannot pay the social cost twice")
+	_check(hub.gear.inventory.materials[&"linen_fiber"] == 6 and flow.profile.material_stash == stash_before, "Duplicate living callback cannot pay the carried social cost twice")
 	hub.dialogue.close(); await _step()
 	_check(hub.return_to_hub(), "Product retains the same actor and gear when returning")
 	await _step()
@@ -143,11 +151,12 @@ func _product_social_and_courier() -> void:
 	_check(hub.open_courier_register() and _has(hub.dialogue,&"courier_contact"), "Stationary shrine remains a real fallback while the contact recovers")
 	await _choose(hub,&"courier_contact")
 	_check(flow.profile.courier_objectives()["contact_source"] == "shrine" and _has(hub.dialogue,&"courier_help"), "Shrine contact advances the same canonical choice")
-	var dust: int = flow.profile.material_stash[&"dust"]
-	var linen: int = flow.profile.material_stash[&"linen_fiber"]
+	var dust: int = hub.gear.inventory.materials[&"dust"]
+	var linen: int = hub.gear.inventory.materials[&"linen_fiber"]
 	var souls: int = flow.profile.souls
 	await _choose(hub,&"courier_help",true)
-	_check(flow.profile.material_stash[&"dust"] == dust-1 and flow.profile.material_stash[&"linen_fiber"] == linen and flow.profile.souls == souls, "Supply confirmation spends one dust, zero social cloth and zero Souls")
+	_check(hub.gear.inventory.materials[&"dust"] == dust-1 and hub.gear.inventory.materials[&"linen_fiber"] == linen and flow.profile.material_stash == stash_before and flow.profile.souls == souls, "Supply confirmation spends one carried dust, zero social cloth and zero Souls with storage unchanged")
+	ledger["materials"][&"dust"] -= 1
 	_check(flow.profile.courier_choice_event().get("source_id") == "p03_shrine_register" and FileAccess.get_file_as_bytes(life.save_path) == tombstone, "Courier event identifies the register and leaves withdrawal evidence intact")
 	await _shot("shrine_supply_committed_during_recovery")
 	var committed: PackedByteArray = FileAccess.get_file_as_bytes(flow.profile.save_path)
@@ -160,7 +169,7 @@ func _product_social_and_courier() -> void:
 	var progress: Dictionary = flow.profile.cultivation_progress.duplicate(true)
 	for key: Key in [KEY_G,KEY_F,KEY_BACKSPACE,KEY_E]: await _key(key)
 	flow.cultivation_session._physics_process(600.0)
-	_check(GearInventoryCodec.encode(hub.gear.inventory) == ledger and flow.profile.cultivation_progress == progress, "Map shortcuts preserve the exact gear/rune ledger and freeze cultivation")
+	_check(GearInventoryCodec.encode(hub.gear.inventory) == ledger and flow.profile.cultivation_progress == progress, "Map shortcuts preserve the exact gear/rune ledger after only the two authorized carried costs and freeze cultivation")
 	await _key(KEY_ESCAPE)
 	_check(not modal.is_open and hub.player.controls_enabled and is_equal_approx(Engine.time_scale,1.0), "Map closes through real input and restores its single claim")
 	_check(hub.player.get_instance_id() == actor_id, "All composition keeps the same product player")
@@ -195,7 +204,7 @@ func _product_social_and_courier() -> void:
 	hub.close_station()
 	await _cleanup()
 	hub = await _open(fixture.save_path)
-	_check(NpcSocialProgress.helped(OpeningSocialRuntime.state(flow.profile),ID) and flow.profile.material_stash[&"linen_fiber"] == 6 and flow.profile.courier_objectives()["outcome"] == "help", "Cold product scene retains both canonical receipts and their exact costs")
+	_check(NpcSocialProgress.helped(OpeningSocialRuntime.state(flow.profile),ID) and hub.gear.inventory.materials[&"linen_fiber"] == 6 and hub.gear.inventory.materials[&"dust"] == dust-1 and flow.profile.material_stash == lineage_before and flow.profile.courier_objectives()["outcome"] == "help", "Cold product scene retains both canonical receipts, their exact carried costs and unchanged storage after the lineage fixture")
 	_check(hub.npc_population.state.records["pilot_pilgrim"]["mode"] == "recovering" and not hub.npc_population.actors.has("pilot_pilgrim"), "Cold product load does not prematurely restore its withdrawn contact")
 	await _cleanup()
 

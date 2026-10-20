@@ -25,6 +25,7 @@ var hub_session_state: Dictionary = {}
 var return_save_pending: bool = false
 var return_save_error: StringName = &""
 var _return_busy: bool = false
+var reward_notice: OpeningRewardNotice
 signal return_save_changed
 
 
@@ -46,16 +47,22 @@ func _take_prepared_inventory() -> GearInventory:
 		profile.hub_inventory = {}
 		if not profile.save():
 			profile.hub_inventory = previous
+			if active_scene is PrologueHub:
+				active_scene.departure_failed.emit(StringName(profile.last_commit.get("error", "departure_save_failed")))
 			return null
 		if active_scene is PrologueHub: active_scene.economy.hub_access = false
 	# Clone mutable state, then move its ownership out of the Hub once. This also
 	# prevents repeated salvage of the same preparation UID across multiple runs.
+	if world_building_enabled: prepared.begin_expedition()
 	HubPreparation.clear_carried(source)
 	return prepared
 
 
 func _ready() -> void:
+	preload("res://scripts/presentation/opening_render_warmup.gd").begin(self)
 	profile = SanctuaryProfile.new()
+	profile.register_extension_validator(TanDangProgress.SCOPE,TanDangProgress.valid)
+	profile.register_extension_validator(OpeningExplorationProgress.SCOPE,OpeningExplorationProgress.valid)
 	if save_path_override != "":
 		profile.save_path = save_path_override
 	if world_building_enabled:
@@ -75,6 +82,18 @@ func _ready() -> void:
 		var stored: GearInventory = GearInventoryCodec.decode(profile.hub_inventory)
 		if stored != null: hub_session_state[&"inventory"] = stored
 	show_hub()
+	if world_building_enabled:
+		reward_notice=preload("res://scripts/ui/opening_reward_notice.gd").new()
+		reward_notice.name="OpeningRewardNotice";add_child(reward_notice)
+		reward_notice.initialize(profile,_reward_context)
+
+func _reward_context() -> Dictionary:
+	if not is_instance_valid(active_scene) or not is_instance_valid(active_scene.get("gear")):return {"safe":false}
+	var actor: Player=active_scene.get("player")
+	return {"inventory":active_scene.get("gear").inventory,"safe":actor!=null and actor.controls_enabled and actor.health.current_health>0 and not returning and not get_tree().paused and not (active_scene is DungeonRun and active_scene.room.locked)}
+
+func _bind_reward_pickups(scene: DungeonRun) -> void:
+	if is_instance_valid(reward_notice):scene.gear.loot.pickup_collected.connect(reward_notice.acquired)
 
 
 func _clear() -> void:
@@ -128,8 +147,12 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 	if active_scene is DungeonRun:
 		var run: DungeonRun = active_scene as DungeonRun
 		if run.has_pending_rewards(): return _wait_for_return_save(&"pending_rewards", from_defeat)
-		var bank_inventory: bool = hub_scene != null and run.outcome in [&"victory", &"retreat"] and hub_session_state.has(&"inventory")
+		var bank_inventory: bool = hub_scene != null and (run.outcome in [&"victory", &"retreat"] or (world_building_enabled and run.outcome == &"defeat")) and hub_session_state.has(&"inventory")
 		var run_inventory: GearInventory = run.gear.inventory
+		var returned_inventory: GearInventory = HubPreparation.clone_inventory(run_inventory)
+		if world_building_enabled and run.outcome == &"defeat": returned_inventory.materials.assign(run_inventory.defeat_materials())
+		returned_inventory.expedition_active = false
+		returned_inventory.protected_materials.clear()
 		if world_building_enabled:
 			if bank_inventory and profile.coins > MaterialCatalog.MAX_COUNT - run_inventory.run_coins:
 				return _wait_for_return_save(&"coin_capacity", from_defeat)
@@ -137,7 +160,7 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 			var previous_coins: int = profile.coins
 			var previous_opening: Dictionary = profile.opening_progress
 			if bank_inventory:
-				profile.hub_inventory = GearInventoryCodec.encode(run_inventory)
+				profile.hub_inventory = GearInventoryCodec.encode(returned_inventory)
 				profile.hub_inventory["run_coins"] = 0
 				profile.coins += run_inventory.run_coins
 			# Crossing the Golem gate completes the opening segment of this same trip.
@@ -150,7 +173,9 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 				profile.hub_inventory = previous_inventory
 				profile.opening_progress = previous_opening
 				return _wait_for_return_save(&"write_failed", from_defeat)
-			if bank_inventory: run_inventory.run_coins = 0
+			if bank_inventory:
+				run_inventory.run_coins = 0
+				returned_inventory.run_coins = 0
 			profile.changed.emit()
 		# Commit recovery before transferring the carried item UIDs. On failure
 		# the existing return retry retains the run; already banked coins are zero.
@@ -159,7 +184,7 @@ func show_hub(from_defeat: bool = false, explicit_retry: bool = false) -> bool:
 			if not npc_life.recover_after_expedition():
 				return _wait_for_return_save(&"npc_recovery_failed", from_defeat)
 		if bank_inventory:
-			hub_session_state[&"inventory"] = HubPreparation.clone_inventory(run_inventory)
+			hub_session_state[&"inventory"] = returned_inventory
 			HubPreparation.clear_carried(run_inventory)
 	_clear()
 	var hub: Node2D = (hub_scene if hub_scene != null else preload("res://scenes/hub/sanctuary_hub.tscn")).instantiate() as Node2D
@@ -206,6 +231,7 @@ func start_run() -> void:
 	add_child(run)
 	run.content.qa_tools_enabled = qa_tools_enabled
 	active_scene = run
+	_bind_reward_pickups(run)
 	if prepared == null:
 		run.player.available_weapons.clear()
 		for id: StringName in profile.unlocked_weapons:
@@ -253,6 +279,7 @@ func start_depth_campaign(initial_floor: int = 1) -> bool:
 	add_child(campaign)
 	campaign.content.qa_tools_enabled = qa_tools_enabled
 	active_scene = campaign
+	_bind_reward_pickups(campaign)
 	campaign.player.health.reset_health()
 	campaign.player.energy.reset()
 	campaign.gear.loot.set("crystal_drops_enabled", true)
@@ -291,6 +318,7 @@ func start_campaign() -> void:
 	add_child(campaign)
 	campaign.content.qa_tools_enabled = qa_tools_enabled
 	active_scene = campaign
+	_bind_reward_pickups(campaign)
 	if prepared == null:
 		for id: StringName in profile.unlocked_weapons:
 			if not campaign.gear.inventory.items.values().any(func(item: GearItem) -> bool: return item.kind == &"weapon" and item.definition_id == id):

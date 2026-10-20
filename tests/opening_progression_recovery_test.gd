@@ -157,13 +157,13 @@ func _finite_recipe_and_death() -> void:
 	await _step()
 	_pause(flow)
 	hub = flow.active_scene as ExteriorHub
-	_check(not hub.gear.inventory.items.values().any(func(item: GearItem) -> bool: return item.kind == &"rune") and rune_uids.all(func(uid: int) -> bool: return not hub.gear.inventory.items.has(uid)),"Death discards carried rune UIDs rather than resurrecting the banked run copy")
+	_check(rune_uids.all(func(uid: int) -> bool: return hub.gear.inventory.items.has(uid)) and hub.gear.inventory.items.size() == count,"Death transfers exact carried rune UIDs without duplicating the banked run copy")
 	_check(flow.profile.opening_progress["completed"].has("returned_to_hub") and flow.profile.souls == 0 and flow.profile.coins == 0,"Death retains the prior committed milestone without new rewards")
 	rows = MapQuestProjection.rows(flow.profile,hub.gear.inventory)
-	_check(rows[3]["guide"]["blockers"].has("rune_fire_required") and rows[3]["guide"]["blockers"].has("rune_wind_required") and "rương nhỏ có 2" in rows[3]["guide"]["body"],"Guide after death reports real missing runes and the actual finite source")
+	_check(rows[3]["guide"]["status"] == "exact_set" and rows[3]["guide"]["blockers"].is_empty(),"Guide after death reads the retained exact Catalyst recipe")
 	await _close(flow)
 	flow = await _open("death_reload",path)
-	_check(not flow.active_scene.gear.inventory.items.values().any(func(item: GearItem) -> bool: return item.kind == &"rune") and flow.profile.opening_progress["completed"].has("returned_to_hub"),"Cold reload preserves death losses and the historical return milestone")
+	_check(rune_uids.all(func(uid: int) -> bool: return flow.active_scene.gear.inventory.items.has(uid)) and flow.profile.opening_progress["completed"].has("returned_to_hub"),"Cold reload preserves the retained rune ledger and historical return milestone")
 	await _close(flow)
 
 func _fresh_defeat() -> void:

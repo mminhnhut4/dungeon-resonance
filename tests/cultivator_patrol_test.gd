@@ -26,14 +26,14 @@ func _run() -> void:
 	await _step(8)
 	hub = flow.active_scene as ExteriorHub
 	population = hub.npc_population
-	_check(population.actors.is_empty(),"No cultivator spawns inside H00")
+	_check(population.actors.size() == 1 and population.actors.has(TanDangProgress.MOC),"H00 contains only its authored Tàn Đăng keeper")
 	for id: String in CultivatorCatalog.IDS:
 		await _exercise_cultivator(id)
 	await _quarantine_active_strike()
 	_check(NpcWorldState.valid(population.state.snapshot()),"Runtime patrol/combat records remain schema-valid")
 	hub.return_to_hub(false)
 	await _step(4)
-	_check(get_nodes_in_group(&"npc_pilot_actor").is_empty(),"Hub travel removes every room-owned NPC")
+	_check(get_nodes_in_group(&"npc_pilot_actor").size() == 1 and population.actors.has(TanDangProgress.MOC),"Hub travel removes exterior NPCs and restores its authored keeper")
 	var sidecar: String = population.state.save_path
 	flow.queue_free()
 	await _step(6)
@@ -159,6 +159,8 @@ func _quarantine_active_strike() -> void:
 	await _step(4)
 	# A separate registry isolates the fault from the durable population under test.
 	var state := NpcWorldState.new()
+	state.save_path = path_prefix+"_quarantine_npc.json"
+	_check(state.save(),"Quarantine fixture starts from a durable isolated NPC owner")
 	var actor := CultivatorActor.new()
 	actor.stable_id = CultivatorCatalog.IDS[0]
 	actor.npc_id = StringName(actor.stable_id)

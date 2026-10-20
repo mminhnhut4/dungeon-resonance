@@ -68,6 +68,28 @@ func test_system() -> void:
 	level.set_rune_preset(4)
 	hud.refresh_hud()
 	_check(hud.rune_ids == [&"", &"", &""] and hud.rune_icons.all(func(icon: TextureRect) -> bool: return icon.is_visible_in_tree()), "Removing all runes immediately restores three visible empty sockets")
+	var runtime: CatalystRuntime = player.resonance_controller.catalyst_a.runtime_state
+	var slots_before: int = runtime.opened_slots
+	var fire: RuneData = load("res://data/runes/FireRune.tres")
+	var wind: RuneData = load("res://data/runes/WindRune.tres")
+	for capacity: int in [4, 5, 8, 3]:
+		runtime.opened_slots = capacity
+		var runes: Array[RuneData] = [fire, fire, wind, lightning, lightning]
+		if capacity < runes.size(): runes.resize(capacity)
+		_check(player.resonance_controller.catalyst_a.install_runes(runes), "Fixture installs owned runtime capacity %d" % capacity)
+		hud.refresh_hud()
+		_check(hud.rune_icons.size()==capacity and hud.rune_ids.slice(0,runes.size())==runtime.installed_rune_ids, "HUD retains every installed rune, including duplicates, at capacity %d" % capacity)
+		var within: bool = true
+		for index: int in hud.rune_icons.size():
+			var icon: TextureRect = hud.rune_icons[index]
+			within = within and icon.visible and icon.position.x>=44 and icon.position.x+icon.size.x<=340
+			if index>0: within = within and icon.position.x>=hud.rune_icons[index-1].position.x+hud.rune_icons[index-1].size.x
+		_check(within, "Rune row stays inside the existing frame width without overlap at %d slots" % capacity)
+		_check(player.resonance_controller.catalyst_a.install_runes([]), "Runtime permits empty loadout at capacity %d" % capacity)
+		hud.refresh_hud()
+		_check(hud.rune_ids.all(func(id: StringName) -> bool: return id==&"") and hud.rune_icons.size()==capacity, "Unequip clears all dynamic sockets at capacity %d" % capacity)
+	runtime.opened_slots = slots_before
+	hud.refresh_hud()
 	_check(not hud.boss_panel.visible and hud.boss_id == 0, "A test room without a Boss has no stale Boss portrait or bar")
 	var run: DungeonRun = preload("res://scenes/dungeon_run.tscn").instantiate()
 	run.profile = profile

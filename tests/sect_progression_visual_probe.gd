@@ -261,7 +261,7 @@ func _cultivators() -> void:
 		await _frames(20)
 	hub.return_to_hub(false)
 	await _frames(5)
-	_check(hub.player.controls_enabled and hub.npc_population.actors.is_empty(),"Ordinary Hub return cleans up both road rooms without reviving injuries")
+	_check(hub.player.controls_enabled and hub.npc_population.actors.size() == 1 and hub.npc_population.actors.has(TanDangProgress.MOC) and not hub.npc_population.actors.has("thanh_van_disciple_01") and not hub.npc_population.actors.has("xich_lo_guard_01") and hub.npc_population.state.records["thanh_van_disciple_01"]["mode"] == "recovering" and hub.npc_population.state.records["xich_lo_guard_01"]["mode"] == "recovering","Ordinary Hub return retains only Mộc Yên and never revives either injured road cultivator")
 
 func _corner() -> void:
 	flow.start_campaign()

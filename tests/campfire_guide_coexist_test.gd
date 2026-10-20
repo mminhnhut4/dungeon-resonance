@@ -112,7 +112,7 @@ func _run() -> void:
 	guide.open_map()
 	await _step()
 	await _view(guide,&"returned_to_hub")
-	_check("Còn thiếu" in guide.journal.objective_label.text and flow.profile.opening_progress["completed"].has("returned_to_hub"),"Death loss is reflected in guide while historical return remains complete")
+	_check("Đúng bộ" in guide.journal.objective_label.text and flow.profile.opening_progress["completed"].has("returned_to_hub"),"Retained rune recipe is reflected in guide while historical return remains complete")
 	guide.close()
 	await _close(flow)
 	await root.get_node("AudioManager").shutdown()

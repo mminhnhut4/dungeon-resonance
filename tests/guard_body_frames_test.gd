@@ -78,7 +78,7 @@ func _pose_clock_and_mirror() -> void:
 			for side: float in [-1.0,1.0]:
 				body.seek_actor(0.0,side,false,true)
 				var expected_clip: StringName=&"attack_sweep" if item[0]==&"telegraph" and progress==1.0 else item[1]
-				var expected_frame: int=2 if item[0]==&"attack" else 1 if item[0]==&"telegraph" and progress==1.0 else roundi(progress*(int(item[3])-1))
+				var expected_frame: int=mini(7,floori(progress*8.0)) if item[0]==&"attack" else (1 if progress<0.55 else 2) if item[0]==&"hurt" else mini(5,floori(progress*7.5)) if item[0]==&"dead" else 1 if item[0]==&"telegraph" and progress==1.0 else roundi(progress*(int(item[3])-1))
 				_check(body.clip_id==expected_clip and body.frame_index==expected_frame,"Live clock maps %s %.2f facing %.0f"%[item[0],progress,side])
 				_check(EnemySpriteArt.foot_world(guard.visual.sprite,GuardBodyFrames.PIVOT).distance_to(guard.global_position)<0.001 and guard.visual.sprite.scale==Vector2.ONE*0.30,"Constant root/scale survives frame and facing change")
 				_check(guard.visual.sweep_vfx.hand_local().distance_to(body.anchor_local("sword_hand"))<0.001,"r1 VFX reads the delivered pose hand anchor within world-transform precision")
@@ -290,7 +290,7 @@ func _validate_received_pixels() -> void:
 							max_y=maxi(max_y,y)
 				neutral_height=max_y-min_y+1
 			frames_seen+=1
-	_check(frames_seen==76 and clipped==0,"All 76 actual imported RGBA frames have transparent borders and uncut blade/limbs")
+	_check(frames_seen==84 and clipped==0,"All 84 actual imported RGBA frames have transparent borders and uncut blade/limbs")
 	_check(neutral_height==200,"Received neutral solid alpha height is 200px, mapped once to original 60px body")
 	metrics["actual_pixels"]={"frames":frames_seen,"alpha_ge_8_border_pixels":clipped,"neutral_height":neutral_height}
 

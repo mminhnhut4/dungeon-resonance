@@ -46,6 +46,7 @@ func _run() -> void:
 	hero.hurtbox.hit_resolved.connect(_observe)
 	await _step(5)
 	await _guard_live()
+	await _miss_and_dead_gate()
 	await _stomp_live()
 	await _caps_and_scope()
 	await _cancel_and_teardown()
@@ -127,6 +128,27 @@ func _guard_live() -> void:
 	guard.queue_free()
 	await _step(3)
 	_check(not hero.hurtbox.hit_resolved.is_connected(listener) and get_nodes_in_group(&"guard_sweep_vfx").is_empty(),"Guard teardown disconnects the persistent Player result signal")
+
+func _miss_and_dead_gate() -> void:
+	hero.reset_movement_at(Vector2(700,640))
+	hero.controls_enabled=false
+	guard=_new_guard(Vector2(778,640),true)
+	await _wait_guard(&"telegraph")
+	var vfx: GuardSweepVFX=guard.visual.sweep_vfx
+	var hp: float=hero.health.current_health
+	hero.reset_movement_at(Vector2(400,640)) # Genuine miss: target leaves the committed lane.
+	hero.controls_enabled=false
+	await _wait_guard(&"attack")
+	_check(guard.attack_hitbox.active and hero.health.current_health==hp and vfx.impact_count==0,"Target outside the committed active lane receives no damage or contact VFX")
+	await _wait_guard(&"recover")
+	_check(not guard.attack_hitbox.active and hero.health.current_health==hp and vfx.impact_count==0,"Miss remains silent after the real damage window closes")
+	guard.ai_enabled=false
+	var lethal: DamageEvent=_event(hero,10010,guard.get_instance_id(),9999.0)
+	hero.hurtbox.take_damage(lethal)
+	var count: int=vfx.impact_count
+	var late: DamageResult=hero.hurtbox.take_damage(_event(hero,10011,guard.get_instance_id(),24.0))
+	_check(hero.health.current_health==0.0 and late.blocked and vfx.impact_count==count,"Dead target rejects a new attack identity without another contact effect")
+	guard.queue_free();await _step(3)
 
 func _stomp_live() -> void:
 	hero.reset_movement_at(Vector2(600,640))

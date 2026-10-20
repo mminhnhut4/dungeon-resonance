@@ -24,6 +24,11 @@ func _initialize() -> void:
 func _run() -> void:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--hz="): Engine.physics_ticks_per_second = int(arg.trim_prefix("--hz="))
+	var qa_root: String = OS.get_environment("DUNGEON_QA_DATA_ROOT").replace("\\","/").to_lower()
+	_check(not qa_root.is_empty() and OS.get_user_data_dir().replace("\\","/").to_lower().begins_with(qa_root+"/"),"NPC population fixture uses isolated QA storage")
+	if failures > 0:
+		quit(2)
+		return
 	path_prefix = "user://verification/npc_population_%d_%d" % [Engine.physics_ticks_per_second, Time.get_ticks_usec()]
 	print("NPC_POPULATION_USER_DIR=" + ProjectSettings.globalize_path("user://"))
 	_pure_simulation()
@@ -44,7 +49,11 @@ func _pure_simulation() -> void:
 	_check(first.snapshot() == second.snapshot(), "Same authored inputs and 600 in-game ticks produce identical snapshots")
 	_check(NpcWorldState.valid(first.snapshot()), "Longer authored schedules stay within validated room bounds")
 	for id: String in NpcPilotCatalog.IDS:
-		_check(observed[id].has("walk") and observed[id].has("rest") and observed[id].has("work"), "%s visibly transitions walk/work/rest" % id)
+		if id in NpcPilotCatalog.TAN_DANG_IDS:
+			var stop: Dictionary = NpcPilotCatalog.stop(id,0)
+			_check(observed[id].has(stop["mode"]) and observed[id].keys().all(func(mode: String) -> bool: return mode in ["walk",stop["mode"]]) and first.records[id]["x"] == stop["x"] and first.records[id]["target"] == stop["x"],"%s retains its authored fixed station and activity" % id)
+		else:
+			_check(observed[id].has("walk") and observed[id].has("rest") and observed[id].has("work"), "%s visibly transitions walk/work/rest" % id)
 		_check(NpcPilotCatalog.definition(id)["room"] == first.records[id]["room"], "%s retains assigned region ownership" % id)
 	var copied: Dictionary = first.snapshot()
 	copied["records"][NpcPilotCatalog.IDS[0]]["trust"] = 70
@@ -60,7 +69,7 @@ func _pure_simulation() -> void:
 	_check(not NpcWorldState.valid(malformed), "Unknown or duplicate identities cannot inflate population")
 	var hazard := NpcWorldState.new()
 	hazard.save_path = path_prefix + "_hazard.json"
-	hazard.receive_hit(NpcPilotCatalog.IDS[0], 35, 0, false)
+	_check(hazard.save() and hazard.receive_hit(NpcPilotCatalog.IDS[0], 35, 0, false),"Environmental hit commits through a durable isolated NPC owner")
 	_check(hazard.records[NpcPilotCatalog.IDS[0]]["fear"] == 6 and hazard.records[NpcPilotCatalog.IDS[0]]["trust"] == 0, "Unknown attacker or environmental harm creates fear without falsely blaming Player")
 
 func _persistence_and_decisions() -> void:
@@ -142,7 +151,8 @@ func _integration() -> void:
 	hub = flow.active_scene as ExteriorHub
 	var population: NpcPopulation = hub.npc_population
 	population.cue_requested.connect(func(_id: String, _cue: StringName, _at: Vector2, _owner: Node) -> void: cues += 1)
-	_check(population != null and population.state.records.size() == 10 and population.actors.is_empty(), "H00 owns one bounded ten-NPC registry but zero road actors")
+	_check(population != null and population.state.records.size() == 13 and population.actors.size() == 1 and population.actors.has("tan_dang_moc_yen") and _actor_count() == 1,"H00 owns one thirteen-NPC registry and only its authored Mộc Yên representation")
+	_check(population.actors["tan_dang_moc_yen"].room == population.hub_ground and population.hub_ground.room_id == ExteriorRouteCatalog.HUB and population.hub_ground.get_parent() == hub.yard,"The Hub keeper uses the existing population owner and Hub ground reference")
 	var player_id: int = hub.player.get_instance_id()
 	var owned: Array = hub.gear.inventory.items.keys()
 	hub.player.health.current_health = 37
@@ -244,21 +254,31 @@ func _integration() -> void:
 	_check(population.state.records[id]["mode"] == "recovering" and not population.actors.has(id) and _actor_count() == 1, "Withdrawal removes only the injured representation and preserves the other local NPC")
 	_check(hub.player.get_instance_id() == player_id and hub.gear.inventory.items.keys() == owned and hub.player.health.current_health == 37 and hub.player.energy.current == 41, "NPC travel and choices preserve Player/session/UID/HP/energy without rewards")
 	population.set_process(true)
+	var expected_room_actors: Dictionary = {
+		&"o01_p01":["thanh_van_disciple_01"], # Traveler is still withdrawn.
+		&"o01_p02":["pilot_bridge_keeper","xich_lo_guard_01"],
+		&"o01_p03":["pilot_pilgrim","tan_dang_lam_tuoc","tan_dang_du_hanh"],
+		&"o01_p04":["pilot_gatherer"],
+		&"o02_b01":[], &"o02_b02":[],
+		&"o02_b03":["pilot_courier"], &"o02_b04":["pilot_apprentice"]
+	}
 	for room_id: StringName in ExteriorRouteCatalog.ROOMS:
 		hub.enter_exterior(room_id, &"main", &"west", false)
 		await _step(3)
-		_check(_actor_count() <= 2 and _actor_count() == population.actors.size(), "No duplicate local representation after entering %s" % room_id)
+		var expected_ids: Array = expected_room_actors[room_id]
+		_check(_actor_count() == expected_ids.size() and _actor_count() == population.actors.size() and expected_ids.all(func(local_id: String) -> bool: return population.actors.has(local_id)),"Exactly the authored living residents appear without duplicates in %s" % room_id)
 		for local_id: String in population.actors:
 			_check(population.state.records[local_id]["room"] == String(room_id), "Current actor belongs to current room %s" % room_id)
 	hub.return_to_hub(false)
 	await _step(3)
-	_check(_actor_count() == 0, "Hub return cleans pilot actors and room audio ownership")
+	_check(_actor_count() == 1 and population.actors.size() == 1 and population.actors.has("tan_dang_moc_yen"),"Hub return cleans exterior actors and restores only its authored keeper")
 	var sidecar: String = population.state.save_path
 	flow.queue_free()
 	await _step(4)
 	var cold := NpcWorldState.new()
 	cold.save_path = sidecar
 	_check(cold.load_state() and cold.records[id]["mode"] == "recovering", "Full scene teardown and cold load do not heal a withdrawn identity")
+	_check(cold.records.size() == 13 and NpcWorldState.life_id(id) == id+":opening:1","Cold load retains all thirteen canonical records and the original same-life identity")
 	flow = preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
 	flow.save_path_override = path_prefix + "_profile.json"
 	root.add_child(flow)

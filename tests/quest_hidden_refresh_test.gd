@@ -1,7 +1,9 @@
 extends SceneTree
 var failures: int=0
 var checks: int=0
-func _initialize() -> void: _run.call_deferred()
+func _initialize() -> void:
+	Engine.physics_ticks_per_second = 120 if "--hz=120" in OS.get_cmdline_user_args() else 60
+	_run.call_deferred()
 func check(ok: bool,title: String) -> void:
 	checks+=1
 	if not ok: failures+=1
@@ -16,8 +18,12 @@ func _run() -> void:
 	var before: String=FileAccess.get_file_as_string(profile.save_path)
 	var journal: QuestJournal=flow.active_scene.gear.modal.journal
 	var original: int=journal.quest_list.get_child(0).get_instance_id()
+	var nav: QuestNavigator=flow.active_scene.gear.modal.get_node("QuestNavigator") as QuestNavigator
+	nav.track(&"explored")
 	journal.hide(); profile.opening_progress=OpeningProgress.with_event(profile.opening_progress,&"explored"); profile.changed.emit()
 	check(journal._projection_dirty and journal.quest_list.get_child(0).get_instance_id()==original,"Hidden publication keeps the existing button tree and marks it dirty")
+	nav.update_navigation()
+	check(nav.tracked_id()==&"explored" and nav.state["status"]=="reward_pending" and not nav.visible and journal._projection_dirty and journal.quest_list.get_child(0).get_instance_id()==original,"Hidden canonical change refreshes pending-insight navigation without rebuilding the UI tree")
 	profile.changed.emit(); profile.changed.emit()
 	check(journal.quest_list.get_child(0).get_instance_id()==original,"Repeated hit publications coalesce while hidden")
 	var key:=InputEventKey.new(); key.physical_keycode=KEY_M; key.pressed=true; Input.parse_input_event(key)

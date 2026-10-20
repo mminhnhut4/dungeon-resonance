@@ -178,7 +178,10 @@ func refresh_visual() -> void:
 	_material.set_shader_parameter("opacity", opacity)
 	_material.set_shader_parameter("animation_phase", visual_progress)
 	var melee: bool = _snapshot.weapon_definition.attack_kind == &"melee"
-	crescent.visible = melee and weapon.phase != Weapon.Phase.WINDUP and opacity > 0.002
+	# A thrust uses the narrow committed hitbox and the existing forward ribbon.
+	# The 120-degree crescent belongs only to sweeping melee motions.
+	var sweeping_melee: bool = melee and _step.motion != &"thrust"
+	crescent.visible = sweeping_melee and weapon.phase != Weapon.Phase.WINDUP and opacity > 0.002
 	var crescent_elapsed: float = weapon._phase_duration - weapon._phase_remaining
 	if weapon.phase == Weapon.Phase.RECOVERY:
 		crescent_elapsed += _step.active_seconds
@@ -202,7 +205,7 @@ func refresh_visual() -> void:
 		blade_light.energy = (0.25 + committed_quality * 0.06) * (0.9 + sin(visual_progress * PI) * 0.1)
 	if _last_phase != weapon.phase or absf(_last_progress - arc_progress) > 0.002:
 		_build_mesh(arc_progress)
-		if melee:
+		if sweeping_melee:
 			_build_crescent(sweep_progress)
 		_last_phase = weapon.phase
 		_last_progress = arc_progress
@@ -402,3 +405,23 @@ func _exit_tree() -> void:
 	_step = null
 	weapon = null
 	feedback = null
+
+
+func prepare_first_draw() -> void:
+	# Only an unbound presentation copy may use this startup sample. It never
+	# commits a weapon, emits a hit, changes a clock or touches an actor.
+	if is_instance_valid(weapon): return
+	set_process(false)
+	var sample := AttackSnapshot.new()
+	sample.weapon_definition = preload("res://data/weapons/ancient_sword.tres")
+	_on_attack_committed(sample)
+	_build_mesh(0.5)
+	_build_crescent(0.5)
+	ribbon.show()
+	crescent.show()
+	crescent_ink.show()
+	slash_sprite.show()
+	crescent.self_modulate = Color.WHITE
+	_material.set_shader_parameter("opacity", 0.8)
+	_crescent_material.set_shader_parameter("opacity", 0.8)
+	_slash_material.set_shader_parameter("opacity", 0.8)

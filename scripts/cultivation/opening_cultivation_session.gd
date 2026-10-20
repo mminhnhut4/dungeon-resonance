@@ -44,6 +44,8 @@ func initialize(permanent: SanctuaryProfile, owner_node: Node, seed_override: in
 			error=profile.last_commit.get("error","initialization_failed"); return false
 	if not profile.compact_cultivation_receipts():
 		error=profile.last_commit.get("error","cultivation_compaction_failed"); return false
+	if not profile.ease_opening_cultivation():
+		error=profile.last_commit.get("error","cultivation_tuning_failed"); return false
 	initialized=Model.valid(profile.cultivation_progress,profile.material_stash)
 	if not initialized: error="invalid_cultivation"
 	profile.changed.connect(_profile_changed)
@@ -76,8 +78,21 @@ func detach_scene() -> void:
 
 func snapshot() -> Dictionary:
 	var data: Dictionary = profile.cultivation_progress.duplicate(true) if profile!=null else {}
-	data.merge({"ready":initialized and not profile.read_only,"error":error,"materials":profile.material_stash.duplicate() if profile!=null else {},"souls":profile.souls if profile!=null else 0,"proofs":profile.boss_proofs.duplicate() if profile!=null else {},"proposal_not_final":true,"training_actor":training_actor,"npc_eligible":life!=null and not life.capture(Model.NPC,false).is_empty()},true)
+	data.merge({"ready":initialized and not profile.read_only,"error":error,"materials":_cost_materials(_safe_carried_inventory()),"souls":profile.souls if profile!=null else 0,"proofs":profile.boss_proofs.duplicate() if profile!=null else {},"proposal_not_final":true,"training_actor":training_actor,"npc_eligible":life!=null and not life.capture(Model.NPC,false).is_empty()},true)
 	return data
+
+func _safe_carried_inventory() -> GearInventory:
+	if profile == null or profile.hub_inventory_quarantined or not scene is PrologueHub: return null
+	var economy: EconomySession = scene.get("economy") as EconomySession
+	var gear: GearSession = scene.get("gear") as GearSession
+	if economy == null or gear == null or not economy.persist_safe_inventory or not economy.hub_access or economy._busy or economy.profile != profile or economy.inventory != gear.inventory: return null
+	return gear.inventory
+
+func _cost_materials(carried: GearInventory) -> Dictionary:
+	if profile == null: return {}
+	var materials: Dictionary = profile.material_stash.duplicate()
+	for id: StringName in [&"crystal",&"dust"]: materials[id]=int(carried.materials.get(id,0)) if carried != null else 0
+	return materials
 
 func _profile_changed() -> void:
 	if not _busy: _sync_insights()
@@ -92,16 +107,27 @@ func _sync_insights() -> void:
 
 func _commit(kind: String, args: Dictionary, fence: Dictionary = {}) -> Dictionary:
 	if _busy or not initialized or profile.read_only: return {"ok":false,"error":"profile_unavailable"}
+	var carried: GearInventory = null
+	if kind in ["train","breakthrough","craft_pill"]:
+		carried=_safe_carried_inventory()
+		if carried == null: return {"ok":false,"error":"safe_carried_inventory_required"}
 	_busy=true
 	var model_args: Dictionary = args.duplicate(true)
 	var ability_choice: String = str(model_args.get("branch_id","")); model_args.erase("branch_id")
 	var event_id: String = "cult_%d" % int(profile.cultivation_progress["next_event"])
-	var proposal: Dictionary = Model.propose(profile.cultivation_progress,profile.material_stash,profile.souls,profile.boss_proofs,kind,model_args,event_id)
+	var materials: Dictionary = _cost_materials(carried) if carried != null else profile.material_stash
+	var proposal: Dictionary = Model.propose(profile.cultivation_progress,materials,profile.souls,profile.boss_proofs,kind,model_args,event_id)
 	var result: Dictionary = proposal
 	if proposal.get("ok",false):
 		var guard: Callable = Callable()
 		if not fence.is_empty(): guard=life.matches.bind(fence) if life!=null else Callable()
-		if not profile.commit_cultivation(proposal,fence,guard,ability_choice): result=profile.last_commit.duplicate(true)
+		var economy: EconomySession = scene.get("economy") as EconomySession if carried != null else null
+		# The inventory listener must not start a second save or retain its old
+		# rollback ledger while this profile transaction publishes its result.
+		if economy != null: economy._busy=true
+		if not profile.commit_cultivation(proposal,fence,guard,ability_choice,carried): result=profile.last_commit.duplicate(true)
+		elif economy != null: economy.changed.emit()
+		if economy != null: economy._busy=false
 	error=result.get("error","")
 	# Keep ownership through publication: a UI listener cannot create another
 	# fresh command while the first button's quote is still being published.

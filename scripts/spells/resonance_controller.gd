@@ -1,6 +1,8 @@
 class_name ResonanceController
 extends Node
 ## Active catalyst, exact recipes, immutable cast commit and persistent cooldowns.
+const CAST_ENERGY_COST: float = 30.0
+var foundation_resonance_enabled: bool = false
 
 signal resonance_prepared(definition: ResonanceDefinition)
 signal resonance_triggered(attack_id: int)
@@ -79,13 +81,13 @@ func cooldown_remaining() -> float:
 
 
 func can_cast() -> bool:
-	return casting_enabled and is_instance_valid(executor) and get_recipe() != null and cooldown_remaining() <= 0.000001 and (actor == null or actor.energy.can_spend(30.0))
+	return casting_enabled and is_instance_valid(executor) and get_recipe() != null and cooldown_remaining() <= 0.000001 and (actor == null or actor.energy.can_spend(CAST_ENERGY_COST))
 
 
 func commit_cast() -> SpellSnapshot:
 	if not can_cast():
 		return null
-	if not actor.energy.spend(30.0):
+	if not actor.energy.spend(CAST_ENERGY_COST):
 		return null
 	var recipe: ResonanceDefinition = get_recipe()
 	var spell := SpellSnapshot.new()
@@ -132,6 +134,7 @@ func commit_cast() -> SpellSnapshot:
 		spell.poison_stacks = maxi(spell.poison_stacks, rune.poison_stacks)
 		spell.poison_percent = rune.poison_percent
 		spell.poison_seconds = rune.poison_seconds
+	FoundationResonance.apply(spell,recipe,foundation_resonance_enabled)
 	if catalyst_a.runtime_state.installed_rune_ids.has(&"fire") or catalyst_a.runtime_state.installed_rune_ids.has(&"lightning"):
 		spell.damage *= element_damage_multiplier
 		spell.explosion_damage *= element_damage_multiplier

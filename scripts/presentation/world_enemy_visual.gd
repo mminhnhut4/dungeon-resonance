@@ -4,6 +4,7 @@ extends Node2D
 
 const FLASH: Shader = preload("res://shaders/hit_flash.gdshader")
 const SOLID_ALPHA_CACHE: StringName = &"world_enemy_solid_geometry_v1"
+const OPENING_SKILL_ART: Script = preload("res://scripts/presentation/opening_enemy_skill_art.gd")
 var actor: BaseEnemy
 var sprite: Sprite2D
 var geometry: Dictionary = {}
@@ -26,6 +27,7 @@ var _was_grounded: bool = false
 var _landing_remaining: float = 0.0
 var sweep_vfx: GuardSweepVFX
 var body_frames: GuardBodyFrames
+var opening_skill_art: OpeningEnemySkillArt
 
 func bind(target: BaseEnemy) -> void:
 	actor = target
@@ -62,6 +64,10 @@ func bind(target: BaseEnemy) -> void:
 		sweep_vfx = GuardSweepVFX.new()
 		add_child(sweep_vfx)
 		sweep_vfx.bind(actor, self)
+	if actor.definition.id==&"ancient_guard" and body_frames!=null and get_tree().get_nodes_in_group(&"opening_enemy_skill_art").size()<8:
+		opening_skill_art = OPENING_SKILL_ART.new() as OpeningEnemySkillArt
+		add_child(opening_skill_art)
+		opening_skill_art.bind(actor,body_frames)
 
 func _configure_sprite(texture: Texture2D, height: float) -> Dictionary:
 	# Very faint atmospheric edge pixels must not become the ground pivot.
@@ -177,16 +183,21 @@ func _physics_process(delta: float) -> void:
 		motion.rotation = 0.0
 		motion.scale = Vector2.ONE
 		body_frames.seek_actor(walk_phase,displayed_facing,distance>0.001 and distance<32.0)
-	if state == &"dead": opacity = maxf(0.0, 1.0 - actor.state_time / 0.3)
+	if is_instance_valid(opening_skill_art): opening_skill_art.sample(step_delta,distance,grounded)
+	if state == &"dead":
+		opacity = 1.0-smoothstep(0.18,0.30,actor.state_time) if body_frames!=null else maxf(0.0,1.0-actor.state_time/0.3)
 	if not geometry.is_empty(): EnemySpriteArt.set_facing(sprite, geometry["foot_pixel"], displayed_facing < 0)
-	sprite.modulate = Color(1, 0.38, 0.30, opacity) if actor.flash_remaining > 0.0 else Color(1, 0.50, 0.40, opacity) if actor.enraged else Color(1, 1, 1, opacity)
-	_material.set_shader_parameter("flash", 1.0 if actor.flash_remaining > 0.075 else 0.0)
+	_apply_hit_tint(opacity)
 	shatter_remaining = maxf(0.0, shatter_remaining - delta)
 	if actor.health is EnemyShieldHealth:
 		var current: float = (actor.health as EnemyShieldHealth).current_shield
 		if _last_shield > 0.0 and current <= 0.0: shatter_remaining = 0.4
 		_last_shield = current
 	queue_redraw()
+
+func _apply_hit_tint(opacity: float) -> void:
+	sprite.modulate = Color(1, 0.38, 0.30, opacity) if actor.flash_remaining > 0.0 else Color(1, 0.50, 0.40, opacity) if actor.enraged else Color(1, 1, 1, opacity)
+	_material.set_shader_parameter("flash", 1.0 if actor.flash_remaining > 0.075 else 0.0)
 
 func _update_facing(state: StringName) -> void:
 	if state in [&"telegraph", &"attack"]:
@@ -204,6 +215,10 @@ func _on_visual_hit(event: DamageEvent, result: DamageResult) -> void:
 	if actor.state_machine.get_state_id() != &"attack":
 		active_cue_remaining = 0.0
 		trail.clear()
+	# Hit-stop prevents the next physics sample, so show the already accepted
+	# contact on the current frame. Keep the existing actor-owned flash timer.
+	_apply_hit_tint(sprite.modulate.a)
+	queue_redraw()
 
 func _exit_tree() -> void:
 	if body_frames != null: body_frames.release()

@@ -197,8 +197,8 @@ func _test_opening() -> void:
 	await _step(3)
 	hub = flow.active_scene as ExteriorHub
 	var fresh: GearItem = hub.gear.inventory.items[hub.gear.inventory.equipped_weapon_uid]
-	_check(fresh.definition_id == &"ancient_sword_bounty" and fresh.uid != lost_uid and fresh.enhancement_level == 0 and fresh.drop_bonus == 0.0 and fresh.affix_id == &"" and fresh.quality == GearItem.Quality.COMMON, "Death retains learned combo on one fresh plain starter UID, without restoring lost bonuses")
-	_check(not hub.gear.inventory.items.has(lost_uid) and not hub.economy.claim_bounty(&"golem_hunt") and bank.unlocked_weapons.count(&"ancient_sword_bounty") == 1, "Dead reward UID is absent and neither bounty nor permanent unlock can duplicate")
+	_check(fresh.definition_id == &"ancient_sword_bounty" and fresh.uid == lost_uid and fresh.enhancement_level == 4 and fresh.drop_bonus == 0.05 and fresh.affix_id == &"" and fresh.quality == GearItem.Quality.COMMON, "Death retains the exact equipped reward UID, learned combo and earned enhancement/affix data")
+	_check(hub.gear.inventory.items.has(lost_uid) and not hub.economy.claim_bounty(&"golem_hunt") and bank.unlocked_weapons.count(&"ancient_sword_bounty") == 1, "Carried reward UID remains and neither bounty nor permanent unlock can duplicate")
 	var stored: SanctuaryProfile = _reader(bank)
 	var restored: GearInventory = GearInventoryCodec.decode(stored.hub_inventory)
 	_check(restored != null and restored.items[restored.equipped_weapon_uid].definition_id == &"ancient_sword_bounty" and stored.souls == 5 and stored.opening_objectives()["complete"], "Death/reload preserves combo preparation, banked Souls, first upgrade and objectives")
@@ -304,7 +304,7 @@ func _test_death_escrow() -> void:
 	run.player.health.apply_damage(9999)
 	_check(not flow.show_hub(true) and flow.active_scene == run, "Death cannot erase an already attempted permanent reward save")
 	bank.reject = false
-	_check(flow.retry_pending_return() and bank.souls == 25 and bank.coins == 0, "Explicit death recovery banks the earned Soul once and loses carried coins")
+	_check(flow.retry_pending_return() and bank.souls == 25 and bank.coins == 12, "Explicit death recovery banks the earned Soul and carried coins exactly once")
 	await _step(3)
 	_check(flow.active_scene.gear.inventory.run_coins == 0 and _reader(bank).souls == 25, "Death recovery remains durable with a fresh preparation ledger")
 	flow.queue_free()

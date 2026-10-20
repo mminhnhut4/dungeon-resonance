@@ -61,7 +61,11 @@ func _configure_focus(rows: Array[Array]) -> void:
 	var enabled: Array[Control] = []
 	for row: Array in rows:
 		for child: Control in row:
-			if child is Button and not child.disabled: enabled.append(child)
+			if child is Button and not child.disabled:
+				enabled.append(child)
+				if child is ServiceItemCard:
+					for input: Control in child.extra_focus:
+						if input.visible and not (input is Button and input.disabled): enabled.append(input)
 	for index: int in enabled.size():
 		var child: Control = enabled[index]
 		child.focus_previous = child.get_path_to(enabled[index - 1]) if index > 0 else NodePath()

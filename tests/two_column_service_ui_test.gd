@@ -42,6 +42,8 @@ func _run() -> void:
 	root.add_child(hub)
 	current_scene = hub
 	await _frames(8)
+	hub.economy.persist_safe_inventory = true
+	_check(hub.economy._save_safe(), "Standalone Hub fixture persists its carried inventory like GameFlow")
 	var coins_before: int = hub.profile.coins
 	var stash_before: Dictionary = hub.profile.material_stash.duplicate()
 	var count_before: int = hub.gear.inventory.items.size()
@@ -113,7 +115,7 @@ func _run() -> void:
 					await _action(&"ui_down")
 					_check(root.gui_get_focus_owner() == cards[3], "Down keeps the right column")
 					await _action(&"ui_focus_prev")
-					_check(root.gui_get_focus_owner() == cards[2], "Previous focus follows row-major order")
+					_check(root.gui_get_focus_owner() == (cards[2].extra_focus.back() if not cards[2].extra_focus.is_empty() else cards[2]), "Previous focus follows row-major order including quantity controls")
 				var last: Button = hub.station_content.get_node("WithdrawMaterial_detox_root") as Button
 				last.grab_focus()
 				await _frames(5)
@@ -154,6 +156,11 @@ func _run() -> void:
 		await _action(&"ui_accept")
 		await _frames(5)
 		_check(hub.profile.coins == coins_before and hub.gear.inventory.items.size() == count_before and hub.station_content.has_node("ConfirmPurchase"),"Accept first opens purchase confirmation without spending")
+		if not hub.station_content.has_node("ConfirmPurchase"):
+			hub.queue_free()
+			await _frames(8)
+			quit(1)
+			return
 		(hub.station_content.get_node("ConfirmPurchase") as Button).grab_focus()
 		await _frames(2)
 		await _action(&"ui_accept")

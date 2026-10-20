@@ -38,6 +38,7 @@ func _run() -> void:
 	root.add_child(hub)
 	current_scene = hub
 	await _frames(8)
+	hub.gear.inventory.materials[&"crystal"] = 2
 	var coins_before: int = hub.profile.coins
 	var stash_before: Dictionary = hub.profile.material_stash.duplicate()
 	var count_before: int = hub.gear.inventory.items.size()
@@ -78,7 +79,7 @@ func _run() -> void:
 				for id: StringName in MaterialCatalog.IDS:
 					if hub.profile.material_stash[id] > 0: expected_ids.append(id)
 				for child: Node in hub.station_content.get_children():
-					if child is ServiceItemCard:
+					if child is ServiceItemCard and String(child.name).begins_with("WithdrawMaterial_"):
 						rows += 1
 						ids.append(StringName(String(child.name).trim_prefix("WithdrawMaterial_")))
 						_check(child.item_title.text.length() > 0 and "Trong kho" in child.quantity_label.text, "Storage row has actual name/count and mapped image or pending state")
@@ -92,7 +93,7 @@ func _run() -> void:
 				await _frames(3)
 			if service == &"merchant":
 				_check(hub.station_content.get_node("BuyWeapon_common_sword_0") is Button, "Shop preserves common_sword quote/action NodePath")
-				_check(hub.station_content.get_node("SellMaterial_crystal") is ServiceItemCard, "Sale uses illustrated card with existing callback")
+				_check(hub.station_content.get_node("SellBagMaterial_crystal") is ServiceItemCard, "Carried-material sale uses illustrated card with owner callback")
 			for child: Node in hub.station_content.get_children():
 				if child is ServiceItemCard:
 					_check(child.size.x <= hub.station_scroll.size.x + 1 and child.size.y >= (76 if child.compact else 96), "Item row wraps inside scroll and keeps generous hit area")

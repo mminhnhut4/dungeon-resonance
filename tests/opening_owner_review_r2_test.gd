@@ -106,7 +106,7 @@ func _realm_replay() -> void:
 	var a: Dictionary = _propose(p,"realm_a","breakthrough",{"actor_id":"player"})
 	_check(p.try_add_souls(1) and not p.commit_cultivation(a,{},Callable(),"tether_sigil") and p.cultivation_abilities()["learned_ids"].is_empty() and p.cultivation_progress["actors"]["player"]["stage"]==2,"Uncommitted stale realm proposal cannot charge or unlock after reward")
 	a=_propose(p,"realm_a","breakthrough",{"actor_id":"player"})
-	_check(p.commit_cultivation(a,{},Callable(),"tether_sigil") and p.souls==96 and p.cultivation_abilities()["learned_ids"]==["tether_sigil"],"Fresh realm A pays five Souls and unlocks exactly one branch")
+	_check(p.commit_cultivation(a,{},Callable(),"tether_sigil") and p.souls==101 and p.cultivation_abilities()["learned_ids"]==["tether_sigil"],"Fresh realm A preserves Souls under the PC curriculum and unlocks exactly one branch")
 	var economy := EconomySession.new(); economy.initialize(p,GearInventory.new())
 	_check(p.try_add_souls(2) and economy.buy_upgrade(&"max_hp") and p.commit_cultivation(_propose(p,"post_realm_b","mastery")),"Reward/HP/B occur after the branch receipt")
 	var snapshot: String = _snapshot(p); var image: PackedByteArray = FileAccess.get_file_as_bytes(p.save_path)

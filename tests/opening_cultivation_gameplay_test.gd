@@ -39,6 +39,9 @@ func _run() -> void:
 	var fixture := SanctuaryProfile.new(); fixture.save_path=fixture_path
 	fixture.souls=25; fixture.material_stash[&"crystal"]=20; fixture.material_stash[&"dust"]=20
 	fixture.material_stash[&"linen_fiber"]=6
+	var carried_fixture: GearInventory = HubPreparation.starter_inventory(fixture)
+	carried_fixture.materials[&"crystal"]=20; carried_fixture.materials[&"dust"]=20
+	fixture.hub_inventory=GearInventoryCodec.encode(carried_fixture)
 	_check(fixture.save(),"Isolated legacy resource fixture saved")
 	_check(fixture.commit_cultivation(Model.initial_proposal(Model.new_progress(4),fixture.material_stash,fixture.souls,fixture.boss_proofs)),"Seed four commits before either herb becomes visible")
 	flow=preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
@@ -61,33 +64,39 @@ func _run() -> void:
 	hub.open_station(&"training")
 	_check(hub.station_open and hub.station_content.find_child("CultivationStartPlayer",true,false)!=null,"Existing training station contains the explicit cultivation panel")
 	_check(not session.perform("train",{"actor_id":"player","sessions":8,"target_tick":1000}).get("ok",false),"UI cannot invent elapsed pulses or inject raw training commands")
-	_check(session.perform("craft_pill",{"origin_id":"h00_courtyard_01"}).get("ok",false),"Crafting commits dust and herb-to-pill lineage together")
+	hub.economy.persist_safe_inventory=false
+	var blocked_bag: Dictionary = session.perform("craft_pill",{"origin_id":"h00_courtyard_01"})
+	_check(not blocked_bag.get("ok",false) and blocked_bag.get("error")=="safe_carried_inventory_required" and flow.profile.material_stash[&"aptitude_herb"]==1,"Missing safe bag context rejects costs without consuming the lineage herb")
+	hub.economy.persist_safe_inventory=true
+	_check(session.perform("craft_pill",{"origin_id":"h00_courtyard_01"}).get("ok",false),"Crafting commits carried dust and bank herb-to-pill lineage together")
+	_check(hub.gear.inventory.materials[&"dust"]==18 and flow.profile.material_stash[&"dust"]==20 and session.snapshot()["materials"][&"dust"]==18,"Completed craft snapshot restores current bag counts after transaction publication")
 	_check(session.perform("consume",{"actor_id":"player","origin_id":"h00_courtyard_01"}).get("ok",false),"Player explicitly consumes one pill from the shared bank")
 	_check(flow.profile.cultivation_progress["actors"]["player"]["aptitude"]==8 and flow.profile.material_stash[&"aptitude_pill"]==0,"One lineage grants eight aptitude once")
 	_check(not session.perform("consume",{"actor_id":"player","origin_id":"h00_courtyard_01"}).get("ok",false),"Second consumption cannot claim the same aptitude")
 	(hub.station_content.find_child("CultivationStartPlayer",true,false) as Button).pressed.emit()
 	_check(not hub.station_open and hub.player.controls_enabled and session.training_actor=="player","Training button releases modal/time claim before beginning gameplay pulses")
-	var before: int = flow.profile.material_stash[&"crystal"]
+	var before: int = hub.gear.inventory.materials[&"crystal"]
 	paused=true; session._physics_process(600.0); paused=false
-	_check(flow.profile.material_stash[&"crystal"]==before and session.observed_pulses==0,"Pause grants no offline/catch-up training")
+	_check(hub.gear.inventory.materials[&"crystal"]==before and session.observed_pulses==0,"Pause grants no offline/catch-up training")
 	hub.player.controls_enabled=false; session._physics_process(600.0); hub.player.controls_enabled=true
-	_check(flow.profile.material_stash[&"crystal"]==before,"Disabled controls grant no elapsed training")
+	_check(hub.gear.inventory.materials[&"crystal"]==before,"Disabled controls grant no elapsed training")
 	hub.player.health.current_health=0.0; session._physics_process(600.0); hub.player.health.reset_health()
-	_check(flow.profile.material_stash[&"crystal"]==before,"A dead player cannot advance cultivation")
+	_check(hub.gear.inventory.materials[&"crystal"]==before,"A dead player cannot advance cultivation")
 	var freeze_event := DamageEvent.new(); freeze_event.attack_id=90001; freeze_event.root_event_id=90001; freeze_event.melee_hit=true
 	var freeze_result := DamageResult.new(); freeze_result.actual_damage=1.0
 	hub.feedback.on_hit_confirmed(freeze_event,freeze_result)
 	_check(hub.feedback.is_frozen(),"Actual feedback owner activates hitstop in both local and global backends")
 	session._physics_process(600.0); hub.feedback.reset_feedback()
-	_check(flow.profile.material_stash[&"crystal"]==before,"Combat hitstop freezes training even with a large supplied delta")
+	_check(hub.gear.inventory.materials[&"crystal"]==before,"Combat hitstop freezes training even with a large supplied delta")
 	hub.open_station(&"training"); session._physics_process(600.0); hub.close_station()
-	_check(flow.profile.material_stash[&"crystal"]==before,"Station modal contributes no gameplay pulses")
+	_check(hub.gear.inventory.materials[&"crystal"]==before,"Station modal contributes no gameplay pulses")
 	flow.return_save_pending=true; session._physics_process(600.0); flow.return_save_pending=false
-	_check(flow.profile.material_stash[&"crystal"]==before,"Pending shared return/reward save freezes training")
+	_check(hub.gear.inventory.materials[&"crystal"]==before,"Pending shared return/reward save freezes training")
 	_pulse(session,2)
-	_check(flow.profile.material_stash[&"crystal"]==before-1 and flow.profile.cultivation_progress["actors"]["player"]["trained_ticks"]==8,"Exactly two eligible seconds debit one crystal at the requested physics rate")
+	_check(hub.gear.inventory.materials[&"crystal"]==before-1 and flow.profile.cultivation_progress["actors"]["player"]["trained_ticks"]==8,"Exactly two eligible seconds debit one carried crystal at the requested physics rate")
 	session._physics_process(1000.0)
-	_check(flow.profile.material_stash[&"crystal"]==before-2 and flow.profile.cultivation_progress["actors"]["player"]["trained_ticks"]==16,"A stalled frame grants at most the bounded eight pulses")
+	_check(hub.gear.inventory.materials[&"crystal"]==before-2 and flow.profile.cultivation_progress["actors"]["player"]["trained_ticks"]==16,"A stalled frame grants at most the bounded eight pulses")
+	_check(flow.profile.material_stash[&"crystal"]==20 and session.snapshot()["materials"][&"crystal"]==before-2,"Training leaves bank crystals untouched and publishes the final carried amount")
 	session.stop_training()
 	var progress_before: Dictionary = flow.profile.cultivation_progress.duplicate(true)
 	var fake_event := DamageEvent.new(); fake_event.source_id=player_id; fake_event.target_id=hub.dummy.get_instance_id(); fake_event.attack_id=99999; fake_event.root_event_id=99999; fake_event.melee_hit=true
@@ -146,7 +155,8 @@ func _run() -> void:
 			args["branch_id"]="tether_sigil"; flow.profile._writer.fault_plan={"write_candidate":true}
 			_check(not session.perform("breakthrough",args).get("ok",false) and flow.profile.cultivation_abilities()["learned_ids"].is_empty() and FileAccess.get_file_as_bytes(flow.profile.save_path)==before_branch,"Realm/technique IO failure preserves Soul cost and locked abilities in one old image")
 		_check(session.perform("breakthrough",args).get("ok",false) and flow.profile.cultivation_progress["actors"]["player"]["stage"]==stage+1,"Explicit breakthrough stage %d commits its own gates/cost" % (stage+1))
-	_check(flow.profile.souls==20 and flow.profile.boss_proofs[&"golem"]==1,"Final breakthrough spends five Souls and retains the real proof")
+	_check(flow.profile.souls==25 and flow.profile.boss_proofs[&"golem"]==1,"Final breakthrough keeps Souls and retains the real proof under the PC curriculum")
+	_check(hub.gear.inventory.materials[&"dust"]==17 and flow.profile.material_stash[&"dust"]==20,"Pill plus three breakthroughs debit only three carried dust and leave stored dust intact")
 	_check(flow.profile.cultivation_abilities()["learned_ids"]==["tether_sigil"] and session.style_binding.runtime.learned==[&"tether_sigil"] and session.style_binding.runtime.selected==&"tether_sigil","Committed realm installs exactly the selected branch on the existing player")
 	hub.close_station()
 	hub.player.energy.reset(); hub.feedback.reset_feedback(); await _step(5)
@@ -176,13 +186,14 @@ func _run() -> void:
 	life_state.records["pilot_gatherer"]["mode"]="rest"; life_state.records["pilot_gatherer"]["remaining"]=32
 	_check(life_state.save(),"Only the actual life owner checkpoints the isolated exemplar rest")
 	hub.open_station(&"training")
-	_check(session.perform("enroll",{"enabled":true}).get("ok",false),"One real stable NPC opts into bounded shared-bank sponsorship")
+	_check(session.perform("enroll",{"enabled":true}).get("ok",false),"One real stable NPC opts into bounded sponsorship from carried supplies")
 	if not flow.profile.cultivation_progress["actors"].has("pilot_gatherer"):
 		await _abort_fixture(); return
 	hub.close_station(); _check(session.start_training("pilot_gatherer"),"Alive actual NPC can start its sponsored clock")
 	var life_bytes: PackedByteArray = FileAccess.get_file_as_bytes(life_state.save_path)
+	var carried_before_npc: int = hub.gear.inventory.materials[&"crystal"]
 	_pulse(session,2); session.stop_training()
-	_check(flow.profile.cultivation_progress["actors"]["pilot_gatherer"]["energy"]==8 and FileAccess.get_file_as_bytes(life_state.save_path)==life_bytes,"NPC training commits progress/resources without writing a life copy")
+	_check(flow.profile.cultivation_progress["actors"]["pilot_gatherer"]["energy"]==8 and hub.gear.inventory.materials[&"crystal"]==carried_before_npc-1 and flow.profile.material_stash[&"crystal"]==20 and FileAccess.get_file_as_bytes(life_state.save_path)==life_bytes,"NPC training spends one carried crystal and commits progress without writing a life copy")
 	_check(session.start_training("pilot_gatherer"),"A second sponsored interval begins explicitly")
 	for _pulse_index: int in 7: session._physics_process(0.25)
 	life_state.records["pilot_gatherer"]["mode"]="talk"; hub.open_station(&"training")
@@ -197,6 +208,7 @@ func _run() -> void:
 	_check(life_state.save() and not session.start_training("pilot_gatherer"),"Withdrawn NPC never advances or heals through cultivation")
 	var persisted := SanctuaryProfile.new(); persisted.save_path=fixture_path
 	_check(persisted.load_profile() and persisted.cultivation_progress["actors"]["player"]["stage"]==3 and persisted.cultivation_progress["actors"]["pilot_gatherer"]["energy"]==8,"Cold common profile retains completed player and one NPC example")
+	_check(persisted.material_stash==flow.profile.material_stash and int(persisted.hub_inventory["materials"]["crystal"])==hub.gear.inventory.materials[&"crystal"] and int(persisted.hub_inventory["materials"]["dust"])==hub.gear.inventory.materials[&"dust"],"Cold profile preserves separate stored and carried resource ledgers")
 	_check(hub.player.get_instance_id()==player_id,"Opening loop reuses the existing player and world architecture")
 	flow.queue_free(); await _step(3)
 	_check(is_equal_approx(Engine.time_scale,1.0),"Scene teardown releases all owned time claims")

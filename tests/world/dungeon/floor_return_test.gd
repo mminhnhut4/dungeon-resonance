@@ -240,10 +240,11 @@ func _boss_and_defeat() -> void:
 	await _clear_floor(run)
 	_exit(run)
 	_loot(run)
+	var carried_coins: int = run.gear.inventory.run_coins
 	run.player.health.apply_damage(99999)
 	_check(not run.request_floor_return() and flow.show_hub(true), "Death cannot claim a cleared-floor retreat")
 	await _step()
-	_check(flow.profile.coins == 0 and not flow.profile.opening_progress["completed"].has("returned_to_hub"), "Existing defeat discards carried coins without inventing victory")
+	_check(flow.profile.coins == carried_coins and carried_coins > 0 and not flow.profile.opening_progress["completed"].has("returned_to_hub"), "Defeat banks actual carried coins without inventing victory")
 	await _close(flow)
 
 func _capture(name: String) -> void:

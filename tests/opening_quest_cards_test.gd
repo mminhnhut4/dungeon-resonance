@@ -45,7 +45,7 @@ func _old_and_end_state() -> void:
 	var screen: InventoryScreen = hub.gear.modal as InventoryScreen
 	var journal: QuestJournal = screen.journal
 	screen.open_map(); await _step()
-	_check(journal.selected_id == &"golem_defeated" and journal.rows[0]["id"] == &"golem_defeated", "Audited old-save shape opens unfinished bounty first")
+	_check(journal.selected_id == &"golem_defeated" and journal.rows[0]["id"] == PowerProgressionGuide.ID and journal.rows[1]["id"] == &"golem_defeated", "Pinned power route preserves the audited old-save unfinished bounty selection")
 	_check("CẦN LÀM TIẾP" in journal.detail_title.text and "Kiếm Lữ Hành" in journal.objective_label.text and "Vô Danh" in journal.objective_label.text,"Default detail gives action, actual reward and concrete NPC")
 	var button: Button = journal.quest_buttons[&"golem_defeated"]
 	_check(button.has_theme_stylebox_override(&"normal") and button.get_theme_stylebox(&"normal") is StyleBoxTexture and button.text.contains("0/1"),"Active card has gold antique frame and text/counter cues")
@@ -179,7 +179,7 @@ func _reward_loop() -> void:
 	_check(flow.show_hub(true),"Reward-equipped death returns through existing ownership boundary")
 	await _step(8); hub = flow.active_scene as ExteriorHub; hub.npc_population.set_process(false)
 	kit = hub.gear.inventory
-	_check(bank.bounty_claimed and not kit.items.has(old_uid) and not hub.economy.claim_bounty(WorldProgressionCatalog.BOUNTY_ID),"Death loses old reward UID while permanent receipt forbids another payout")
+	_check(bank.bounty_claimed and kit.items.has(old_uid) and not hub.economy.claim_bounty(WorldProgressionCatalog.BOUNTY_ID),"Death retains the reward UID while permanent receipt forbids another payout")
 	var path: String = bank.save_path; await _close()
 	hub = await _open(path); screen = hub.gear.modal as InventoryScreen; screen.open_map(); await _step()
 	_check(flow.profile.bounty_claimed and _row(screen.journal,&"golem_defeated")["card"]["complete"] and "Đã nhận" in _row(screen.journal,&"golem_defeated")["card"]["reward_status"],"Cold reload displays claimed reward accurately after death")
@@ -196,10 +196,10 @@ func _canonical_counter() -> void:
 	journal.bind_progress(profile,kit)
 	root.add_child(journal); await _step()
 	var before: String = _snapshot(profile,kit)
-	_check(journal.rows.size()==7 and "6 / 6" in journal.state_label.text and "Đã hoàn tất" in journal.state_label.text,"Six completed canonical milestones show 6/6 with the derived cultivation goal")
+	_check(journal.rows.size()==9 and journal.quest_buttons.has(PowerProgressionGuide.ID) and journal.quest_buttons.has(&"tan_dang_q1") and _row(journal,&"tan_dang_q1")["card"]["optional"] and "6 / 6" in journal.state_label.text and "Đã hoàn tất" in journal.state_label.text,"Six canonical milestones stay6/6 with read-only power guidance, cultivation and optional Tàn Đăng goals")
 	journal.extension_rows_provider = func() -> Array[Dictionary]: return [{"id":&"qa_completed_extra","title":"QA extra","body":"Read-only extra","done":true}]
 	journal.refresh()
-	_check(journal.rows.size()==8 and "6 / 6" in journal.state_label.text,"Completed extension rows never increase the canonical counter")
+	_check(journal.rows.size()==10 and "6 / 6" in journal.state_label.text,"Completed extension and power rows never increase the canonical counter")
 	profile.cultivation_progress["actors"]["player"]["stage"] = 3
 	profile.cultivation_progress["actors"]["player"]["energy"] = profile.cultivation_progress["config"]["energy_thresholds"][2]
 	profile.cultivation_progress["actors"]["player"]["mastery"] = profile.cultivation_progress["config"]["mastery_thresholds"][2]
@@ -222,19 +222,21 @@ func _early_guidance() -> void:
 	var before: String = _snapshot(profile,kit)
 	var rows: Array[Dictionary] = OpeningQuestCards.decorate(MapQuestProjection.rows(profile,kit),profile,kit)
 	_check(rows.any(func(row: Dictionary) -> bool: return row["id"] == &"cultivation_breakthrough" and row["card"]["optional"]),"Cultivation route is visible before all opening milestones are complete")
-	_check("mộc nhân" in OpeningProgressionGuide.cultivation_next_step(profile),"Fresh player receives the concrete mastery action")
+	_check("mộc nhân" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Fresh player receives the concrete mastery action")
 	_check(_snapshot(profile,kit) == before,"Guidance does not grant training or mutate resources")
 	var actor: Dictionary = profile.cultivation_progress["actors"]["player"]
 	actor["mastery"] = 8
-	_check("KHO CĂN CỨ" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing bank crystal points to collection and deposit")
-	profile.material_stash[&"crystal"] = 1
-	_check("đóng bảng" in OpeningProgressionGuide.cultivation_next_step(profile),"Funded training tells player to close the menu")
+	_check("Kiếm từ quái/rương" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Missing carried crystal points to collection and pickup")
+	kit.materials[&"crystal"] = 1
+	_check("đóng bảng" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Funded training tells player to close the menu")
 	actor["energy"] = 40
-	_check("ĐƯỜNG BỘ" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing insight names the actual road interaction")
-	actor["insight_ids"] = ["explored"]
-	_check("Bột Phép" in OpeningProgressionGuide.cultivation_next_step(profile),"Missing breakthrough cost names its bank material")
-	profile.material_stash[&"dust"] = 4
-	_check("Đủ điều kiện" in OpeningProgressionGuide.cultivation_next_step(profile),"Ready player receives the exact breakthrough destination")
+	actor["stage"] = 1
+	_check("ĐƯỜNG BỘ" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Missing insight names the actual road interaction")
+	actor["insight_ids"] = ["explored", "thanh_vy_met"]
+	actor["stage"] = 2
+	_check("Bột Phép" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Missing breakthrough cost names its carried material")
+	kit.materials[&"dust"] = 4
+	_check("Đủ điều kiện" in OpeningProgressionGuide.cultivation_next_step(profile,kit),"Ready player receives the exact breakthrough destination")
 
 func _run() -> void:
 	var allowed: String = OS.get_environment("DUNGEON_QA_DATA_ROOT").replace("\\","/").trim_suffix("/")

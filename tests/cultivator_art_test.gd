@@ -32,9 +32,10 @@ func _run() -> void:
 		await _exercise(id)
 	hub.return_to_hub(false)
 	await _step(3)
-	_check(get_nodes_in_group(&"npc_pilot_actor").is_empty(),"Leaving the road releases both art actors")
+	_check(get_nodes_in_group(&"npc_pilot_actor").size() == 1 and hub.npc_population.actors.has(TanDangProgress.MOC),"Leaving the road releases its art actors and restores only the authored hub keeper")
 	flow.queue_free()
 	await _step(5)
+	_check(get_nodes_in_group(&"npc_pilot_actor").is_empty(),"Closing the actual flow releases every art actor including its hub keeper")
 	print("RESULT cultivator_art checks=%d failures=%d hz=%d" % [checks,failures,Engine.physics_ticks_per_second])
 	quit(0 if failures == 0 else 1)
 

@@ -60,7 +60,7 @@ func _check(condition: bool, label: String) -> void:
 func _fixture(label: String) -> CountedState:
 	var state := CountedState.new()
 	state.save_path = directory + "/" + label + "/profile.json.npc_v1.json"
-	_check(state.load_state() and state.save(),label + ": clean schema4 owner commits through existing IO")
+	_check(state.load_state() and state.save(),label + ": clean schema5 owner commits through existing IO")
 	return state
 
 func _write(path: String, payload: Dictionary) -> bool:
@@ -80,7 +80,7 @@ func _reader(path: String) -> CountedState:
 
 func _policy() -> void:
 	var state: CountedState = _fixture("policy")
-	_check(state.records.size() == 10 and NpcWorldState.valid(state.snapshot()),"Exactly six residents and four cultivators exist in schema4")
+	_check(state.records.size() == 13 and NpcWorldState.valid(state.snapshot()),"Schema5 preserves six residents and four legacy cultivators, adding exactly three sect identities")
 	var life: String = NpcWorldState.life_id(RESIDENT)
 	var debt: int = state.records[RESIDENT]["debt"]
 	state.receive_hit(RESIDENT,1.0,0.0)
@@ -148,6 +148,7 @@ func _legacy(schema: int) -> Dictionary:
 	data["npc_schema"] = schema
 	data["tick"] = 90
 	for id: String in NpcPilotCatalog.CULTIVATOR_IDS: data["records"].erase(id)
+	for id: String in NpcPilotCatalog.TAN_DANG_IDS: data["records"].erase(id)
 	if schema == 1: data["records"].erase("pilot_bridge_keeper")
 	for id: String in data["records"]:
 		var record: Dictionary = data["records"][id]
@@ -172,21 +173,22 @@ func _migration(schema: int) -> void:
 	var canonical_bytes: PackedByteArray = FileAccess.get_file_as_bytes(canonical_path)
 	var state: CountedState = _reader(path)
 	_check(state.load_state() and not state.read_only and state.save_calls == 1,"Schema%d migrates with one durable owner transaction" % schema)
-	_check(state.snapshot()["npc_schema"] == 4 and state.records.size() == 10 and NpcWorldState.valid(state.snapshot()),"Migration creates exact schema4 identities only after validation")
+	_check(state.snapshot()["npc_schema"] == NpcWorldState.SCHEMA and state.records.size() == 13 and NpcWorldState.valid(state.snapshot()),"Migration creates exact schema5 identities only after validation")
 	_check(FileAccess.get_file_as_bytes(path+".bak") == original,"Migration backup preserves the entire original sidecar byte for byte")
 	var immutable_path: String = path + ".pre_nonlethal_v%d.json" % schema
 	_check(FileAccess.get_file_as_bytes(immutable_path) == original,"Immutable premigration source is byte-identical to the validated legacy primary")
 	_check(state.records[RESIDENT]["legacy_death"] == legacy["records"][RESIDENT]["death"],"Every field of the original terminal fact remains in legacy_death")
-	_check(state.records[RESIDENT]["death"].is_empty() and state.records[RESIDENT]["mode"] == "recovering" and state.records[RESIDENT]["hp"] == 1.0,"Old terminal resident is withdrawn pending a real expedition return")
+	_check(state.records[RESIDENT]["death"] == legacy["records"][RESIDENT]["death"] and state.records[RESIDENT]["mode"] == "dead" and state.records[RESIDENT]["hp"] == 0.0,"Old terminal resident remains the same terminal life under permanent-death migration")
 	for field: String in ["episode","trust","fear","debt","greeted","room","x","target"]:
 		_check(state.records[RESIDENT][field] == legacy["records"][RESIDENT][field],"Migration retains old " + field)
 	_check(FileAccess.get_file_as_bytes(canonical_path) == canonical_bytes,"NPC migration cannot rewrite social/courier/cultivation receipts or UID data")
 	var cold: CountedState = _reader(path)
-	_check(cold.load_state() and cold.save_calls == 0 and cold.snapshot() == state.snapshot(),"Cold schema4 load cannot replay migration or manufacture another life")
+	_check(cold.load_state() and cold.save_calls == 0 and cold.snapshot() == state.snapshot(),"Cold schema5 load cannot replay migration or manufacture another life")
 	var archive: Dictionary = cold.records[RESIDENT]["legacy_death"].duplicate(true)
-	_check(cold.recover_after_expedition(),"Migrated NPC can return under the new expedition policy")
-	cold.receive_hit(RESIDENT,1.0,0.0)
-	_check(cold.records[RESIDENT]["episode"] == 4 and cold.records[RESIDENT]["legacy_death"] == archive and NpcWorldState.valid(cold.snapshot()),"A later injury advances episode without overwriting the historical event")
+	var terminal: Dictionary = cold.records[RESIDENT].duplicate(true)
+	_check(cold.recover_after_expedition() and cold.records[RESIDENT] == terminal,"Expedition recovery never revives a migrated terminal NPC")
+	_check(not cold.receive_hit(RESIDENT,1.0,0.0),"A later hit is rejected for the historical terminal life")
+	_check(cold.records[RESIDENT]["episode"] == 3 and cold.records[RESIDENT]["legacy_death"] == archive and cold.records[RESIDENT] == terminal and NpcWorldState.valid(cold.snapshot()),"Rejected harm preserves the episode and the complete historical death")
 	_check(FileAccess.get_file_as_bytes(immutable_path) == original,"Recovery and later saves never rotate the immutable premigration source")
 
 func _migration_faults() -> void:
@@ -201,7 +203,7 @@ func _migration_faults() -> void:
 		_check(SanctuaryProfile.CommitWriter.canonical(state.snapshot()) == SanctuaryProfile.CommitWriter.canonical(legacy) and FileAccess.get_file_as_bytes(path) == bytes,stage + ": rollback preserves the complete parsed old view and exact primary bytes")
 		_check(not state.save() and not state.recover_after_expedition(),stage + ": quarantined instance cannot overwrite or recover old records")
 		var retry: CountedState = _reader(path)
-		_check(retry.load_state() and retry.records.size() == 10,stage + ": fresh load can retry the same valid migration")
+		_check(retry.load_state() and retry.records.size() == 13,stage + ": fresh load can retry the same valid migration")
 
 func _immutable_backup_guards() -> void:
 	var path: String = directory + "/immutable_conflict/profile.json.npc_v1.json"

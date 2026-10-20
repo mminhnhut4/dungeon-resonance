@@ -32,7 +32,7 @@ func _sample(label: String, profile: SanctuaryProfile, inventory: GearInventory)
 	examples[label] = MapQuestProjection.rows(profile,inventory)
 
 func _journal_row(journal: QuestJournal,id: StringName) -> Dictionary:
-	for row: Dictionary in journal.rows:
+	for row: Dictionary in journal.projection_rows():
 		if row["id"] == id: return row
 	return {}
 
@@ -58,7 +58,7 @@ func _base_gain_copy(inventory: GearInventory) -> void:
 	var next: Dictionary = Model.propose(profile.cultivation_progress,profile.material_stash,profile.souls,profile.boss_proofs,"train",{"actor_id":"player","sessions":1,"target_tick":24},"copy_next_session")
 	_check(next.get("ok",false) and int(next["progress"]["actors"]["player"]["energy"])-int(actor["energy"]) == 9, "Actual next session gain differs from the base eight")
 	var hint: String = _guide(&"first_upgrade",profile,inventory)["body"]
-	_check("nhận 8 năng lượng cơ bản" in hint and "Tư chất ảnh hưởng lượng thực nhận" in hint and not "nhận 8 năng lượng." in hint, "Copy labels configured base gain rather than promising exact session reward")
+	_check("nhận 8 năng lượng cơ bản" in hint and "tư chất ảnh hưởng lượng thực nhận" in hint.to_lower() and not "nhận 8 năng lượng." in hint, "Copy labels configured base gain rather than promising exact session reward")
 	_check(_state(profile,inventory) == before and profile.saves == 0, "Copy projection and model preview leave authoritative state untouched")
 
 func _pure_contracts() -> void:
@@ -85,17 +85,17 @@ func _pure_contracts() -> void:
 	inventory.unequip_equipment(0)
 	_check(_guide(&"explored",profile,inventory)["status"] == "equip_needed", "Owned usable weapon gives an equip instruction")
 	inventory.equip_equipment(sword.uid)
-	_check(_guide(&"reward_collected",profile,inventory)["blockers"] == ["bank_stone_required","bank_coins_required"], "No ingredients reports both real deficits")
+	_check(_guide(&"reward_collected",profile,inventory)["blockers"] == ["carried_stone_required","bank_coins_required"], "No ingredients reports both real deficits")
 	_sample("no_upgrade_ingredients",profile,inventory)
 	inventory.materials[&"enhancement_stone_1"] = 1
 	profile.coins = 5
-	_check(_guide(&"reward_collected",profile,inventory)["blockers"] == ["bank_stone_required"], "Carried stone does not satisfy the bank cost")
-	_check(_guide(&"golem_defeated",profile,inventory)["status"] == "deposit_needed", "Carried ordinary material directs to existing stash")
-	var economy := EconomySession.new(); economy.profile = profile; economy.inventory = inventory
+	_check(_guide(&"reward_collected",profile,inventory)["blockers"].is_empty(), "Carried stone and coins satisfy cost without a stash deposit")
+	_check(_guide(&"golem_defeated",profile,inventory)["status"] == "carried_ready", "Carried ordinary material is ready for services without deposit")
+	var economy := EconomySession.new(); economy.profile = profile; economy.inventory = inventory; economy.persist_safe_inventory = true
 	for level: int in 12:
 		sword.enhancement_level = level
 		var quote: Dictionary = economy.quote_enhance(sword.uid)
-		profile.material_stash[quote["stone_id"]] = 1
+		inventory.materials[quote["stone_id"]] = 1
 		profile.coins = int(quote["coin_cost"])
 		var hint: Dictionary = _guide(&"reward_collected",profile,inventory)
 		_check(hint["status"] == "resources_ready" and str(quote["coin_cost"]) in hint["body"] and MaterialCatalog.DISPLAY_NAMES[quote["stone_id"]] in hint["body"], "All twelve quotes follow actual coin and stone grade contracts")
@@ -107,7 +107,7 @@ func _pure_contracts() -> void:
 	_check(_guide(&"reward_collected",profile,inventory)["status"] == "repair_needed", "Broken equipped fixture never claims enhancement readiness")
 	sword.broken = false
 	var missing: Dictionary = _guide(&"returned_to_hub",profile,inventory)
-	_check(missing["blockers"].has("rune_fire_required") and missing["blockers"].has("rune_wind_required") and "rương nhỏ có 2" in missing["body"] and "mất khi chết" in missing["body"], "Missing ingredients show the actual finite chest source and carried loss contract")
+	_check(missing["blockers"].has("rune_fire_required") and not missing["blockers"].has("rune_wind_required") and "rương nhỏ có 2" in missing["body"] and "chỉ mất nguyên liệu mới nhặt" in missing["body"], "Missing first rune shows its actual finite chest source and carried loss contract without requiring a pair")
 	_sample("missing_talisman_runes",profile,inventory)
 	inventory.add_rune(&"fire"); inventory.add_rune(&"wind")
 	_check(_guide(&"returned_to_hub",profile,inventory)["status"] == "install_needed", "Owned ingredients still require Catalyst installation")
@@ -126,14 +126,14 @@ func _pure_contracts() -> void:
 	_check(_guide(&"thanh_vy_met",profile,inventory)["status"] == "capped", "All permanent caps are reported without another purchase")
 	profile.cultivation_progress = Model.new_progress(4)
 	var cultivation: Dictionary = _guide(&"first_upgrade",profile,inventory)
-	_check(cultivation["blockers"].has("energy_required") and cultivation["blockers"].has("mastery_required") and cultivation["blockers"].has("insight_required") and cultivation["blockers"].has("training_crystal_required"), "All initial cultivation prerequisites are explicit")
+	_check(cultivation["blockers"].has("energy_required") and cultivation["blockers"].has("mastery_required") and not cultivation["blockers"].has("insight_required") and cultivation["blockers"].has("training_crystal_required"), "All initial cultivation prerequisites are explicit")
 	profile.cultivation_progress["config"]["training_cost"] = 7
 	_check("7 Tinh Thạch" in _guide(&"first_upgrade",profile,inventory)["body"], "Training guidance uses saved configurable tuning")
 	var actor: Dictionary = profile.cultivation_progress["actors"]["player"]
 	actor["stage"] = 2; actor["energy"] = 40; actor["mastery"] = 8; actor["insight_ids"] = ["explored","thanh_vy_met","golem_defeated"]
-	profile.material_stash[&"dust"] = 2; profile.souls = 5
+	inventory.materials[&"dust"] = 2; profile.souls = 5
 	_check(Model.valid(profile.cultivation_progress,profile.material_stash), "Missing-proof fixture is a valid owned cultivation track")
-	_check(_guide(&"first_upgrade",profile,inventory)["blockers"] == ["boss_proof_required"], "Final breakthrough needs actual saved boss proof despite other sufficient numbers")
+	_check(_guide(&"first_upgrade",profile,inventory)["blockers"] == [], "Easier final breakthrough does not demand a boss proof")
 	_sample("breakthrough_missing_proof",profile,inventory)
 	profile.boss_proofs[&"golem"] = 1
 	_check(_guide(&"first_upgrade",profile,inventory)["status"] == "requirements_ready", "All displayed breakthrough requirements match saved state")
@@ -196,7 +196,7 @@ func _product_replay_and_death() -> void:
 		_check("HÀNH TRANG & SỨC MẠNH" in journal.objective_label.text and "TRẠNG THÁI:" in journal.objective_label.text and _journal_row(journal,OpeningProgress.IDS[index])["done"], "Completed topic and honest reward status are replayable in existing quest detail")
 	journal.extension_rows_provider = func() -> Array[Dictionary]: return [{"id":&"existing_side_quest","title":"Việc tự nguyện","body":"Nội dung do owner hiện có cung cấp.","done":false}]
 	journal.refresh()
-	_check(journal.rows.size() == 8 and journal.rows[-1]["id"] == &"existing_side_quest", "Existing extension providers survive cards and cultivation follow-up")
+	_check(OpeningProgress.IDS.all(func(id: StringName) -> bool:return not _journal_row(journal,id).is_empty()) and journal.rows[0]["id"] == PowerProgressionGuide.ID and journal.rows[-1]["id"] == &"existing_side_quest", "Existing canonical and extension rows survive the read-only power route and cultivation follow-up")
 	journal.extension_rows_provider = Callable(); journal.refresh()
 	screen.open_map(); await _step()
 	_check(screen.is_open and screen.tabs.current_tab == 2 and journal.tracker_text().is_empty() and not screen.tracker.visible, "Existing Map modal contains guidance with no persistent HUD")
@@ -223,13 +223,13 @@ func _product_replay_and_death() -> void:
 	_check(run != null, "Existing campaign receives prepared inventory")
 	if run == null: await _close(); return
 	run.outcome = &"defeat"
-	_check(flow.show_hub(true), "Existing defeat return creates a fresh starter")
+	_check(flow.show_hub(true), "Defeat returns the same prepared equipment")
 	await _step(12)
 	hub = flow.active_scene as ExteriorHub
 	hub.npc_population.set_process(false)
 	var new_inventory: GearInventory = hub.gear.inventory
 	journal = (hub.gear.modal as InventoryScreen).journal
-	_check(new_inventory.items[new_inventory.equipped_weapon_uid].enhancement_level == 0 and "+0 → +1" in _journal_row(journal,&"reward_collected")["guide"]["body"], "Death guidance reads new UID; old +9 is not resurrected")
+	_check(new_inventory.items[new_inventory.equipped_weapon_uid].enhancement_level == 9 and "+9 → +10" in _journal_row(journal,&"reward_collected")["guide"]["body"], "Death guidance reads the retained +9 equipment without resetting it")
 	_check(OpeningProgress.IDS.all(func(id: StringName) -> bool: return _journal_row(journal,id)["done"]), "Death does not erase canonical opening milestones")
 	hub.npc_population.state.receive_hit("pilot_gatherer",1.0,0.0)
 	_check(hub.npc_population.state.records["pilot_gatherer"]["mode"] == "recovering" and hub.npc_population.state.last_save_ok, "Actual NPC life owner durably withdraws the injured fixture resident")
@@ -245,7 +245,7 @@ func _product_replay_and_death() -> void:
 	hub = await _open(path)
 	_check(hub.npc_population.state.records["pilot_gatherer"]["mode"] == "recovering", "Cold reload preserves NPC withdrawal until an actual expedition return")
 	journal = (hub.gear.modal as InventoryScreen).journal
-	_check(journal.rows.size() == 7 and "+0 → +1" in _journal_row(journal,&"reward_collected")["guide"]["body"] and _journal_row(journal,&"explored")["done"], "Cold reload replays canonical old quests and derived follow-up against fresh current gear")
+	_check(OpeningProgress.IDS.all(func(id: StringName) -> bool:return not _journal_row(journal,id).is_empty()) and journal.rows[0]["id"] == PowerProgressionGuide.ID and "+9 → +10" in _journal_row(journal,&"reward_collected")["guide"]["body"] and _journal_row(journal,&"explored")["done"], "Cold reload replays canonical old quests and the read-only power route against fresh current gear")
 	await _close()
 	_check(not old_inventory.changed.get_connections().any(func(connection: Dictionary) -> bool: return (connection["callable"] as Callable).get_object_id() == old_journal_id), "Deleted journal leaves no stale callback for its exact instance ID")
 

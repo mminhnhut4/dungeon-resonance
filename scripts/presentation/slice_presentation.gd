@@ -116,7 +116,11 @@ func rebuild(boss_room: bool = false) -> void:
 	atmosphere.rebuild(boss_room)
 	if world is WorldCampaign and is_instance_valid(world.room):
 		preload("res://scripts/presentation/existing_map_raster.gd").attach_campaign(world.room, world.stage, atmosphere.room_art)
-	if boss_room:
+	if world is PrologueHub:
+		# Hub yard/home own their painted art, including after exterior returns.
+		atmosphere.room_art.hide()
+		foyer_art.clear()
+	elif boss_room:
 		foyer_art.clear()
 	else:
 		foyer_art.rebuild(world)

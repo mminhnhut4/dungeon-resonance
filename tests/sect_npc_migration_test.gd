@@ -1,5 +1,5 @@
 extends "res://tests/npc_nonlethal_recovery_test.gd"
-## Exact v3 authority survives additive v4 stewards, including archived causality.
+## Exact v3 authority survives schema5 identities; archived death stays terminal.
 class SectFault extends SanctuaryProfile:
 	var primary: String
 	var fail_copy: bool=false
@@ -23,14 +23,18 @@ func _run() -> void:
 	var original: PackedByteArray=FileAccess.get_file_as_bytes(primary)
 	var state: CountedState=_reader(primary)
 	_check(state.load_state() and not state.read_only and state.save_calls==1,"V3 migrates once through owner writer")
-	_check(state.snapshot()["npc_schema"]==4 and state.records.size()==10,"V4 adds exactly two stable steward identities")
+	_check(state.snapshot()["npc_schema"]==NpcWorldState.SCHEMA and state.records.size()==13,"V5 retains two steward identities and adds exactly three sect identities")
 	for id: String in NpcPilotCatalog.SCHEMA_THREE_IDS:
-		_check(state.records[id]==source["records"][id],"Every old relationship/history/motion field survives: "+id)
+		var expected: Dictionary=source["records"][id].duplicate(true)
+		if not expected["legacy_death"].is_empty():
+			expected["mode"]="dead"; expected["hp"]=0.0; expected["remaining"]=0; expected["interrupted"]={}
+			expected["death"]=expected["legacy_death"].duplicate(true)
+		_check(state.records[id]==expected,"Every old relationship/history/motion field survives with archived death terminal: "+id)
 	for id: String in NpcPilotCatalog.SECT_STEWARD_IDS:
 		_check(state.records[id]==NpcPilotCatalog.initial_record(id),"Only the new steward receives its authored initial state: "+id)
 	_check(FileAccess.get_file_as_bytes(primary+".pre_sect_v3.json")==original,"Immutable backup retains exact pre-sect bytes")
 	var cold: CountedState=_reader(primary)
-	_check(cold.load_state() and cold.save_calls==0 and cold.snapshot()==state.snapshot(),"Cold v4 load neither migrates again nor erases history")
+	_check(cold.load_state() and cold.save_calls==0 and cold.snapshot()==state.snapshot(),"Cold v5 load neither migrates again nor erases history")
 	for id: String in NpcPilotCatalog.SECT_STEWARD_IDS:
 		state.receive_hit(id,1.0,0.0)
 		_check(state.records[id]["mode"]=="recovering" and state.records[id]["death"].is_empty(),"New steward withdraws nonlethally")
@@ -50,7 +54,7 @@ func _run() -> void:
 		_check(not failed.load_state() and failed.read_only and failed.records.size()==8,"Failed copy/replace exposes only read-only old authority")
 		_check(FileAccess.get_file_as_bytes(target)==bytes and not failed.save(),"Failed migration preserves exact primary and refuses later overwrite")
 		var retry: CountedState=_reader(target)
-		_check(retry.load_state() and retry.records.size()==10,"Fresh owner can retry after transient storage failure")
+		_check(retry.load_state() and retry.records.size()==13,"Fresh owner can retry after transient storage failure")
 	var conflict: String=directory+"/conflict/profile.json.npc_v1.json"
 	var other: Dictionary=source.duplicate(true); other["tick"]=101
 	_check(_write(conflict,source) and _write(conflict+".pre_sect_v3.json",other),"Differing immutable backup is explicit conflict fixture")
@@ -59,7 +63,7 @@ func _run() -> void:
 	var blocked: CountedState=_reader(conflict)
 	_check(not blocked.load_state() and blocked.read_only,"Different immutable source blocks migration")
 	_check(FileAccess.get_file_as_bytes(conflict)==primary_bytes and FileAccess.get_file_as_bytes(conflict+".pre_sect_v3.json")==backup_bytes,"Neither side of the backup conflict is overwritten")
-	for schema: int in [5,3]:
+	for schema: int in [NpcWorldState.SCHEMA+1,3]:
 		var invalid: Dictionary=source.duplicate(true); invalid["npc_schema"]=schema
 		if schema==3: invalid["records"].erase("pilot_traveler")
 		var target: String=directory+"/invalid_%d/profile.json.npc_v1.json" % schema
@@ -74,6 +78,7 @@ func _source() -> Dictionary:
 	var source: Dictionary=NpcWorldState.new().snapshot()
 	source["npc_schema"]=3; source["tick"]=100
 	for id: String in NpcPilotCatalog.SECT_STEWARD_IDS: source["records"].erase(id)
+	for id: String in NpcPilotCatalog.TAN_DANG_IDS: source["records"].erase(id)
 	var old: Dictionary=source["records"][RESIDENT]
 	old["mode"]="recovering"; old["hp"]=1.0; old["remaining"]=0; old["episode"]=3
 	old["trust"]=-17; old["fear"]=42; old["debt"]=4; old["greeted"]=true

@@ -58,6 +58,8 @@ func test_system() -> void:
 	var lethal: DamageEvent=super._damage(boss.hurtbox,1000.0); lethal.source_id=level.get_instance_id()
 	boss.hurtbox.take_damage(lethal); await _time(0.2)
 	_check(rig.pose==&"dead" and absf(rig.torso.rotation)>0.05 and skin.modulate.a<1.0,"Real lethal damage slumps the stone rig on the original death clock")
+	while boss.state_time<0.36:await _step(1)
+	_check(absf(rig.torso.rotation)>0.65 and skin.modulate.a>0.5,"Collapse becomes readable before the finite death fade hides its silhouette")
 	await _time(0.5); _check(not is_instance_valid(boss),"Death deadline frees rig with its boss")
 
 func _install(recipe: StringName) -> bool:

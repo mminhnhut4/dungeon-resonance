@@ -11,6 +11,9 @@ var pending_note: StringName = &""
 var transition_count: int = 0
 var npc_population: NpcPopulation
 var sect_journey: SectJourney
+var tan_dang: TanDangJourney
+var exploration: OpeningExploration
+var living: TanDangLivingRuntime
 var entry_card: RegionEntryCard
 var _entry_controller_device: int = -1
 
@@ -23,6 +26,15 @@ func _ready() -> void:
 		npc_population = NpcPopulation.new()
 		npc_population.hub = self
 		add_child(npc_population)
+		tan_dang = TanDangJourney.new()
+		add_child(tan_dang)
+		tan_dang.initialize(self)
+		exploration=OpeningExploration.new()
+		add_child(exploration)
+		exploration.initialize(self)
+		living = TanDangLivingRuntime.new()
+		add_child(living)
+		living.initialize(self,npc_population,tan_dang.progress)
 	_station(&"exterior_road",Vector2(750,640),"ĐƯỜNG BỘ · BẾN TRẦM →")
 	entry_card = RegionEntryCard.new()
 	add_child(entry_card)
@@ -44,7 +56,7 @@ func enter_exterior(room: StringName, route: StringName = ExteriorRouteCatalog.M
 		reject_next_load = false
 		return false
 	var target := ExteriorRoom.new()
-	if not target.configure(room,route,bool(profile.exterior_progress["sc01_open"])) or not target.dry_anchor(entry):
+	if not target.configure(room,route,OpeningExplorationProgress.shortcut_open(profile)) or not target.dry_anchor(entry):
 		target.free()
 		return false
 	var previous: Dictionary = profile.exterior_progress.duplicate(true)
@@ -140,7 +152,12 @@ func _clear_room_presentation() -> void:
 
 func nearest_station() -> StringName:
 	if cultivation_session!=null and cultivation_session.herb_near(INTERACTION_RANGE): return &"aptitude_herb"
-	if not outside: return super.nearest_station()
+	if not outside:
+		var station: StringName = super.nearest_station()
+		if inside_house or not is_instance_valid(npc_population): return station
+		var range_left: float = INTERACTION_RANGE if station == &"" else player.global_position.distance_to(stations[station].global_position)
+		var resident: String = npc_population.nearest_id(range_left)
+		return StringName(resident) if not resident.is_empty() else station
 	if not is_instance_valid(exterior): return &""
 	var best: StringName = &""
 	var distance: float = INTERACTION_RANGE
@@ -155,7 +172,9 @@ func nearest_station() -> StringName:
 	return best
 
 func interact_station(id: StringName) -> bool:
+	if id==OpeningExploration.CACHE:return exploration!=null and exploration.interact()
 	if id==&"aptitude_herb": return cultivation_session!=null and cultivation_session.harvest_near()
+	if tan_dang != null and tan_dang.handles(id): return tan_dang.interact(id)
 	if is_instance_valid(npc_population) and String(id) in NpcPilotCatalog.IDS: return npc_population.interact(String(id))
 	if not outside:
 		if id == &"exterior_road":
@@ -266,7 +285,7 @@ func refresh_summary() -> void:
 		super.refresh_summary()
 		return
 	if summary == null: return
-	summary.text = "%s\nĐường khô · %s" % [ExteriorRouteCatalog.title(exterior.room_id,exterior.route_id),"SC01 đã mở" if profile.exterior_progress["sc01_open"] else "Khám phá"]
+	summary.text = "%s\nĐường khô · %s" % [ExteriorRouteCatalog.title(exterior.room_id,exterior.route_id),"SC01 đã mở" if OpeningExplorationProgress.shortcut_open(profile) else "Khám phá"]
 
 func _process(delta: float) -> void:
 	var controller_held: bool = _entry_controller_device >= 0 and Input.is_joy_button_pressed(_entry_controller_device,JOY_BUTTON_X)
@@ -277,7 +296,7 @@ func _process(delta: float) -> void:
 		_update_entry_card()
 		return
 	var id: StringName = nearest_station()
-	prompt.text = "Space / E · Tiếp tục thoại" if dialogue.is_open else "E · Qua cửa đường bộ" if id in [&"door_west",&"door_east"] else "E · Vào hầm đường giữ đèn" if id == &"tunnel" else "E · Mở cổng đường giữ đèn" if id == &"sc01_lever" else "E · Ghi mốc địa lý (không hồi / bank)" if id in [&"shrine",&"water"] else "E · Trò chuyện với Hạnh" if id == &"hanh" else "E · Đọc dấu tích" if id != &"" else "A/D: Đi bộ · Space: Nhảy · Shift: Dash · Tab: Hành trang"
+	prompt.text = "Space / E · Tiếp tục thoại" if dialogue.is_open else "E · Qua cửa đường bộ" if id in [&"door_west",&"door_east"] else "E · Vào hầm đường giữ đèn" if id == &"tunnel" else ("E · Cơ cấu đường giữ đèn · Đã mở" if OpeningExplorationProgress.shortcut_open(profile) else "E · Mở cổng đường giữ đèn") if id == &"sc01_lever" else "E · Ghi mốc địa lý (không hồi / bank)" if id in [&"shrine",&"water"] else "E · Trò chuyện với Hạnh" if id == &"hanh" else "E · Đọc dấu tích" if id != &"" else "A/D: Đi bộ · Space: Nhảy · Shift: Dash · Tab: Hành trang"
 	if player.global_position.y > ORIGIN.y+exterior.bounds.end.y+80 and player.health.current_health > 0:
 		executor.clear_entities()
 		PlayerTravel.relocate(player,ORIGIN+exterior.anchors[last_entry])

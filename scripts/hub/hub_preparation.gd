@@ -41,6 +41,8 @@ static func clone_inventory(source: GearInventory) -> GearInventory:
 	copy.weapon_capacity = source.weapon_capacity
 	copy.permanent_rune_capacity = source.permanent_rune_capacity
 	copy.run_coins = source.run_coins
+	copy.expedition_active = source.expedition_active
+	copy.protected_materials.assign(source.protected_materials)
 	copy.explicit_weapon_selection = true
 	return copy
 
@@ -80,4 +82,6 @@ static func clear_carried(inventory: GearInventory) -> void:
 	inventory.catalyst_capacity = 3
 	inventory.weapon_capacity = 1
 	inventory.run_coins = 0
+	inventory.expedition_active = false
+	inventory.protected_materials.clear()
 	inventory.changed.emit()

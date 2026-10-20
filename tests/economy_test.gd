@@ -39,6 +39,8 @@ var _fixture_directory: String
 
 func _initialize() -> void:
 	suite = "economy"
+	# Persisted bag fixtures require authored resource paths, not neutral copies.
+	use_neutral_equipment = false
 	super._initialize()
 
 
@@ -57,6 +59,7 @@ func test_system() -> void:
 	_check(stored.size() == 7 and not stored.has("coins") and not stored.has("material_stash"), "Zero economy retains the seven-field legacy schema-one layout")
 	_economy = EconomySession.new()
 	_economy.initialize(bank, inventory)
+	_economy.persist_safe_inventory = true
 	bank.changed.connect(_on_profile_changed)
 	inventory.changed.connect(_on_inventory_changed)
 	inventory.materials[&"crystal"] = 6
@@ -78,11 +81,11 @@ func test_system() -> void:
 	_check(not _economy.withdraw(&"crystal", 5) and not _economy.withdraw(&"metal", -1), "Withdrawal refuses missing materials and negative quantities")
 	await _test_failed_commits(bank, inventory)
 	var quote: Dictionary = _economy.quote_crystal_sale()
-	_check(quote.quantity == 4 and quote.unit_price == 5 and quote.total == 20 and quote.can_sell, "Kael receives an explicit four-crystal quote at the prototype five-coin unit price")
+	_check(quote.quantity == 2 and quote.unit_price == 5 and quote.total == 10 and quote.can_sell, "Kael quotes two carried crystals at the prototype five-coin unit price")
 	var changes_before: int = _profile_changes
-	_check(_economy.sell_all_crystals() and bank.coins == 20 and bank.material_stash[&"crystal"] == 0 and inventory.materials[&"crystal"] == 2 and bank.souls == 137, "Merchant sale consumes only stored crystals and commits twenty coins, without consuming carried crystals or Souls")
-	_check(not _economy.sell_all_crystals() and bank.coins == 20 and _profile_changes == changes_before + 1, "Repeated sale cannot grant duplicate payment or publish another successful commit")
-	_check(loaded.load_profile() and loaded.coins == 20 and loaded.material_stash[&"crystal"] == 0 and loaded.souls == 137, "Sale proceeds and depleted crystal stash survive a fresh disk reload")
+	_check(_economy.sell_all_crystals() and bank.coins == 10 and bank.material_stash[&"crystal"] == 4 and inventory.materials[&"crystal"] == 0 and bank.souls == 137, "Merchant sells only carried crystals for ten coins, preserving stored crystals and Souls")
+	_check(not _economy.sell_all_crystals() and bank.coins == 10 and _profile_changes == changes_before + 1, "Repeated sale cannot grant duplicate payment or publish another successful commit")
+	_check(loaded.load_profile() and loaded.coins == 10 and loaded.material_stash[&"crystal"] == 4 and loaded.souls == 137 and GearInventoryCodec.decode(loaded.hub_inventory).materials[&"crystal"] == 0, "Sale proceeds, empty carried crystals and untouched stash survive disk reload")
 	await _test_gear_repair(bank, inventory)
 	await _test_approved_consumables(inventory)
 	await _test_seeded_drops()
@@ -91,14 +94,14 @@ func test_system() -> void:
 	_check(not _economy.deposit_all() and not _economy.withdraw(&"metal", 1) and not _economy.sell_all_crystals(), "A run-context session cannot access stash transfers or merchant sales")
 	_economy.hub_access = true
 	inventory.materials[&"crystal"] = 3
-	_check(_economy.deposit_all() and bank.material_stash[&"crystal"] == 3, "Materials explicitly brought back and deposited become safe permanent storage")
+	_check(_economy.deposit_all() and bank.material_stash[&"crystal"] == 7, "Returned materials add to the four crystals already stored")
 	inventory.materials[&"crystal"] = 9
 	player.hurtbox.set_invulnerable(false)
 	player.hurtbox.take_damage(_damage(player.hurtbox, 999.0))
 	await _step(3)
 	level.gear.reset_inventory()
-	_check(player.health.current_health == 0.0 and inventory.materials == MaterialCatalog.empty_counts() and bank.material_stash[&"crystal"] == 3, "Actual death followed by fresh-run reset loses carried materials and preserves deposited storage")
-	_check(loaded.load_profile() and loaded.coins == 20 and loaded.material_stash[&"crystal"] == 3 and loaded.souls == 137, "Death does not overwrite safe materials, coin proceeds or persistent Souls on disk")
+	_check(player.health.current_health == 0.0 and inventory.materials == MaterialCatalog.empty_counts() and bank.material_stash[&"crystal"] == 7, "Actual death followed by fresh-run reset loses carried materials and preserves deposited storage")
+	_check(loaded.load_profile() and loaded.coins == 10 and loaded.material_stash[&"crystal"] == 7 and loaded.souls == 137, "Death does not overwrite safe materials, coin proceeds or persistent Souls on disk")
 	await _test_capacity(bank, inventory)
 	await _test_schema_loading()
 	bank.changed.disconnect(_on_profile_changed)
@@ -182,31 +185,34 @@ func _test_gear_repair(bank: FaultProfile, inventory: GearInventory) -> void:
 	var before: Dictionary = _loot_fields(item)
 	var original_uid: int = inventory.equipped_weapon_uid
 	_check(not inventory.equip_equipment(item.uid) and inventory.equipped_weapon_uid == original_uid, "Broken Rare weapon is owned but cannot replace the equipped weapon")
+	_check(not _economy.quote_repair(item.uid).can_repair, "Repair cannot consume ingredients still held in storage")
+	_check(_economy.withdraw(&"metal", 4) and _economy.withdraw(&"dust", 2), "Explicit withdrawal prepares carried repair ingredients")
 	var quote: Dictionary = _economy.quote_repair(item.uid)
-	_check(quote.can_repair and quote.metal == 4 and quote.dust == 2 and not quote.requires_forging, "Restoration quotes a concrete Rare cost from safe storage rather than promising free equipment")
+	_check(quote.can_repair and quote.metal == 4 and quote.dust == 2 and not quote.requires_forging, "Restoration quotes four carried metal and two carried dust")
+	var stash_before: Dictionary = bank.material_stash.duplicate()
 	for stage: StringName in [&"write", &"backup_copy", &"backup_commit", &"commit"]:
 		var original: PackedByteArray = FileAccess.get_file_as_bytes(bank.save_path)
-		var stored: Dictionary = bank.material_stash.duplicate()
+		var carried_before: Dictionary = inventory.materials.duplicate()
 		var signals_before: int = _profile_changes
 		bank.fail_once(stage)
-		_check(not _economy.repair_item(item.uid) and _loot_fields(item) == before and bank.material_stash == stored, "%s failed repair restores materials and the same broken rolled item" % stage)
+		_check(not _economy.repair_item(item.uid) and _loot_fields(item) == before and inventory.materials == carried_before and bank.material_stash == stash_before, "%s failed repair restores carried ingredients and the same broken item" % stage)
 		_check(FileAccess.get_file_as_bytes(bank.save_path) == original and _profile_changes == signals_before, "%s failed repair does not persist material consumption or publish success" % stage)
 	var restored: Dictionary = before.duplicate()
 	restored.broken = false
-	var metal_before: int = bank.material_stash[&"metal"]
-	var dust_before: int = bank.material_stash[&"dust"]
-	_check(_economy.repair_item(item.uid) and _loot_fields(item) == restored and bank.material_stash[&"metal"] == metal_before - 4 and bank.material_stash[&"dust"] == dust_before - 2, "Successful repair consumes the quoted resources once and preserves UID, quality, definition and roll")
+	var metal_before: int = inventory.materials[&"metal"]
+	var dust_before: int = inventory.materials[&"dust"]
+	_check(_economy.repair_item(item.uid) and _loot_fields(item) == restored and inventory.materials[&"metal"] == metal_before - 4 and inventory.materials[&"dust"] == dust_before - 2 and bank.material_stash == stash_before, "Repair consumes carried costs once and preserves stash, UID, quality, definition and roll")
 	_check(inventory.equip_equipment(item.uid) and not _economy.repair_item(item.uid), "Restored weapon becomes usable and an already-repaired item cannot charge materials twice")
 	var reader := SanctuaryProfile.new()
 	reader.save_path = bank.save_path
-	_check(reader.load_profile() and reader.material_stash == bank.material_stash and reader.coins == 20, "Repair material expense survives reload and does not change the coin account")
+	_check(reader.load_profile() and reader.material_stash == stash_before and reader.coins == 10 and GearInventoryCodec.decode(reader.hub_inventory).materials == inventory.materials, "Repair expense survives bag reload while preserving storage and coins")
 	var blank: GearItem = inventory.add_equipment(GearInventory.COMMON_SWORD, GearItem.Quality.VERY_RARE)
 	LootAffixRoller.roll_once(blank, seeded, &"drop", true)
 	_check(_economy.quote_repair(blank.uid).requires_forging and not _economy.repair_item(blank.uid) and not inventory.equip_equipment(blank.uid), "Very Rare drop is an unfinished forging blank; repair cannot bypass the blacksmith crafting requirement")
 	blank.broken = false
 	_check(not inventory.equip_equipment(blank.uid) and blank.is_forging_blank(), "Removing a blank's broken flag still cannot make a Very Rare drop directly usable")
 	var unavailable := GearItem.new()
-	_check(not _economy.quote_repair(unavailable.uid).can_repair and not _economy.repair_item(-123), "Missing UIDs cannot manufacture equipment or consume safe materials")
+	_check(not _economy.quote_repair(unavailable.uid).can_repair and not _economy.repair_item(-123), "Missing UIDs cannot manufacture equipment or consume carried materials")
 	_economy.hub_access = false
 	item.broken = true
 	_check(not _economy.repair_item(item.uid) and item.broken, "Equipment restoration is unavailable to a session outside the Hub")
@@ -226,13 +232,13 @@ func _test_gear_repair(bank: FaultProfile, inventory: GearInventory) -> void:
 	level.gear.sync_loadout()
 	_check(player.equipped_weapon.definition == GearInventory.COMMON_SWORD.moveset and player.available_weapons.has(GearInventory.COMMON_SWORD.moveset), "A restored usable weapon returns to the quick-switch list without rerolling or altering movement")
 	_check(not _economy.quote_material_sale(&"metal").can_sell and not _economy.sell_material(&"unknown") and not _economy.sell_material(&"dust"), "Unpriced crafting resources and unknown names cannot mint merchant money")
-	bank.material_stash[&"slime_essence"] = 2
+	inventory.materials[&"slime_essence"] = 2
 	var essence_quote: Dictionary = _economy.quote_material_sale(&"slime_essence")
 	_check(essence_quote.unit_price == 3 and essence_quote.total == 6 and essence_quote.can_sell, "Approved Slime Essence has a separate two-item quote at three prototype coins each")
-	_check(_economy.sell_material(&"slime_essence") and bank.coins == 26 and bank.material_stash[&"slime_essence"] == 0 and not _economy.sell_material(&"slime_essence"), "Essence sale uses the same atomic one-time merchant transaction")
+	_check(_economy.sell_material(&"slime_essence") and bank.coins == 16 and inventory.materials[&"slime_essence"] == 0 and bank.material_stash == stash_before and not _economy.sell_material(&"slime_essence"), "Carried Essence sale uses the same atomic transaction and leaves storage untouched")
 	# Keep historical crystal assertions independent of the added Essence offer.
-	bank.coins = 20
-	_check(bank.save(), "Independent repair/Essence fixture commits its final bank state")
+	bank.coins = 10
+	_check(_economy._save_safe(), "Independent repair/Essence fixture commits wallet and carried state")
 	reader = null
 
 
@@ -366,7 +372,7 @@ func _test_failed_commits(bank: FaultProfile, inventory: GearInventory) -> void:
 		_check(not _economy.withdraw(&"crystal", 1) and bank.material_stash[&"crystal"] == 4 and inventory.materials[&"crystal"] == 2, "%s withdrawal failure restores both ledgers" % stage)
 		_check(FileAccess.get_file_as_bytes(bank.save_path) == original and _profile_changes == profile_count and _inventory_changes == inventory_count, "%s failed withdrawal never publishes or persists a material copy" % stage)
 		bank.fail_once(stage)
-		_check(not _economy.sell_all_crystals() and bank.coins == 0 and bank.material_stash[&"crystal"] == 4, "%s merchant failure restores the entire crystal stack and coin balance" % stage)
+		_check(not _economy.sell_all_crystals() and bank.coins == 0 and bank.material_stash[&"crystal"] == 4 and inventory.materials[&"crystal"] == 2, "%s merchant failure restores carried crystal stack and wallet while preserving storage" % stage)
 		_check(FileAccess.get_file_as_bytes(bank.save_path) == original and _profile_changes == profile_count and _inventory_changes == inventory_count, "%s failed sale changes neither save bytes nor success notifications" % stage)
 
 
@@ -375,8 +381,9 @@ func _test_capacity(bank: FaultProfile, inventory: GearInventory) -> void:
 	inventory.materials[&"crystal"] = 1
 	_check(not _economy.deposit_all() and not _economy.deposit(&"crystal", 1) and inventory.materials[&"crystal"] == 1 and bank.material_stash[&"crystal"] == MaterialCatalog.MAX_COUNT, "Overflow prevents the whole transfer without partial credit or lost carried material")
 	bank.material_stash[&"crystal"] = 2
+	inventory.materials[&"crystal"] = 2
 	bank.coins = MaterialCatalog.MAX_COUNT - 5
-	_check(not _economy.quote_crystal_sale().can_sell and not _economy.sell_all_crystals() and bank.material_stash[&"crystal"] == 2 and bank.coins == MaterialCatalog.MAX_COUNT - 5, "Coin-cap overflow disables the full-stack offer rather than consuming crystals for capped payment")
+	_check(not _economy.quote_crystal_sale().can_sell and not _economy.sell_all_crystals() and bank.material_stash[&"crystal"] == 2 and inventory.materials[&"crystal"] == 2 and bank.coins == MaterialCatalog.MAX_COUNT - 5, "Coin-cap overflow refuses the carried stack without consuming crystals or touching storage")
 	_check(not MaterialCatalog.valid_count(INF) and not MaterialCatalog.valid_count(NAN) and not MaterialCatalog.valid_count(1.5), "Nonfinite and fractional material/currency quantities are rejected")
 
 

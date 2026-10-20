@@ -10,16 +10,41 @@
   "max_npc_sessions": 6,
   "aptitude_rate_bps": 100,
   "aptitude_cap": -1,
-  "stages": ["luyen_khi_i", "luyen_khi_ii", "luyen_khi_iii", "truc_co_so_ky"],
-  "stage_labels": ["Luyện Khí I", "Luyện Khí II", "Luyện Khí III", "Trúc Cơ sơ kỳ"],
-  "energy_thresholds": [12, 24, 40],
-  "mastery_thresholds": [2, 5, 8],
-  "insight_thresholds": [1, 2, 3],
-  "interim_dust_cost": 1,
-  "final_dust_cost": 2,
-  "final_soul_cost": 5,
-  "final_golem_proof": 1,
+  "stages": [
+    "luyen_khi_i",
+    "luyen_khi_ii",
+    "luyen_khi_iii",
+    "truc_co_so_ky"
+  ],
+  "stage_labels": [
+    "Luyện Khí I",
+    "Luyện Khí II",
+    "Luyện Khí III",
+    "Trúc Cơ sơ kỳ"
+  ],
+  "energy_thresholds": [
+    4,
+    8,
+    16
+  ],
+  "mastery_thresholds": [
+    1,
+    2,
+    4
+  ],
+  "insight_thresholds": [
+    0,
+    1,
+    2
+  ],
+  "interim_dust_cost": 0,
+  "final_dust_cost": 1,
+  "final_soul_cost": 0,
+  "final_golem_proof": 0,
   "pill_dust_cost": 2,
   "herb_occurrence_bps": 2000,
-  "aptitude_gains": {"herb": 5, "pill": 8}
+  "aptitude_gains": {
+    "herb": 5,
+    "pill": 8
+  }
 }

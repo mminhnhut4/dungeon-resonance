@@ -20,6 +20,9 @@ func test_system() -> void:
 	bank.save_path = "user://verification/world_%d_%d/profile.json" % [OS.get_process_id(), Time.get_ticks_usec()]
 	bank.souls = 2000
 	bank.coins = 5000
+	bank.material_stash[&"metal"] = 73
+	bank.material_stash[&"dust"] = 91
+	bank.material_stash[&"enhancement_stone_1"] = 125
 	economy = EconomySession.new()
 	economy.initialize(bank, carried)
 	economy.persist_safe_inventory = true
@@ -72,37 +75,42 @@ func _test_progression() -> void:
 	progression.queue_free()
 
 func _test_stones() -> void:
-	bank.material_stash[&"enhancement_stone_1"] = 125
-	_check(economy.combine_stones(1, 25) and economy.combine_stones(2, 5) and economy.combine_stones(3) and bank.material_stash[&"enhancement_stone_1"] == 0 and bank.material_stash[&"enhancement_stone_4"] == 1, "Recursive 125 grade-one stones conserve exactly one grade-four stone")
+	var stored_before: Dictionary = bank.material_stash.duplicate()
+	_check(not economy.quote_combine_stones(1)["can_combine"] and not economy.quote_enhance(carried.equipped_weapon_uid)["can_enhance"], "Stored stones cannot fund carried enhancement or combining")
+	carried.materials[&"enhancement_stone_1"] = 125
+	_check(economy.combine_stones(1, 25) and economy.combine_stones(2, 5) and economy.combine_stones(3) and carried.materials[&"enhancement_stone_1"] == 0 and carried.materials[&"enhancement_stone_4"] == 1, "Recursive 125 grade-one stones conserve exactly one grade-four stone")
 	_check(not economy.combine_stones(6) and not economy.combine_stones(0) and not economy.combine_stones(1, -1), "No grade-seven stone or negative combining output exists")
-	bank.material_stash[&"enhancement_stone_1"] = 20
-	bank.material_stash[&"enhancement_stone_2"] = MaterialCatalog.MAX_COUNT
-	var previous: Dictionary = bank.material_stash.duplicate()
-	_check(not economy.combine_stones(1) and bank.material_stash == previous, "Stone destination cap rejects before consuming five inputs")
-	bank.material_stash[&"enhancement_stone_2"] = 20
+	carried.materials[&"enhancement_stone_1"] = 20
+	carried.materials[&"enhancement_stone_2"] = MaterialCatalog.MAX_COUNT
+	var previous: Dictionary = carried.materials.duplicate()
+	_check(not economy.combine_stones(1) and carried.materials == previous, "Stone destination cap rejects before consuming five inputs")
+	carried.materials[&"enhancement_stone_2"] = 20
 	bank.fail_write = true
-	previous = bank.material_stash.duplicate()
-	_check(not economy.combine_stones(1) and bank.material_stash == previous, "Failed stone combine rolls both grades back")
+	previous = carried.materials.duplicate()
+	_check(not economy.combine_stones(1) and carried.materials == previous, "Failed stone combine rolls both grades back")
 	bank.fail_write = false
 	var sword: GearItem = carried.items[carried.equipped_weapon_uid]
 	var definition: EquipmentData = sword.equipment_definition
 	var base_damage: float = definition.moveset.base_damage
 	var factor: float = sword.damage_factor()
-	for grade: int in range(1, 7): bank.material_stash[StringName("enhancement_stone_%d" % grade)] = 20
+	for grade: int in range(1, 7): carried.materials[StringName("enhancement_stone_%d" % grade)] = 20
 	bank.fail_write = true
 	var before_coins: int = bank.coins
-	previous = bank.material_stash.duplicate()
-	_check(not economy.enhance_item(sword.uid) and sword.enhancement_level == 0 and bank.coins == before_coins and bank.material_stash == previous, "Failed enhancement preserves level, coins and the exact grade-one stone")
+	previous = carried.materials.duplicate()
+	_check(not economy.enhance_item(sword.uid) and sword.enhancement_level == 0 and bank.coins == before_coins and carried.materials == previous, "Failed enhancement preserves level, coins and the exact grade-one stone")
 	bank.fail_write = false
 	for level_index: int in range(1, 13):
 		var quote: Dictionary = economy.quote_enhance(sword.uid)
 		_check(quote["stone_grade"] == ceili(level_index / 2.0) and economy.enhance_item(sword.uid) and sword.enhancement_level == level_index, "Enhancement +%d consumes the appropriate grade with guaranteed success" % level_index)
 	_check(not economy.enhance_item(sword.uid) and sword.quality == GearItem.Quality.COMMON and sword.equipment_definition == definition and definition.moveset.base_damage == base_damage and is_equal_approx(sword.damage_factor(), factor + 0.36), "+12 adds exactly 36% base damage, caps there and preserves shared rarity/moveset")
 
+	_check(bank.material_stash == stored_before, "Stone combining and enhancement leave storage unchanged")
+
 func _fill_costs(recipe: ForgeRecipe) -> void:
-	for id: StringName in recipe.costs(): bank.material_stash[id] = recipe.costs()[id] + 10
+	for id: StringName in recipe.costs(): carried.materials[id] = recipe.costs()[id] + 10
 
 func _test_forge() -> void:
+	var stored_before: Dictionary = bank.material_stash.duplicate()
 	_check(not economy.quote_buy(&"world_saber", 0)["can_buy"] and not economy.quote_forge(&"world_saber_very_rare")["can_forge"], "Unlearned family cannot enter shop or smith bypass")
 	_check(bank.learn_blueprint(&"world_saber") and not bank.learn_blueprint(&"world_saber"), "One family blueprint learns once for all four forge qualities")
 	_check(economy.buy_weapon(&"common_sword", 0) and economy.buy_weapon(&"world_saber", 1) and not economy.buy_weapon(&"world_saber", 2), "Kael sells basic and learned Common/Rare, never Very Rare+ gear")
@@ -117,11 +125,11 @@ func _test_forge() -> void:
 	rng.seed = 42
 	var previous_rng: int = rng.state
 	var coins: int = bank.coins
-	var mats: Dictionary = bank.material_stash.duplicate()
+	var mats: Dictionary = carried.materials.duplicate()
 	var count: int = carried.items.size()
 	bank.fail_write = true
 	var result: Dictionary = economy.forge(recipe.id, rng)
-	_check(not result["committed"] and carried.items.size() == count and bank.coins == coins and bank.material_stash == mats and rng.state == previous_rng, "Failed forge disk transaction restores UID ledger, costs and RNG state")
+	_check(not result["committed"] and carried.items.size() == count and bank.coins == coins and carried.materials == mats and rng.state == previous_rng, "Failed forge disk transaction restores UID ledger, costs and RNG state")
 	bank.fail_write = false
 	result = economy.forge(recipe.id, rng)
 	var item: GearItem = carried.items.get(int(result["uid"]))
@@ -134,19 +142,21 @@ func _test_forge() -> void:
 		if rng.randf() >= 0.5:
 			rng.seed = seed_value
 			break
-	mats = bank.material_stash.duplicate()
+	mats = carried.materials.duplicate()
 	count = carried.items.size()
 	result = economy.forge(divine.id, rng)
 	var all_consumed: bool = true
-	for id: StringName in divine.costs(): all_consumed = all_consumed and bank.material_stash[id] == int(mats[id]) - divine.costs()[id]
+	for id: StringName in divine.costs(): all_consumed = all_consumed and carried.materials[id] == int(mats[id]) - divine.costs()[id]
 	_check(result["committed"] and not result["success"] and carried.items.size() == count and all_consumed and bank.learned_blueprints.has(&"world_saber"), "Divine 50% failure consumes every quoted ingredient while retaining learned recipe")
-	bank.material_stash[&"healing_herb"] = 3
-	bank.material_stash[&"linen_fiber"] = 2
-	bank.material_stash[&"detox_root"] = 2
-	bank.material_stash[&"dust"] = 2
+	carried.materials[&"healing_herb"] = 3
+	carried.materials[&"linen_fiber"] = 2
+	carried.materials[&"detox_root"] = 2
+	carried.materials[&"dust"] = 2
 	_check(economy.craft_consumable(&"potion") and economy.craft_consumable(&"bandage") and economy.craft_consumable(&"antidote") and carried.consumables[&"potion"] == 1 and carried.consumables[&"bandage"] == 1 and carried.consumables[&"antidote"] == 1, "Survival recipes consume their own farmed ingredients into finite carried bottles/bandages")
 	var hp: float = player.health.current_health
 	_check(economy.buy_consumable(&"potion") and carried.consumables[&"potion"] == 2 and player.health.current_health == hp, "Potion purchase stores a bottle instead of healing or buying arbitrary IDs")
+
+	_check(bank.material_stash == stored_before, "Forge and consumable crafting charge carried ingredients only")
 
 func _test_codec() -> void:
 	var snapshot: Dictionary = GearInventoryCodec.encode(carried)
@@ -325,12 +335,14 @@ func _test_flow() -> void:
 	flow.start_campaign()
 	await _step(2)
 	run = flow.active_scene as DungeonRun
-	run.gear.inventory.materials[&"crystal"] = 9
+	var preserved_crystal: int = run.gear.inventory.materials[&"crystal"]
+	var preserved_items: Array = GearInventoryCodec.encode(run.gear.inventory)["items"]
+	run.gear.inventory.add_material(&"crystal", 9)
 	run.gear.inventory.run_coins = 12
 	run.finish(&"defeat")
 	flow.show_hub(true)
 	await _step(3)
-	_check(flow.active_scene.gear.inventory.materials[&"crystal"] == 0 and flow.active_scene.gear.inventory.run_coins == 0 and flow.profile.coins == before_coins + 7 and not flow.active_scene.gear.inventory.items.values().any(func(item: GearItem) -> bool: return item.enhancement_level > 0), "Defeat loses carried crafted/enhanced gear and loot while keeping banked coins and materials")
+	_check(flow.active_scene.gear.inventory.materials[&"crystal"] == preserved_crystal and flow.active_scene.gear.inventory.run_coins == 0 and flow.profile.coins == before_coins + 19 and GearInventoryCodec.encode(flow.active_scene.gear.inventory)["items"] == preserved_items, "Defeat retains exact crafted/enhanced item records, banks new coins once, and drops only the nine newly collected crystals")
 	flow.active_scene.open_station(&"stash")
 	_check(flow.active_scene.station_open and MaterialCatalog.IDS.all(func(id: StringName) -> bool: return MaterialCatalog.DISPLAY_NAMES.has(id)), "Expanded fifteen-material stash opens with complete Vietnamese labels")
 	flow.active_scene.close_station()

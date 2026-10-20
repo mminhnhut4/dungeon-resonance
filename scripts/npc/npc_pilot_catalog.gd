@@ -1,15 +1,20 @@
 class_name NpcPilotCatalog
 extends RefCounted
-## Hand-authored pilot roles, not new named canon or sect definitions.
+## Stable authored roles, placement and realm IDs; NpcWorldState owns life.
 const LEGACY_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice"]
 const SCHEMA_TWO_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper"]
 const ORIGINAL_CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01"]
 const SECT_STEWARD_IDS: Array[String] = ["thanh_van_steward_01", "xich_lo_steward_01"]
-const CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
+const TAN_DANG_IDS: Array[String] = ["tan_dang_moc_yen", "tan_dang_lam_tuoc", "tan_dang_du_hanh"]
+const CULTIVATOR_IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01", "tan_dang_moc_yen", "tan_dang_lam_tuoc", "tan_dang_du_hanh"]
 const SCHEMA_THREE_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01"]
-const IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
+const SCHEMA_FOUR_IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
+const IDS: Array[String] = ["pilot_traveler", "pilot_pilgrim", "pilot_gatherer", "pilot_courier", "pilot_apprentice", "pilot_bridge_keeper", "thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01", "tan_dang_moc_yen", "tan_dang_lam_tuoc", "tan_dang_du_hanh"]
 const MAX_HEALTH: float = 40.0
 const DEFINITIONS: Dictionary = {
+	"tan_dang_moc_yen": {"name":"Mộc Yên", "role":"Chấp sự · Tàn Đăng Môn", "goal":"Đèn cổng đang yếu. Lâm Tước mang lõi đi rồi.", "room":"h00_traveler_hub", "left":860.0,"right":1030.0,"speed":32.0,"activity":"Giữ sổ Tàn Đăng","tint":"bdb090"},
+	"tan_dang_lam_tuoc": {"name":"Lâm Tước", "role":"Đệ tử · Tàn Đăng Môn", "goal":"Em biết mình đã lấy thứ gì.", "room":"o01_p03", "left":120.0,"right":1500.0,"speed":42.0,"activity":"Giữ lõi cứu người","tint":"c3ba8b"},
+	"tan_dang_du_hanh": {"name":"Dư Hành", "role":"Kẻ đào ngũ bị thương", "goal":"Ta đã rời bên đó. Các người có quyền không tin.", "room":"o01_p03", "left":1040.0,"right":1410.0,"speed":30.0,"activity":"Nghỉ bên lõi cổ phù","tint":"af9dc6"},
 	"thanh_van_steward_01": {"name":"Phùng Yên Trúc", "role":"Chấp sự · Thanh Vân", "goal":"Ta ghi điều người đi đường thực sự nhìn thấy. Sổ tiếp nhận bên phải luôn ở đó, kể cả khi ta phải dưỡng thương.", "room":"tv01_cloud_gate", "left":1990.0,"right":2150.0,"speed":32.0,"activity":"Kiểm sổ đường núi","tint":"8eccc9"},
 	"xich_lo_steward_01": {"name":"Tống Hồng Diệp", "role":"Chấp sự · Xích Lô", "goal":"Nước thông thì lò mới yên. Đọc hai mốc trên đê rồi trình bản ghi vào sổ phía đông; đừng buộc tội từ một dấu cặn.", "room":"xl01_red_causeway", "left":2290.0,"right":2390.0,"speed":30.0,"activity":"Kiểm tuyến dẫn thủy","tint":"cba178"},
 	"pilot_traveler": {"name":"Khách đường xa", "role":"Lữ hành", "goal":"Xem đèn bên mái miếu, lên ghế nghỉ rồi quay lại đường núi.", "room":"o01_p01", "left":360.0, "right":1420.0, "speed":48.0, "activity":"Quan sát đường", "tint":"95b7b5"},
@@ -23,6 +28,9 @@ const DEFINITIONS: Dictionary = {
 }
 ## Stop durations use gameplay ticks (4 Hz). These are existing room landmarks.
 const SCHEDULES: Dictionary = {
+	"tan_dang_moc_yen":[{"x":900.0,"mode":"work","ticks":80,"label":"Giữ sổ Tàn Đăng"}],
+	"tan_dang_lam_tuoc":[{"x":1345.0,"mode":"rest","ticks":80,"label":"Giữ lõi cứu người"}],
+	"tan_dang_du_hanh":[{"x":1385.0,"mode":"rest","ticks":80,"label":"Dưỡng thương"}],
 	"thanh_van_steward_01":[{"x":2000.0,"mode":"work","ticks":10,"label":"Đối chiếu ghi chép"},{"x":2140.0,"mode":"rest","ticks":10,"label":"Quan sát lối vào"}],
 	"xich_lo_steward_01":[{"x":2300.0,"mode":"work","ticks":10,"label":"Ghi mực nước"},{"x":2380.0,"mode":"rest","ticks":10,"label":"Kiểm đường hàng"}],
 	"pilot_traveler": [{"x":380.0,"mode":"work","ticks":6,"label":"Xem đèn bên mái miếu"},{"x":980.0,"mode":"work","ticks":8,"label":"Xem đèn nghiêng"},{"x":1380.0,"mode":"rest","ticks":12,"label":"Nghỉ cạnh ghế"},{"x":900.0,"mode":"rest","ticks":4,"label":"Nhìn lại đường núi"}],
@@ -35,6 +43,9 @@ const SCHEDULES: Dictionary = {
 	"xich_lo_guard_01": [{"x":1570.0,"mode":"work","ticks":7,"label":"Canh lối qua cầu"},{"x":1800.0,"mode":"work","ticks":8,"label":"Tuần tra Xích Lô"},{"x":1680.0,"mode":"rest","ticks":12,"label":"Nghỉ bên đường cầu"}]
 }
 const STARTS: Dictionary = {
+	"tan_dang_moc_yen":{"x":900.0,"index":0,"mode":"work","remaining":80},
+	"tan_dang_lam_tuoc":{"x":1345.0,"index":0,"mode":"rest","remaining":80},
+	"tan_dang_du_hanh":{"x":1385.0,"index":0,"mode":"rest","remaining":80},
 	"thanh_van_steward_01":{"x":2000.0,"index":0,"mode":"work","remaining":5},
 	"xich_lo_steward_01":{"x":2300.0,"index":0,"mode":"work","remaining":5},
 	"pilot_traveler":{"x":520.0,"index":1,"mode":"walk"},
@@ -48,6 +59,12 @@ const STARTS: Dictionary = {
 }
 const MODE_LABELS: Dictionary = {"walk":"Đi đường", "rest":"Nghỉ", "work":"Làm việc", "talk":"Trò chuyện", "flee":"Rút lui", "downed":"Trọng thương · Chờ rút lui", "recovering":"Đã rút về dưỡng thương"}
 
+static func cultivation_stage(id: String) -> String:
+	return {"tan_dang_moc_yen":"truc_co_so_ky", "tan_dang_lam_tuoc":"luyen_khi_ii", "tan_dang_du_hanh":"luyen_khi_iii"}.get(id,"luyen_khi_i")
+
+static func maximum_health(id: String) -> float:
+	return MAX_HEALTH * CultivatorCombatScaling.health_multiplier(cultivation_stage(id)) if id in CULTIVATOR_IDS else MAX_HEALTH
+
 static func definition(id: String) -> Dictionary:
 	return DEFINITIONS.get(id, {}).duplicate(true)
 
@@ -55,13 +72,17 @@ static func initial_record(id: String) -> Dictionary:
 	var spec: Dictionary = definition(id)
 	var start: Dictionary = STARTS[id]
 	var stop: Dictionary = SCHEDULES[id][start["index"]]
-	return {"room":spec["room"], "mode":start["mode"], "x":start["x"], "target":stop["x"], "remaining":start.get("remaining",0), "hp":MAX_HEALTH, "trust":0, "debt":0, "fear":0, "greeted":false, "episode":0, "death":{}, "schedule_index":start["index"], "interrupted":{}, "legacy_death":{}}
+	var record: Dictionary = {"room":spec["room"], "mode":start["mode"], "x":start["x"], "target":stop["x"], "remaining":start.get("remaining",0), "hp":maximum_health(id), "trust":0, "debt":0, "fear":0, "greeted":false, "episode":0, "death":{}, "schedule_index":start["index"], "interrupted":{}, "legacy_death":{}}
+	if id in TAN_DANG_IDS: record["karma"] = {"grievance":"","gratitude":0,"assistance_used":false,"player_murdered":false,"spared":false,"rescued":false,"helped":false}
+	if id in TAN_DANG_IDS: record["causality"]=TanDangCausality.empty()
+	return record
 
 static func stop(id: String, index: int) -> Dictionary:
 	return SCHEDULES[id][index].duplicate(true)
 
 static func activity_label(id: String, record: Dictionary) -> String:
-	var point: Dictionary = stop(id, int(record["schedule_index"]))
+	var point: Dictionary = TanDangLivingCatalog.stop(id,str(record["room"]),int(record["schedule_index"])) if id in TAN_DANG_IDS else stop(id, int(record["schedule_index"]))
+	if point.is_empty(): return MODE_LABELS.get(str(record["mode"]),"Đang nghỉ")
 	if record["mode"] in ["rest", "work"] and is_equal_approx(record["x"], point["x"]): return point["label"]
 	if record["mode"] == "walk": return "Đi tới · " + String(point["label"])
 	return MODE_LABELS[record["mode"]]

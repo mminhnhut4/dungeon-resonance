@@ -47,7 +47,7 @@ func quote(id: StringName) -> Dictionary:
 			learn_hint = _milestone_lock(id)
 			if learn_hint.is_empty() and economy.profile.souls < int(COSTS[id]): learn_hint = "Chưa đủ Tàn Hồn để học bùa."
 		if not learned: craft_hint = "Học bùa trước khi chế thêm. Bùa nhặt được vẫn có thể ghép ngay."
-		elif not economy._has_costs(CRAFT_COST): craft_hint = "Cần 2 %s và 1 %s trong kho để chế thêm." % [MaterialCatalog.DISPLAY_NAMES[&"dust"],MaterialCatalog.DISPLAY_NAMES[&"crystal"]]
+		elif not economy._has_costs(CRAFT_COST): craft_hint = "Cần 2 %s và 1 %s trong túi để chế thêm." % [MaterialCatalog.DISPLAY_NAMES[&"dust"],MaterialCatalog.DISPLAY_NAMES[&"crystal"]]
 	return {"id":String(id), "name":NAMES.get(id,""), "learned":learned,
 		"can_learn":learn_hint.is_empty(), "can_craft":craft_hint.is_empty(),
 		"cost":int(COSTS.get(id,0)), "craft_materials":CRAFT_COST.duplicate(),
@@ -97,9 +97,9 @@ func craft(id: StringName) -> bool:
 	economy._busy = true
 	var previous_bag: int = economy.inventory.bag[id]
 	var item: GearItem = _add_rune(id)
-	for material: StringName in CRAFT_COST: economy.profile.material_stash[material] -= int(CRAFT_COST[material])
+	for material: StringName in CRAFT_COST: economy.inventory.materials[material] -= int(CRAFT_COST[material])
 	if not economy._save_safe():
-		for material: StringName in CRAFT_COST: economy.profile.material_stash[material] += int(CRAFT_COST[material])
+		for material: StringName in CRAFT_COST: economy.inventory.materials[material] += int(CRAFT_COST[material])
 		economy.inventory.items.erase(item.uid)
 		economy.inventory.bag[id] = previous_bag
 		economy._busy = false

@@ -1,47 +1,55 @@
-# Dungeon Resonance — Godot 4 prototype
+# Dungeon Resonance — nguồn review
 
-**Dành cho thành viên:** đọc [dự án và cốt truyện](docs/team/PROJECT_AND_STORY.md) rồi [hướng dẫn bắt đầu](docs/team/START_HERE.md). Có [kế hoạch/owner](docs/team/TEAM_PLAN.md), [map](docs/team/MAP_GUIDE.md), [bùa](docs/team/SPELL_GUIDE.md), [nhân vật](docs/team/CHARACTER_GUIDE.md), [skill portable](docs/team/AI_SKILL_GUIDE.md), [QA](docs/team/QA_AND_HANDOFF.md) và [backlog](docs/team/BACKLOG.md). Repo [mminhnhut4/dungeon-resonance](https://github.com/mminhnhut4/dungeon-resonance) hiện **public**, thành viên có thể xem/tải không cần đăng nhập. Dùng nhánh **main** để xem nguồn mới; ZIP release bàn giao đầu ngày là snapshot lịch sử. Source chưa phải game export.
+| Mục | Giá trị |
+|---|---|
+| Nhánh review | `review/pc-source-sync-20261020` |
+| Commit nguồn dùng để đối chiếu | `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` |
+| Nền snapshot | `6d73a61d640fa7d564cce30a55afc2f8afef260f` |
+| Trạng thái | **Source PC đã tích hợp; chưa phải release mới** |
+| Số file nguồn trong phạm vi snapshot | 363 |
 
-**Chơi thử ZIP mới trên Windows:** giải nén toàn bộ, mở `CHAY_GAME.cmd`, nhập đường dẫn Godot **4.7.2 stable** đang có. Launcher chọn đúng main và dùng save chơi thử riêng. [Cách chạy và xử lý cổng E](docs/team/HOW_TO_RUN_GAME.md) · [Biên bản kiểm tra gói/cổng](docs/team/PORTAL_PACKAGE_VERIFICATION.json). Đây là gói source, chưa có game EXE độc lập.
+Nguồn PC tại f36b4bc, gồm các thay đổi Mac đã ghép trước đó. Snapshot này giữ nguồn runtime/test được chọn; không mang các báo cáo và log riêng. Mac chưa được đồng bộ ngược khi offline.
 
-**Hiện hành 08/10/2026:** tuyến Golem nối tầng4–8; bốn map Thanh Vân/Xích Lô và hai nhiệm vụ mở sân trong đã ghép. Core có học/chế bùa, mana tối đa, hướng dẫn tiến triển và giảm chi phí mastery/save. Gia nhập, đồng hành, nhân chứng/truy nã và kế nhiệm vẫn là thiết kế. [Dự án + cốt truyện + hướng phát triển + ảnh game](docs/team/PROJECT_AND_STORY.md) · [Cách chơi hiện tại](docs/HUONG_DAN_TIEN_TRINH_20261008.md) · [Nghiệm thu và giới hạn](docs/SECT_MAPS_RESUME_20261008.md).
+Số file ở trên là số đường dẫn thay đổi được chọn, gồm cả UID/import sidecar, không phải tổng số file trong checkout. Nhánh PC được so với nền GitHub; các nhánh còn lại được so với nguồn PC `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` và kế thừa snapshot PC gồm 363 đường dẫn thay đổi.
 
+Các nhánh ngoài PC cùng kế thừa 86 đường dẫn milestone opening: Runic/DOT/readability, nhịp attack-window/FIFO, mine/revisit/supply và rune prep/power/depth V2. Đây là dependency của snapshot, không phải toàn bộ tính năng đã được nghiệm thu chung. Crash native lịch sử vẫn **FAIL_UNRESOLVED**. Các tài liệu mốc cũ giữ từ nền GitHub có thể không phản ánh nguồn review hiện tại; dùng trạng thái trong README này để phân biệt.
 
-Ảnh native bản chính 08/10, fixture kiểm thử; không phải benchmark hoặc playtest tự nhiên:
+Đây là snapshot mã nguồn, asset và test dành cho review và dựng cục bộ. Commit snapshot có thể khác commit nguồn vì chỉ mang các file đã chọn, không mang lịch sử QA riêng. Chọn đúng nhánh ở trên trong một checkout riêng; các nhánh thử nghiệm có phạm vi và dependency riêng, không phải những patch đã được kiểm khi ghép nối tiếp.
 
-![Thanh Vân · Tùng Đình](docs/team/evidence/current_20261008/thanh_van.png)
+**HOLD** nghĩa là mục tiêu tương ứng còn thiếu bằng chứng hoặc chưa đạt. Mã vẫn có thể được đọc và thử trong môi trường QA, nhưng trạng thái đó không phải chấp thuận merge hay phát hành. Các mục **FAIL_UNRESOLVED** của nguồn vẫn giữ nguyên.
 
-[Cốt truyện đề xuất “Hai lời thề giữ đường” và các bước tiếp theo](docs/team/PROJECT_AND_STORY.md#cốt-truyện-mở-rộng-đề-xuất-hai-lời-thề-giữ-đường).
+## Mở dự án
 
-**Các mốc phía dưới là lịch sử; xem trạng thái08/10 ở đầu trang.**
+`project.godot` khai báo **Godot 4.7**, renderer **GL Compatibility**; runner hiện dùng tên bản **4.7.2** làm mặc định. Dùng Godot 4.7.2 để đối chiếu trước; chưa xác nhận mọi bản Godot 4 khác tương thích.
 
-**2026-10-03:** opening/save/QA mặc định OFF, resident P2, polish quái hiện hữu và khung cổ vàng–đỏ chỉ có tên khu vực đã áp dụng vào dự án. Full strict trực tiếp đạt148gate/8.639check,170script/33scene; GPU trực tiếp519check/86ảnh thực. Xem [Project State](docs/PROJECT_STATE.md) để phân biệt phần đang chạy, các mốc lịch sử và phần thiết kế/worker chưa kích hoạt. Bản sửa NPC/cửa hàng5.666check/GPU31capture ngày2026-10-02 được giữ tại [báo cáo lịch sử](docs/TARGETED_REPAIR_20261002.md).
+1. Tạo môi trường QA riêng trước khi mở editor hoặc chạy game: dùng tài khoản hệ điều hành QA, hoặc tiến trình có `APPDATA` và `LOCALAPPDATA` trỏ vào thư mục QA trống. Checkout riêng không tự tách `user://`.
+2. Trong Godot Project Manager của môi trường đó, chọn **Import** và mở `project.godot` tại gốc nhánh. Chờ nhập asset hoàn tất rồi mở dự án. Cache `.godot` sẽ được tạo tại máy review.
+3. Chỉ chơi hoặc kiểm tra bằng userdata QA. Không dùng, sao chép hay ghi đè save đang chơi; không đưa userdata và kết quả QA vào commit.
 
-Godot **4.7.2**, GDScript, Compatibility, offline. Prototype có HUD khung rồng với TextureProgressBar, icon bùa/vũ khí, Player concept PNG, Slime/Golem/bia/rương PNG alpha, bục/cột đá AtlasTexture, canvas glow, arc kiếm khí bạc/jade, hạt đuôi phép, âm thanh tổng hợp và Skeleton2D. Player hiện có rig modular dùng cutout PNG/AtlasTexture và animation đọc clock gameplay; atlas bộ khởi đầu đã tích hợp. Xem [nền tảng nhân vật](docs/CHARACTER_FOUNDATION.md). Resident còn dùng hình vector tạm; chưa export Steam.
+Các bước trên dành cho lúc được phép chạy editor/import. Việc chuẩn bị snapshot không tự thực hiện các bước này.
 
-Mở project.godot và chạy main bằng F5. Main hiện là `scenes/maps/prologue_hub.tscn`, bắt đầu tại **Căn Cứ Lữ Khách** dùng ExteriorHub. Đến **Đường Bộ** và tương tác E/tay cầm X để đi theo tuyến ngoại cảnh; Esc/B hoãn khung tên vùng. Cổng Hub vẫn đưa vào campaign hiện hữu. Menu Tế Đàn/Alpha của các scene legacy không phải entrypoint main hiện tại. Phòng thử riêng: scenes/test_level.tscn → Run Current Scene.
+## Kiểm tra bằng runner
 
-- A/D hoặc ←/→: chạy; Space/W: nhảy; Shift/K: dash.
-- Chuột trái/J: attack; chuột phải/I: cast; hướng theo cursor.
-- Q: vũ khí; E: nhặt/mở/tương tác; Tab: khảm bùa, time 10%; C: wounds/crafting/relics.
-- Phím **` / ~** (dưới Esc): bật/tắt chữ debug, mặc định tắt. Camera zoom1.35, bám chuột tối đa40px; kiếm/dao dùng Kiếm Sĩ, trượng dùng Thuật Sĩ. Xem [Camera và hai ngoại hình](docs/GAME_FEEL_SKINS.md).
-- QA tools **mặc định tắt** trong main: F5–F8 và API cấp đồ/nội dung debug đều bị chặn. Chỉ fixture opt-in `qa_tools_enabled` mới dùng các shortcut QA đó. Trong editor F5/F6 vẫn là shortcut chạy scene.
-
-Tiến độ và hướng dẫn chi tiết: [Dynamic Combat Polish](docs/DYNAMIC_COMBAT_POLISH.md), [Run và căn cứ tu luyện](docs/CULTIVATION_RUN_ROADMAP.md), [Full Visual](docs/COMBAT_ART_POLISH.md), [Polish Report](docs/MILESTONE_POLISH_REPORT.md), [Player Rig](docs/MODULAR_PLAYER_RIG.md), [Project State](docs/PROJECT_STATE.md), [Architecture](docs/PROJECT_ARCHITECTURE.md), [Content Report](docs/MILESTONE_CONTENT_REPORT.md), [Addon status](docs/ADDONS.md).
-
-Ảnh được phân loại theo [Asset Pipeline](docs/ASSET_PIPELINE.md): Player/NPC trong assets/sprites; sheet đá/cột trong assets/environment/tilesets; props có thư mục riêng. [Art Integration](docs/ART_INTEGRATION.md) mô tả Player lật theo con trỏ, pivot chân/Tween thở và skin đá của Tiền Sảnh. Hitbox/Hurtbox/collider giữ cây vật lý hiện hữu. Nguồn staging được lưu trữ trong docs/verification và bị loại khỏi import.
+`tests/run_tests.ps1` dành cho PowerShell trên Windows. Đọc runner trước khi dùng; snapshot này chưa có strict gate mới. Ví dụ dưới đây dùng thư mục QA tạm mới do runner tự tạo và yêu cầu nhập đường dẫn engine đang cài:
 
 ```powershell
-./tests/run_tests.ps1
+$reviewEngine = Read-Host 'Đường dẫn đầy đủ đến Godot 4.7.2 executable'
+.\tests\run_tests.ps1 -EnginePath $reviewEngine -GameplayOnly -CheckTimeoutSeconds 60
 ```
 
-Báo cáo polish lịch sử đạt **2.857/2.857 assertion**, giữ đủ 2.409 mốc Full Visual và thêm 448 cho procedural motion, global hit-stop/modal, audio, VFX, vòng đời Boss/HUD và giao dịch save. Movement55/Combat100 ở cả 60/120 physics Hz và Resolver20 giữ nguyên. Validator103 script/19 scene; import/editor/addon/exit đều đạt. Ở mốc lịch sử đó, preview14ảnh kiểm đến Boss bị giải phóng và cổng chiến thắng; bốn benchmark GPU Tiền Sảnh/Boss đạt gần60/120FPS trên RTX5080. Các số này thuộc checkpoint lịch sử, không thay nghiệm thu08/10 ở đầu README và không chứng nhận cân bằng/gamefeel15–20phút. Xem [verification summary](docs/verification/polish_test_summary.json) và [log cuối](docs/verification/hades_juice_strict_suite.log).
+Chạy từ gốc checkout. Không dựa vào đường dẫn engine mặc định của runner.
 
-Các lượt chẩn đoán có native editor shutdown `0xC0000005` chưa xác định nguyên nhân; gate cuối sạch không chứng minh lỗi gián đoạn đã hết, xem [native audit](docs/verification/full_visual_native_audit.md). Runner giữ mọi ERROR/WARNING và không dùng GameplayOnly thay strict. Aseprite Wizard được cài nhưng tắt chờ thủ công; PNG/SpriteFrames không cần executable.
+- `-GameplayOnly` chỉ bỏ nhóm import/addon đầu. Nó **vẫn chạy editor/import cho Player rig**, `asset_pipeline` và các suite đã đăng ký ở 60/120 Hz; đây không phải smoke test hay chế độ không import.
+- Runner không có tham số chọn riêng một script/suite. `-CheckTimeoutSeconds` nhận 1–60 giây **cho mỗi check**, không giới hạn toàn lượt.
+- Runner tự tách `APPDATA`, `LOCALAPPDATA` và `DUNGEON_QA_DATA_ROOT`, rồi khôi phục biến môi trường khi kết thúc. Có thể chỉ định `-QaDataRoot` bằng một thư mục QA mới. Log/capture vẫn được tạo dưới `docs/verification/` trong checkout.
+- Mặc định dừng ở lỗi đầu. `-CollectAllFailures` tiếp tục thu lỗi rồi vẫn báo thất bại; không biến lượt lỗi thành pass.
 
+`tests/asset_pipeline_test.gd` cần manifest, ảnh nguồn và import metadata lưu trữ ngoài snapshot. Vì vậy runner không thể vượt toàn gate nguyên trạng khi thiếu archive này, kể cả với `-GameplayOnly`. Không bổ sung save hay archive riêng vào repository để làm gate xanh. Một số test native/cold cũng cần fixture QA bên ngoài và thiết lập riêng; runner không thay thế các giao thức đó.
 
-## Navigation kiến trúc — proposal và đích đến
+QA đã có trên commit nguồn chỉ là bằng chứng cho đúng commit, fixture và điều kiện đã ghi. Nó không đồng nghĩa snapshot mới đã qua strict gate, human playtest, soak, hoặc đã giải quyết các lỗi lịch sử.
 
-[Module map, conventions và các batch migration](docs/architecture/README.md) · [History index](docs/history/README.md) · [Nhật ký vấp ngã](<nhật ký vấp ngã/README.md>).
+## Âm thanh và provenance
 
-Bộ tài liệu/navigation đã có trên bản chính; bố cục runtime đề xuất chưa migration. Catalog mô tả snapshot để review, không lệnh move hoặc chép đè file. Chờ AI/map handoff chốt trước migration code; các report gate phía trên giữ mốc lịch sử của chúng.
+Nếu nhánh có `assets/audio/recorded_combat_pair/`, giữ `SOURCES_AND_LICENSES.md` và `BUILD_MANIFEST.json` cùng đủ mười TRES. Bộ này ghi nguồn từ hai pack CC0 của artisticdude và rubberduck; xem tài liệu đi kèm để đối chiếu tác giả, URL và recipe.
+
+Riêng nhánh `review/audio-force-20261020`, hash build cũ của **cả 10 TRES** dùng bytes CRLF, khác bytes LF được Git phân phối. Bản manifest dành cho snapshot đã cập nhật cả 10 hash theo Git LF, giữ hash CRLF dưới nhãn lịch sử và thay hai `copied_from` bằng đường dẫn tương đối kèm commit nguồn. **Không có audio blob nào thay đổi bởi bước này.** Đây là sửa metadata phân phối, không phải thêm một lần xử lý âm hoặc xác nhận đã được nghe duyệt.

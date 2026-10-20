@@ -106,20 +106,26 @@ func resolve() -> Dictionary:
 	if not is_instance_valid(world) or world.is_queued_for_deletion() or not is_instance_valid(actor) or not is_instance_valid(journal): return _fallback("world_missing","Vùng / nhân vật chưa sẵn sàng; mũi tên tạm dừng.")
 	if profile == null or profile.read_only or profile.opening_progress_quarantined or profile.exterior_progress_quarantined: return _fallback("state_unavailable","Tiến triển chưa xác minh / hồ sơ đang khóa; không chỉ tới đích chưa hợp lệ.")
 	var selected: Dictionary = {}
-	for row: Dictionary in journal.get("rows"):
+	for row: Dictionary in journal.call("projection_rows"):
 		if row["id"] == id: selected = row; break
 	if selected.is_empty(): return _fallback("quest_missing","Nhiệm vụ theo dõi không còn trong danh sách hiện tại; chọn lại hoặc bỏ theo dõi.")
 	if bool(selected.get("card",{}).get("complete",selected.get("done",false))):
 		profile.set_meta(TRACKED,&"")
 		return _fallback("complete","Nhiệm vụ đã hoàn tất; mũi tên đã dừng. Chọn nhiệm vụ tiếp theo nếu muốn.")
 	if selected.get("card",{}).get("command",&"") == &"retry_insights": return _fallback("reward_pending","Dấu mốc đã ghi nhưng lĩnh ngộ còn chờ lưu; về căn cứ và dùng nút thử lưu lại trên thẻ nhiệm vụ.")
+	if String(id).begins_with("tan_dang_"): return _tan_dang_goal(world,actor,id)
 	if String(id).begins_with("sect_"): return _sect_goal(world,actor,String(id).trim_prefix("sect_"))
 	var hub_goal: StringName
 	match id:
+		PowerProgressionGuide.ID:
+			hub_goal = selected.get("power",{}).get("station",&"")
+			if hub_goal == &"":return _fallback("state_unavailable","Chưa xác minh bước tăng sức mạnh; mở lại bảng để kiểm tra hồ sơ và túi.")
 		&"explored": hub_goal = &"exterior_road"
 		&"golem_defeated": hub_goal = NpcCatalog.WANDERER if not profile.bounty_accepted or profile.boss_proofs.get(&"golem",0)-profile.bounty_start_proofs >= 1 else &"portal"
 		&"thanh_vy_met",&"first_upgrade": hub_goal = NpcCatalog.HEALER
-		&"cultivation_breakthrough": hub_goal = &"training"
+		&"cultivation_breakthrough":
+			var carried: GearInventory = world.gear.inventory if world is PrologueHub or world is DungeonRun else null
+			hub_goal = OpeningProgressionGuide.cultivation_station(profile, carried)
 		&"first_loop_next",&"prepare_next_run": hub_goal = &"portal"
 		&"returned_to_hub": hub_goal = &"portal"
 		&"reward_collected": return _dungeon_goal(world,actor,id) if world.has_method("living_enemies") else _fallback("loot_missing","Phần thưởng nằm trong hành trình; chưa có vật phẩm rơi để chỉ ở căn cứ.")
@@ -130,10 +136,20 @@ func resolve() -> Dictionary:
 		var exit: Node2D = property(home,&"exit_point") as Node2D
 		return _point(exit.global_position,"Ra sân bằng cửa nhà, E tương tác; sau đó theo mũi tên tới mục tiêu.",&"home_exit") if is_instance_valid(exit) else _fallback("anchor_missing","Cửa ra sân chưa sẵn sàng.")
 	if world.has_method("living_enemies"):
+		if id == PowerProgressionGuide.ID and hub_goal != &"portal":return _exit_goal(world)
 		if id == &"golem_defeated" and not profile.bounty_accepted: return _fallback("quest_gate","Chưa nhận lời hẹn trước thủ lĩnh. Khi tầng đã dọn, E ở lối ra → về sảnh để nhận lời Vô Danh; hạ trước không tính chứng tích nhiệm vụ.")
 		if hub_goal == NpcCatalog.WANDERER: return _exit_goal(world)
 		return _dungeon_goal(world,actor,id)
 	return _station(world,hub_goal)
+
+func _tan_dang_goal(world: Node, actor: Node2D, id: StringName) -> Dictionary:
+	if not world is ExteriorHub or world.tan_dang == null: return _fallback("outside_goal","Trở về căn cứ để tiếp tục việc Tàn Đăng.")
+	if not world.tan_dang.progress.available(): return _fallback("state_unavailable","Tiến trình Tàn Đăng hoặc đời sống NPC chưa xác minh; khôi phục hồ sơ trước khi chỉ đường.")
+	if world.inside_house: return _point(world.house.exit_point.global_position,"E · Ra sân căn cứ trước.",&"home_exit")
+	var target: Dictionary = world.tan_dang.navigation_target(id)
+	var here: StringName = world.exterior.room_id if world.outside and is_instance_valid(world.exterior) else ExteriorRouteCatalog.HUB
+	if here == target["room"]: return _point(target["point"]+(ExteriorHub.ORIGIN if world.outside else Vector2.ZERO),target["hint"],id)
+	return _outside(world,actor,target["room"]) if world.outside else _station(world,&"exterior_road")
 
 func _sect_goal(world: Node, actor: Node2D, faction_id: String) -> Dictionary:
 	if faction_id not in SectRouteCatalog.FACTIONS: return _fallback("quest_missing","Nhiệm vụ môn phái không hợp lệ.")

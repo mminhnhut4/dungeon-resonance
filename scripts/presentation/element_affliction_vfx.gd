@@ -7,6 +7,7 @@ const POISON_TEXTURE: Texture2D = preload("res://assets/vfx/movement/regions/poi
 const BURN_TEXTURE: Texture2D = preload("res://assets/vfx/movement/regions/burn_flame.tres")
 const POISON_COLOR: Color = Color(0.42, 0.78, 0.24)
 const BURN_COLOR: Color = Color(1.0, 0.38, 0.08)
+var _burn_cpu: CompatibilityParticleBurst
 var burn: GPUParticles2D
 var poison: GPUParticles2D
 var burn_visible: bool = false
@@ -31,6 +32,9 @@ func initialize(owner_actor: Node2D, hurt: Hurtbox, feedback: CombatFeedback = n
 	_feedback_id = feedback.get_instance_id() if is_instance_valid(feedback) else 0
 	if burn == null:
 		burn = _make_emitter("BurnEmbers", BURN_TEXTURE, BURN_COLOR, 9, true)
+		# Reuse one bounded CPU emitter only on Compatibility. The authored GPU
+		# node remains the parameter source, including the original hit-stop clock.
+		_burn_cpu = CompatibilityParticleBurst.attach(burn)
 		poison = _make_emitter("PoisonWisps", POISON_TEXTURE, POISON_COLOR, 7, false)
 	var rig: PlayerVisualRig = owner_actor.get_node_or_null("Visuals") as PlayerVisualRig
 	if rig != null:
@@ -95,12 +99,21 @@ func refresh_visual() -> void:
 	var feedback: CombatFeedback = instance_from_id(_feedback_id) as CombatFeedback if is_instance_id_valid(_feedback_id) else null
 	var frozen: bool = feedback != null and feedback.is_frozen()
 	var gpu: bool = DisplayServer.get_name() != "headless"
-	burn.emitting = burn_visible and gpu
+	burn.emitting = burn_visible and gpu and not is_instance_valid(_burn_cpu)
 	poison.emitting = poison_visible and gpu
-	burn.visible = burn_visible
+	burn.visible = burn_visible and not is_instance_valid(_burn_cpu)
 	poison.visible = poison_visible
 	burn.speed_scale = 0.0 if frozen else 1.0
 	poison.speed_scale = 0.0 if frozen else 1.0
+	if is_instance_valid(_burn_cpu):
+		_burn_cpu.speed_scale = burn.speed_scale
+		# Hidden CPU particles stop aging. Clear old world-space particles only
+		# on a new burn; extensions and hit-stop must keep the in-flight phase.
+		# Preserve the emitter seed instead of consuming global RNG on re-entry.
+		if burn_visible and gpu and not _burn_cpu.emitting:
+			_burn_cpu.restart(true)
+		_burn_cpu.set_emission(burn_visible and gpu)
+		_burn_cpu.visible = burn_visible
 	var color: Color = POISON_COLOR if poison_visible else BURN_COLOR
 	if poison_visible and burn_visible:
 		color = POISON_COLOR.lerp(BURN_COLOR, 0.4)

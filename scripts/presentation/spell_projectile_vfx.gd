@@ -11,6 +11,7 @@ const SPARK_TEXTURE: Texture2D = preload("res://assets/presentation/spark.png")
 const ART = preload("res://scripts/presentation/rendered_spell_art.gd")
 
 var particles: GPUParticles2D
+var compatibility_particles: CompatibilityParticleBurst
 var line: Line2D
 var tint: Color = Color(0.35, 1.0, 0.81)
 var owner_id: int = 0
@@ -74,6 +75,7 @@ func _ready() -> void:
 	add_child(particles)
 	_update_color()
 	particles.emitting = DisplayServer.get_name() != "headless"
+	compatibility_particles=CompatibilityParticleBurst.attach(particles)
 	if owner_id != 0:
 		_sample_owner(0.0)
 
@@ -110,6 +112,9 @@ func bind(projectile: SpellProjectile, combat_feedback: CombatFeedback = null) -
 		if line != null: line.width = 2.5 + committed_quality * 0.7
 	if particles != null:
 		particles.emitting = owner_id != 0 and DisplayServer.get_name() != "headless"
+		if is_instance_valid(compatibility_particles):
+			compatibility_particles.refresh_parameters()
+			compatibility_particles.set_emission(particles.emitting)
 	if owner_id != 0 and is_inside_tree():
 		_sample_owner(0.0)
 	elif line != null:
@@ -119,6 +124,7 @@ func bind(projectile: SpellProjectile, combat_feedback: CombatFeedback = null) -
 func _update_color() -> void:
 	if particles != null:
 		(particles.process_material as ParticleProcessMaterial).color = tint.lerp(Color.WHITE, 0.25)
+		if is_instance_valid(compatibility_particles):compatibility_particles.refresh_parameters()
 	if line != null:
 		var gradient := Gradient.new()
 		gradient.set_color(0, Color(tint.r, tint.g, tint.b, 0.0))

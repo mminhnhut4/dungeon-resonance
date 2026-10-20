@@ -172,6 +172,12 @@ func _world_actions() -> void:
 		var event: DamageEvent = _damage(enemy.hurtbox, 1)
 		var pose_before_hit: float = enemy.visual.motion.rotation
 		var hit: DamageResult = enemy.hurtbox.take_damage(event)
+		var flash_on_contact: bool = enemy.flash_remaining > 0.075 and enemy.visual.sprite.modulate == Color(1, 0.38, 0.30, 1) and float(enemy.visual._material.get_shader_parameter("flash")) == 1.0
+		var held_recoil: float = enemy.visual._hit_remaining
+		feedback._frozen_this_tick = true
+		enemy.visual._physics_process(0.05)
+		_check(not hit.blocked and flash_on_contact and enemy.visual._hit_remaining == held_recoil, "%s accepted hit paints the existing flash before the frozen physics frame without consuming recoil" % id)
+		feedback._frozen_this_tick = false
 		var feedback_count: int = feedback.impact_count
 		var hp: float = enemy.health.current_health
 		var duplicate: DamageResult = enemy.hurtbox.take_damage(event)
@@ -181,11 +187,13 @@ func _world_actions() -> void:
 		_check(recoil_pose and enemy.visual._hit_remaining > 0.0, "%s accepted hit changes pose with finite recoil alongside its existing flash" % id)
 		var dot: DamageEvent = _damage(enemy.hurtbox, 1)
 		dot.source_kind = DamageEvent.SourceKind.DOT
+		enemy.flash_remaining = 0.0
+		enemy.visual._physics_process(0.0)
 		enemy.hurtbox.take_damage(dot)
-		_check(enemy.visual.hit_reaction_count == incoming_count + 1, "%s DoT does not restart its impact pose" % id)
+		_check(enemy.visual.hit_reaction_count == incoming_count + 1 and float(enemy.visual._material.get_shader_parameter("flash")) == 0.0, "%s DoT does not start a contact flash or impact pose" % id)
 		enemy.hurtbox.set_invulnerable(true)
 		enemy.hurtbox.take_damage(_damage(enemy.hurtbox, 1))
-		_check(enemy.visual.hit_reaction_count == incoming_count + 1, "%s blocked hit produces no impact pose" % id)
+		_check(enemy.visual.hit_reaction_count == incoming_count + 1 and float(enemy.visual._material.get_shader_parameter("flash")) == 0.0, "%s blocked hit produces no contact flash or impact pose" % id)
 		enemy.hurtbox.set_invulnerable(false)
 		enemy.state_machine.transition_to(&"telegraph")
 		enemy.state_machine.transition_to(&"attack")
@@ -232,18 +240,29 @@ func _slime() -> void:
 	skin._physics_process(1.0 / Engine.physics_ticks_per_second)
 	_check(slime.bite_hitbox.active and count == 1 and skin.active_cue_count == count, "Real Slime bite window creates one local launch mark")
 	var event: DamageEvent = _damage(slime.hurtbox, 1)
-	slime.hurtbox.take_damage(event)
+	var slime_hit: DamageResult = slime.hurtbox.take_damage(event)
+	var slime_flash_now: bool = slime._flash_remaining > 0.12 and float(skin._material.get_shader_parameter("flash")) == 1.0
+	var slime_clock: float = skin.clock
+	var slime_recoil: float = skin._hit_remaining
+	feedback._frozen_this_tick = true
+	skin._physics_process(0.05)
+	_check(not slime_hit.blocked and slime_flash_now and skin.clock == slime_clock and skin._hit_remaining == slime_recoil, "Accepted Slime contact paints flash before frozen frame without advancing pose clock")
+	feedback._frozen_this_tick = false
 	slime.hurtbox.take_damage(event)
 	skin._physics_process(0.05)
 	_check(skin.hit_reaction_count == 1 and absf(skin.motion.rotation) > 0.04 and skin.active_cue_remaining == 0 and not slime.bite_hitbox.active, "Accepted Slime hit recoils once and attack cancellation clears cue/hitbox")
 	_check((slime.get_node("BodyCollision") as CollisionShape2D).global_transform == collision and slime.hurtbox.global_transform == hurt and slime.global_position == position_before, "Slime tell, active and hurt presentation never moves authoritative geometry")
 	var dot: DamageEvent = _damage(slime.hurtbox, 1)
 	dot.source_kind = DamageEvent.SourceKind.DOT
+	slime._flash_remaining = 0.0
+	skin._hit_remaining = 0.0
+	skin.refresh_skin()
 	slime.hurtbox.take_damage(dot)
-	_check(skin.hit_reaction_count == 1, "Slime DoT does not restart the cosmetic impact pose")
+	skin._physics_process(0.0)
+	_check(skin.hit_reaction_count == 1 and float(skin._material.get_shader_parameter("flash")) == 0.0, "Slime DoT does not create a contact flash or restart the impact pose")
 	slime.hurtbox.set_invulnerable(true)
 	slime.hurtbox.take_damage(_damage(slime.hurtbox, 1))
-	_check(skin.hit_reaction_count == 1, "Slime blocked hit creates no cosmetic impact pose")
+	_check(skin.hit_reaction_count == 1 and float(skin._material.get_shader_parameter("flash")) == 0.0, "Slime blocked hit creates no contact flash or impact pose")
 	var connection_count: int = slime.hurtbox.hit_resolved.get_connections().size()
 	skin.bind(null)
 	_check(not slime.hurtbox.hit_resolved.is_connected(skin._on_visual_hit), "Slime unbind disconnects its accepted-hit observer")

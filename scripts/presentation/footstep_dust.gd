@@ -49,6 +49,7 @@ func _ready() -> void:
 	particles.process_material = behavior
 	add_child(particles)
 	particles.emitting = DisplayServer.get_name() != "headless"
+	CompatibilityParticleBurst.attach(particles)
 
 func _process(delta: float) -> void:
 	remaining = maxf(0, remaining - delta)

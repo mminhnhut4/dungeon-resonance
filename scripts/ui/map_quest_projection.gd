@@ -10,7 +10,7 @@ static func known_rooms(profile: SanctuaryProfile) -> Dictionary:
 	return known
 
 static func shortcut_known(profile: SanctuaryProfile, known: Dictionary) -> bool:
-	return profile != null and not profile.exterior_progress_quarantined and bool(profile.exterior_progress.get("sc01_open",false)) and known.has(&"o01_p01") and known.has(&"o01_p03")
+	return profile != null and not profile.exterior_progress_quarantined and OpeningExplorationProgress.shortcut_open(profile) and known.has(&"o01_p01") and known.has(&"o01_p03")
 
 static func rows(profile: SanctuaryProfile, inventory: GearInventory = null) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []

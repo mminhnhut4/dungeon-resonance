@@ -207,10 +207,21 @@ func spawn_skid(location: Vector2, travel: Vector2) -> GPUParticles2D:
 	motion.scale_max = 0.045
 	motion.color = Color(0.75, 0.8, 0.8, 0.22)
 	puff.process_material = motion
-	marks.add_child(puff)
-	puff.global_position = location + Vector2(0.0, -3.0)
+	# Keep one finite mark owner in the eight-entry budget. The Compatibility
+	# renderer and its inactive GPU parameter node retire with that owner.
+	var lifetime_owner: Node2D=puff
+	if CompatibilityParticleBurst.supported():
+		lifetime_owner=Node2D.new()
+		lifetime_owner.name="FiniteSkidDust"
+		lifetime_owner.set_meta(&"initial_alpha",1.0)
+		marks.add_child(lifetime_owner)
+		lifetime_owner.add_child(puff)
+	else:
+		marks.add_child(puff)
+	lifetime_owner.global_position = location + Vector2(0.0, -3.0)
 	puff.emitting = DisplayServer.get_name() != "headless"
-	_register(puff, MARK_SECONDS)
+	CompatibilityParticleBurst.attach(puff)
+	_register(lifetime_owner, MARK_SECONDS)
 	skid_count += 1
 	return puff
 

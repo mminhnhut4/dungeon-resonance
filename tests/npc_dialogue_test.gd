@@ -120,12 +120,18 @@ func _run() -> void:
 	await _select(box, &"upgrade_rune_capacity")
 	await _step(2)
 	_check(hub.gear.inventory.catalyst_capacity == capacity_before + 1 and hub.player.resonance_controller.catalyst_a.runtime_state.opened_slots == capacity_before + 1, "Actual rune service opens the same extra slot in inventory and spell runtime")
-	_check(hub.gear.modal.slots[GearInventory.CATALYST_INDICES[3]].visible, "Rune modal exposes the purchased fourth Catalyst slot immediately")
 	box.close()
+	# Closed inventory intentionally defers redraw; verify the consumer when opened.
+	hub.gear.modal.open()
+	(hub.gear.modal as InventoryScreen).tabs.current_tab = 1
+	await _step(2)
+	_check(hub.gear.modal.is_open and hub.gear.modal.slots[GearInventory.CATALYST_INDICES[3]].visible, "Opened Rune modal immediately exposes the purchased fourth Catalyst slot")
+	hub.gear.modal.close()
 	profile.coins = 2000
+	var stash_before_services: Dictionary = profile.material_stash.duplicate()
 	for material: StringName in MaterialCatalog.IDS:
-		if MaterialCatalog.material_policy(material)["ordinary_transfer"]: profile.material_stash[material] = 100
-	profile.material_stash[&"origin_divine_stone"] = 0
+		if MaterialCatalog.material_policy(material)["ordinary_transfer"]: hub.gear.inventory.materials[material] = 100
+	hub.gear.inventory.materials[&"origin_divine_stone"] = 0
 	profile.learn_blueprint(&"world_saber")
 	var weapon_uid: int = hub.gear.inventory.equipped_weapon_uid
 	var weapon: GearItem = hub.gear.inventory.items[weapon_uid]
@@ -143,15 +149,15 @@ func _run() -> void:
 	_check(weapon.enhancement_level == old_level + 1 and weapon.quality == old_quality and hub.gear.inventory.items[weapon_uid] == weapon and profile.coins == coin_before - enhancement_quote["coin_cost"], "Actual enhancement button commits one guaranteed level without rarity/UID replacement")
 	_check(hub.station_notice.contains("thành công") and not hub.station_notice.contains("50%"), "Guaranteed enhancement feedback does not reuse the Divine gamble label")
 	hub.close_station()
-	var stones_before: int = profile.material_stash[&"enhancement_stone_1"]
-	var stones_after_before: int = profile.material_stash[&"enhancement_stone_2"]
+	var stones_before: int = hub.gear.inventory.materials[&"enhancement_stone_1"]
+	var stones_after_before: int = hub.gear.inventory.materials[&"enhancement_stone_2"]
 	hub.open_npc(NpcCatalog.SMITH)
 	box.advance()
 	await _select(box, &"smith_stones")
 	await _step(2)
 	(hub.station_content.get_node("CombineStone_1") as Button).pressed.emit()
 	await _step(2)
-	_check(profile.material_stash[&"enhancement_stone_1"] == stones_before - 5 and profile.material_stash[&"enhancement_stone_2"] == stones_after_before + 1, "Actual stone control consumes five source stones and creates one next-grade stone")
+	_check(hub.gear.inventory.materials[&"enhancement_stone_1"] == stones_before - 5 and hub.gear.inventory.materials[&"enhancement_stone_2"] == stones_after_before + 1 and profile.material_stash == stash_before_services, "Actual stone control consumes five carried stones and returns one next-grade stone to bag")
 	hub.close_station()
 	hub.open_npc(NpcCatalog.SMITH)
 	box.advance()
@@ -203,13 +209,13 @@ func _run() -> void:
 	_check(hub.gear.inventory.consumables[&"potion"] == potions_before and profile.coins == coin_before,"Potion selection does not spend before confirmation")
 	await _confirm_shop(hub)
 	_check(hub.gear.inventory.consumables[&"potion"] == potions_before + 1 and profile.coins == coin_before - 10 and hub.player.health.current_health == current_health, "Actual healer purchase stores one potion without immediately healing")
-	var linen_before: int = profile.material_stash[&"linen_fiber"]
+	var linen_before: int = hub.gear.inventory.materials[&"linen_fiber"]
 	var bandages_before: int = hub.gear.inventory.consumables[&"bandage"]
 	var bandage_button: Button = hub.station_content.get_node_or_null("CraftConsumable_bandage") as Button
 	_check(bandage_button != null and not bandage_button.disabled, "Actual healer menu exposes the material-backed bandage control")
 	if bandage_button != null: bandage_button.pressed.emit()
 	await _step(2)
-	_check(profile.material_stash[&"linen_fiber"] == linen_before - 2 and hub.gear.inventory.consumables[&"bandage"] == bandages_before + 1, "Actual craft control consumes only the quoted stash ingredients")
+	_check(hub.gear.inventory.materials[&"linen_fiber"] == linen_before - 2 and hub.gear.inventory.consumables[&"bandage"] == bandages_before + 1 and profile.material_stash == stash_before_services, "Actual craft control consumes quoted carried ingredients; all NPC services preserve storage")
 	hub.close_station()
 	hub.player.relocate(hub.stations[NpcCatalog.WANDERER].global_position)
 	await _key(KEY_E)
@@ -332,8 +338,14 @@ func _confirm_shop(hub: PrologueHub) -> void:
 	var button: Button = hub.station_content.get_node_or_null("ConfirmPurchase") as Button
 	_check(button != null,"Purchase requires its explicit confirmation control")
 	if button == null: return
-	hub.station_scroll.ensure_control_visible(button)
-	await _step(3)
+	# PC scroll restoration and Mac quantity/stats resize settle asynchronously.
+	for _index: int in 8:
+		await _step(1)
+		if hub._station_layout_pending: continue
+		hub.station_scroll.ensure_control_visible(button)
+		await _step(2)
+		if hub.station_scroll.get_global_rect().encloses(button.get_global_rect()): break
+	_check(hub.station_scroll.get_global_rect().encloses(button.get_global_rect()), "Purchase confirmation is reachable after layout settles")
 	await _mouse(MOUSE_BUTTON_LEFT,button.get_global_rect().get_center())
 
 func _key(code: int) -> void:

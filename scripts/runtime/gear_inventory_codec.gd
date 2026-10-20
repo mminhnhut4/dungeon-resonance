@@ -9,7 +9,9 @@ static func encode(inventory: GearInventory) -> Dictionary:
 	var records: Array[Dictionary] = []
 	for item: GearItem in inventory.items.values():
 		records.append({"uid": item.uid, "kind": item.kind, "id": item.definition_id, "quality": item.quality, "equipment": item.equipment_definition.resource_path if item.equipment_definition != null else "", "source": item.source, "drop_bonus": item.drop_bonus, "affix_id": item.affix_id, "affix_value": item.affix_value, "broken": item.broken, "loot_rolled": item.loot_rolled, "enhancement_level": item.enhancement_level})
-	return {"items": records, "equipment": inventory.equipment_uids.duplicate(), "weapon": inventory.equipped_weapon_uid, "catalyst": inventory.catalyst_uid, "slots": inventory.slot_uids.duplicate(), "materials": inventory.materials.duplicate(), "consumables": inventory.consumables.duplicate(), "run_coins": inventory.run_coins}
+	var result: Dictionary = {"items": records, "equipment": inventory.equipment_uids.duplicate(), "weapon": inventory.equipped_weapon_uid, "catalyst": inventory.catalyst_uid, "slots": inventory.slot_uids.duplicate(), "materials": inventory.materials.duplicate(), "consumables": inventory.consumables.duplicate(), "run_coins": inventory.run_coins}
+	if not inventory.equipment_positions.is_empty(): result["equipment_positions"] = inventory.equipment_grid_uids(false)
+	return result
 
 static func valid(data: Dictionary) -> bool:
 	if data.is_empty(): return true
@@ -35,6 +37,17 @@ static func valid(data: Dictionary) -> bool:
 	if not _valid_uid(data.get("weapon", 0), true) or int(data.get("weapon", 0)) != int(data["equipment"][0]) or not _valid_uid(data.get("catalyst", 0), true): return false
 	var catalyst: int = int(data.get("catalyst", 0))
 	if catalyst > 0 and (not uids.has(catalyst) or str(uids[catalyst]["kind"]) != "catalyst"): return false
+	if data.has("equipment_positions") and data.has("positions") and data["equipment_positions"] != data["positions"]: return false
+	for position_key: String in ["equipment_positions", "positions"]:
+		if not data.has(position_key): continue
+		if not data[position_key] is Array or data[position_key].size() > MAX_ITEMS: return false
+		var placed: Array[int] = []
+		for value: Variant in data[position_key]:
+			if not _valid_uid(value, true): return false
+			var uid: int = int(value)
+			if uid == 0: continue
+			if not uids.has(uid) or placed.has(uid) or destinations.has(uid) or str(uids[uid]["kind"]) not in EquipmentData.SLOT_KINDS: return false
+			placed.append(uid)
 	for id: Variant in data["materials"]:
 		if StringName(str(id)) not in MaterialCatalog.IDS or not MaterialCatalog.valid_count(data["materials"][id]): return false
 	for id: Variant in data["consumables"]:
@@ -109,6 +122,7 @@ static func decode(data: Dictionary) -> GearInventory:
 	for id: StringName in inventory.consumables: inventory.consumables[id] = int(data["consumables"].get(String(id), data["consumables"].get(id, 0)))
 	inventory.explicit_weapon_selection = true
 	inventory.run_coins = int(data.get("run_coins", 0))
+	inventory.equipment_positions.assign(data.get("equipment_positions", data.get("positions", [])))
 	CombatIds.reserve_through(largest_uid)
 	return inventory
 
@@ -119,6 +133,7 @@ static func copy_into(destination: GearInventory, source: GearInventory) -> void
 	destination.slots.assign(copy.slots)
 	destination.slot_uids.assign(copy.slot_uids)
 	destination.equipment_uids.assign(copy.equipment_uids)
+	destination.equipment_positions.assign(copy.equipment_positions)
 	destination.owned_weapons.assign(copy.owned_weapons)
 	destination.materials.assign(copy.materials)
 	destination.consumables.assign(copy.consumables)
@@ -126,4 +141,6 @@ static func copy_into(destination: GearInventory, source: GearInventory) -> void
 	destination.catalyst_uid = copy.catalyst_uid
 	destination.explicit_weapon_selection = copy.explicit_weapon_selection
 	destination.run_coins = copy.run_coins
+	destination.expedition_active = copy.expedition_active
+	destination.protected_materials.assign(copy.protected_materials)
 	destination.changed.emit()

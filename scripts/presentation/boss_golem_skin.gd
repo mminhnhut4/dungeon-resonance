@@ -124,7 +124,7 @@ func refresh_skin() -> void:
 	_state_time = float(boss.get("state_time"))
 	_emitted_orbs = int(boss.get("emitted_orbs"))
 	_staggered = _state == &"staggered"
-	_fade = maxf(0.0, 1.0 - float(boss.get("state_time")) / 0.6) if _state == &"dead" else 1.0
+	_fade = 1.0-smoothstep(0.18,0.6,float(boss.get("state_time"))) if _state == &"dead" else 1.0
 	modulate.a = _fade
 	_facing = float(boss.get("facing"))
 	var hitbox: Node = boss.get("attack_hitbox") as Node
@@ -147,7 +147,9 @@ func refresh_skin() -> void:
 		core_light.position.y = -58.0 * motion.scale.y
 		core_light.color = JADE if phase == 1 else AMBER
 		var core_energy: float = PHASE_ONE_CORE_ENERGY if phase == 1 else PHASE_TWO_CORE_ENERGY
-		core_light.energy = core_energy * pulse * _fade * (1.0 - _stone_flash)
+		# Holding the collapsing stone visible must not prolong the light peak.
+		var light_fade: float=maxf(0.0,1.0-_state_time/0.6) if _state==&"dead" else _fade
+		core_light.energy = core_energy * pulse * light_fade * (1.0 - _stone_flash)
 	queue_redraw()
 
 
