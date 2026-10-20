@@ -3,6 +3,7 @@ extends WorldCampaign
 ## Opt-in five-floor expedition. The parent retains player, gear, save escrow and return ownership.
 const Catalog=preload("res://data/depth_floor_catalog.gd")
 const RoomScript=preload("res://scripts/rooms/depth_room.gd")
+const SupplyCatalog=preload("res://data/floor_supply_catalog.gd")
 const ENEMY_SCENE: String="res://scenes/enemies/depth_enemy.tscn"
 const BOSS_SCENE: String="res://scenes/enemies/depth_boss.tscn"
 signal depth_floor_cleared(floor_number: int)
@@ -19,6 +20,8 @@ var _cleared_floors: Dictionary[int,bool]={}
 var _summons_created: bool=false
 var branch_chest: TreasureChest
 var _opened_branch_chests: Dictionary[int,bool]={}
+var _supply_sources_issued: Dictionary[StringName,bool]={}
+var _supply_retry_queued: bool=false
 var depth_hud: PanelContainer
 var depth_heading: Label
 var depth_tactic: Label
@@ -28,6 +31,7 @@ func _ready() -> void:
 	super._ready()
 	gear.loot.drop_table=preload("res://data/loot/world_drop_table.tres")
 	gear.loot.permanent_profile=survival.profile
+	gear.loot.pickup_collected.connect(_retry_supply_source)
 	_build_depth_hud()
 	depth_hud.visible=not _opening_active
 	if connected_opening:
@@ -146,6 +150,34 @@ func _check_clear() -> void:
 		_record_depth_event(StringName("depth_floor_%d" % room_number),room_number)
 		depth_floor_cleared.emit(room_number)
 	if survival.enabled: survival.place_campfire(Catalog.camp_point(room_number))
+	_try_supply_sources()
+func _try_supply_sources() -> void:
+	# An optional source never blocks a door, retreat, or the canonical save owner.
+	# Failed allocation stays eligible; collecting another pickup triggers a retry.
+	if _opening_active or not world_building_enabled or profile==null or outcome!=&"" or not is_instance_valid(room) or room.locked or not _cleared_floors.has(room_number) or not living_enemies().is_empty():return
+	for source: Dictionary in SupplyCatalog.sources_for_floor(room_number):
+		var id: StringName=source["id"]
+		if _supply_sources_issued.has(id):continue
+		var pickup: LootPickup=gear.loot.spawn(&"material",source["item"],SupplyCatalog.drop_point(room_number),source["quantity"])
+		if pickup==null:continue
+		_supply_sources_issued[id]=true
+		pickup.set_meta(&"floor_supply_source",id)
+		# Keep a guaranteed source available while this room is active; room/loot
+		# teardown still owns it. Full material counts refuse collection normally.
+		pickup.life=1.0e9
+		pickup.item_label.text+=" · Tầng%d"%source["global_floor"]
+func _retry_supply_source(_pickup: LootPickup) -> void:
+	if _opening_active or _supply_retry_queued or not _cleared_floors.has(room_number):return
+	var pending: bool=false
+	for source: Dictionary in SupplyCatalog.sources_for_floor(room_number):
+		if not _supply_sources_issued.has(source["id"]):pending=true
+	if not pending:return
+	# Collected pickup queues its own free AFTER emitting. Wait until the next
+	# frame, not the same deferred queue, so the 96-slot budget is actually free.
+	_supply_retry_queued=true
+	get_tree().process_frame.connect(_flush_supply_retry,CONNECT_ONE_SHOT)
+func _flush_supply_retry() -> void:
+	_supply_retry_queued=false;_try_supply_sources()
 func advance_room() -> bool:
 	if _opening_active:
 		if has_pending_rewards() or transition_pending: return false

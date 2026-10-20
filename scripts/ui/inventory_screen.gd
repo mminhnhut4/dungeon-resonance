@@ -941,6 +941,7 @@ func _bind_progress() -> void:
 	journal.bind_progress(source, inventory)
 	_progress_world = weakref(ancestor) if ancestor != null else null
 	journal.context_provider = _map_context
+	journal.rune_preparation_context_provider = _rune_preparation_context
 	journal.quest_action_provider = _quest_action
 	journal.refresh()
 	# Navigation reads this supplied world/profile, with no HUD/save ownership.
@@ -951,6 +952,13 @@ func _bind_progress() -> void:
 	journal.navigation_provider = navigator.track
 	if source != null: source.changed.connect(_update_tracker)
 	_update_tracker()
+
+func _rune_preparation_context() -> Dictionary:
+	var world: Node = _progress_world.get_ref() as Node if _progress_world != null else null
+	if not is_instance_valid(world) or world.is_queued_for_deletion():return {}
+	for property: Dictionary in world.get_property_list():
+		if property.get("name")=="rune_learning":return {"service":world.get("rune_learning")}
+	return {}
 
 func _quest_action(command: StringName) -> Dictionary:
 	var world: Node = _progress_world.get_ref() as Node if _progress_world != null else null
