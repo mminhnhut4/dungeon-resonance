@@ -31,11 +31,15 @@ func resolve(event: DamageEvent) -> DamageResult:
 			if _recent_hits.size() >= 256:
 				_recent_hits.erase(_recent_hits.keys()[0])
 			_recent_hits[key] = true
+			# Capture the already-authored consume condition before modify_damage
+			# clears it. Presentation must not infer success from a thermal spell ID.
+			var thermal_ready: bool = event.thermal_shock and status_controller is ElementStatusController and (status_controller as ElementStatusController).freeze_remaining > 0.0
 			var amount: float = status_controller.modify_damage(event) if status_controller != null else event.base_damage
 			# Work on the local resolved amount, never overwrite a shared DamageEvent.
 			var armor: float = maxf(0.0, armor_rating) if is_finite(armor_rating) else 0.0
 			amount *= 100.0 / (100.0 + armor)
 			result.actual_damage = health.apply_damage(amount)
+			if thermal_ready and result.actual_damage > 0.0: result.reaction_id = &"thermal_shock"
 			result.killed = health.current_health <= 0.0
 			if not result.killed and result.actual_damage > 0.0 and status_controller != null:
 				status_controller.apply(event)

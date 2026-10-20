@@ -36,6 +36,13 @@ var _hurt_remaining: float = 0.0
 var _death_emitted: bool = false
 var _attack_shape: Shape2D
 var hit_aggro: EnemyHitAggro=EnemyHitAggro.new()
+var opening_attack_window: Node
+
+func _request_opening_attack() -> bool:
+	return not is_instance_valid(opening_attack_window) or bool(opening_attack_window.call("request",self))
+
+func opening_attack_committed() -> bool:
+	return ai_enabled and health.current_health>0 and is_visible_in_tree() and state_machine.get_state_id() in [&"telegraph",&"attack"]
 
 func _ready() -> void:
 	assert(definition != null)
@@ -181,7 +188,7 @@ func tick_state(id: StringName, delta: float) -> void:
 				return
 			var offset: Vector2 = player.global_position - global_position
 			facing = -1.0 if offset.x < 0.0 else 1.0
-			if offset.length() <= definition.attack_range and attack_cooldown <= 0.0 and _target_path_clear():
+			if offset.length() <= definition.attack_range and attack_cooldown <= 0.0 and _target_path_clear() and _request_opening_attack():
 				state_machine.transition_to(&"telegraph")
 			elif definition.flying:
 				var height: float = 130.0 if definition.moveset == WorldEnemyData.Moveset.BAT_DIVE else 35.0

@@ -105,7 +105,16 @@ static func _cultivation(profile: SanctuaryProfile, inventory: GearInventory) ->
 			requirements.append(requirement(&"dust","Bột Phép trong túi",inventory.materials.get(&"dust",0),int(config["final_dust_cost"] if stage==2 else config["interim_dust_cost"])))
 			if stage==2 and int(config["final_soul_cost"])>0:requirements.append(requirement(&"souls","Tàn Hồn",profile.souls,config["final_soul_cost"],ItemArtCatalog.icon(&"crystal")))
 			if stage==2 and int(config["final_golem_proof"])>0:requirements.append(requirement(&"proof","Chứng tích Golem",profile.boss_proofs.get(&"golem",0),config["final_golem_proof"],ItemArtCatalog.icon(&"blueprint")))
-	return {"key":&"cultivation","title":"Tu luyện","done":stage==3,"stage":stage,"configuration_valid":ready,"station":Guide.cultivation_station(profile,inventory),"action":hint["action"],"requirements":requirements,"result":hint["reward"],"ready":hint["status"]=="requirements_ready","source":"Tu vi khác mana. Đòn trúng mộc nhân/quái tăng thông thạo; Đường Bộ, Thanh Vy, Golem cho lĩnh ngộ một lần. Điều tức phải đóng bảng và ở Sân Luyện."}
+	var sources: Array[String] = ["Đòn cận chiến trúng mộc nhân/quái tăng thông thạo. Đường Bộ, Thanh Vy và Golem cho lĩnh ngộ một lần. Điều tức: Sân Luyện → TU LUYỆN → Đóng bảng và bắt đầu điều tức; đứng tại sân, đóng các bảng để phiên luyện chạy."]
+	for need: Dictionary in requirements:
+		if need["missing"] > 0 and need["id"] in [&"crystal", &"dust"]:
+			sources.append("%s: %s" % [MaterialCatalog.DISPLAY_NAMES[need["id"]], Guide._material_source(profile,need["id"],need["missing"])])
+	return {"key":&"cultivation","title":"Tu luyện","done":stage==3,"stage":stage,"configuration_valid":ready,"station":Guide.cultivation_station(profile,inventory),"action":hint["action"],"requirements":requirements,"result":hint["reward"],"ready":hint["status"]=="requirements_ready","source":"\n".join(sources)}
+
+static func resource_legend(profile: SanctuaryProfile, inventory: GearInventory) -> String:
+	var energy: String = "chưa khả dụng"
+	if Cultivation.valid(profile.cultivation_progress,profile.material_stash): energy = str(profile.cultivation_progress["actors"]["player"]["energy"])
+	return "PHÂN BIỆT TÀI NGUYÊN\nLinh Thạch: %d đã giữ trong hồ sơ; tiền mua đồ/cường hóa theo báo giá.\nTàn Hồn: %d; học bùa/nâng vĩnh viễn theo giá của Thanh Vy.\nTinh Thạch: %d trong túi, %d trong kho; nguyên liệu điều tức/chế bùa, khác Linh Thạch. Dịch vụ dùng phần đang mang.\nTu vi tích lũy: %s; năng lượng tu luyện để xét tiến tầng/đột phá, khác mana dùng tung chiêu." % [profile.coins,profile.souls,inventory.materials.get(&"crystal",0),profile.material_stash.get(&"crystal",0),energy]
 
 static func row(profile: SanctuaryProfile, inventory: GearInventory) -> Dictionary:
 	var card: Dictionary={"title":"Bước tiếp theo để mạnh hơn","action":"Chưa đọc được dữ liệu; vào lại vùng chơi và mở bảng.","location":"Chưa xác minh","progress":"Chưa khả dụng","prerequisite":"Cần hồ sơ và túi hợp lệ.","reward":"Chưa xác minh","reward_mode":"Thực hiện tại bảng đang có; hướng dẫn không phát đồ hoặc ghi tiến độ.","reward_status":"Chưa khả dụng","complete":false,"optional":true,"active":false,"count":0,"command":&"","command_label":"","command_enabled":false}
@@ -135,7 +144,9 @@ static func row(profile: SanctuaryProfile, inventory: GearInventory) -> Dictiona
 	for need: Dictionary in next["requirements"]:lines.append("%s: %d/%d · thiếu %d"%[need["name"],need["have"],need["need"],need["missing"]])
 	card.merge({"action":next["action"],"location":_location(next["station"]),"progress":counts,"prerequisite":"\n".join(lines) if not lines.is_empty() else "Dùng đồ đang sở hữu, ghép đúng công thức; giao dịch kiểm lại giá tại nơi thực hiện.","reward":next["result"],"reward_status":"Đã mở Liên Ấn" if foundation else "Trúc Cơ sẽ mở Liên Ấn"},true)
 	var current: String="%s · %s"%[profile.cultivation_progress["config"]["stage_labels"][cultivation["stage"]] if cultivation["configuration_valid"] else "Tu luyện chưa sẵn sàng",ItemArtCatalog.gear_name(weapon) if equipped else "Chưa mặc vũ khí dùng được"]
-	result["power"]={"station":next["station"],"key":next["key"],"requirements":next["requirements"],"current":current,"spell_ids":spell["recipe"]["recipe_rune_ids"],"foundation":foundation}
+	if cultivation["configuration_valid"] and cultivation["stage"] < 3:
+		current = "%s → %s\n%s" % [profile.cultivation_progress["config"]["stage_labels"][cultivation["stage"]],profile.cultivation_progress["config"]["stage_labels"][cultivation["stage"]+1],ItemArtCatalog.gear_name(weapon) if equipped else "Chưa mặc vũ khí dùng được"]
+	result["power"]={"station":next["station"],"key":next["key"],"requirements":next["requirements"],"current":current,"spell_ids":spell["recipe"]["recipe_rune_ids"],"foundation":foundation,"guidance":"NGUỒN / CÁCH THỰC HIỆN\n"+next["source"]+"\n\n"+resource_legend(profile,inventory)}
 	result["body"]="HIỆN TẠI · "+current+"\n"+next["source"]+"\n\nTRÚC CƠ · "+FoundationResonance.description()+"\n"+FoundationLesson.example_text()+" Bùa đơn không có thêm liên kết. Tab → Bùa cho biết bộ hiện tại / lý do chưa dùng được. Hai bia Sân Luyện tự hồi, không đánh trả; đứng giữa, nhắm bia phải để thấy bia sau lưng nhận liên kết. Không cấp rune miễn phí.\n\nCÁC ĐƯỜNG SỨC MẠNH\nTrang bị: Tab để so sánh/mặc.\nGhép bùa: Tab → Bùa; học/chế ở Thanh Vy hoặc tìm rương.\nNâng cấp: Thiết Lão / Thanh Vy theo giá thực.\nTu luyện: Sân Luyện; theo từng điều kiện trên đây."
 	return result
 

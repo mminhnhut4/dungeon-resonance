@@ -17,6 +17,9 @@ var hp_text: Label
 var energy_text: Label
 var soul_text: Label
 var currency_text: Label
+var spell_status: Label
+var dash_status: Label
+var combo_hint: Label
 var _profile: SanctuaryProfile
 var rune_icons: Array[TextureRect] = []
 var rune_ids: Array[StringName] = []
@@ -89,6 +92,15 @@ func _build_ui() -> void:
 	currency_text.name = "SpiritStoneBalance"
 	currency_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	currency_text.add_theme_color_override("font_color", Color(0.98, 0.88, 0.60))
+	spell_status = _label(player_panel,Vector2(44,216),Vector2(330,22),13)
+	spell_status.name = "SpellReadiness"
+	spell_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	dash_status = _label(player_panel,Vector2(44,238),Vector2(330,22),13)
+	dash_status.name = "DashReadiness"
+	dash_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	combo_hint = _label(player_panel,Vector2(44,260),Vector2(360,22),12)
+	combo_hint.name = "ElementSetupHint"
+	combo_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	weapon_icon = _texture(player_panel, "EquippedWeaponIcon", SWORD_ICON, Vector2(4, 590), Vector2(56, 56))
 	weapon_icon.mouse_filter = Control.MOUSE_FILTER_PASS
 	weapon_name = _label(player_panel, Vector2(64, 608), Vector2(260, 36), 15)
@@ -213,6 +225,7 @@ func refresh_hud() -> void:
 	hp_text.text = "%d / %d" % [roundi(player.health.current_health), roundi(player.health.maximum_health)]
 	energy_text.text = "%d / %d" % [roundi(player.energy.current), roundi(player.energy.maximum)]
 	energy_bar.tooltip_text = "Năng lượng · Lướt và phép dùng chung"
+	_refresh_combat_readiness(player)
 	var catalyst: CatalystRuntime = player.resonance_controller.catalyst_a.runtime_state
 	var installed: Array[RuneData] = catalyst.installed_runes
 	_sync_rune_slots(maxi(3, maxi(catalyst.opened_slots, installed.size())))
@@ -259,6 +272,36 @@ func refresh_hud() -> void:
 	else:
 		_clear_boss_hud()
 	_layout_footer()
+
+
+func _refresh_combat_readiness(player: Player) -> void:
+	var controller: ResonanceController = player.resonance_controller
+	var recipe: ResonanceDefinition = controller.get_recipe()
+	var action: StringName = player.action_state_machine.get_state_id()
+	var spell_reason: String = "Sẵn sàng"
+	if player.health.current_health<=0: spell_reason = "Đã gục"
+	elif not controller.casting_enabled: spell_reason = "Chưa dùng được"
+	elif recipe==null: spell_reason = "Bộ bùa không hợp lệ"
+	elif controller.cooldown_remaining()>0.000001: spell_reason = "Hồi %.1fs"%(ceilf(controller.cooldown_remaining()*10.0)/10.0)
+	elif not player.energy.can_spend(ResonanceController.CAST_ENERGY_COST): spell_reason = "Cần %d năng lượng"%ResonanceController.CAST_ENERGY_COST
+	elif not player.controls_enabled or player._resume_guard>0: spell_reason = "Đang mở bảng"
+	elif action!=&"ready": spell_reason = "Chờ nhịp đòn"
+	spell_status.text = "I · %s · %s"%[recipe.display_name if recipe!=null else "Bùa",spell_reason]
+	spell_status.modulate = Color(0.65,0.92,1) if spell_reason=="Sẵn sàng" else Color(0.92,0.80,0.58)
+	var dash_reason: String = "Sẵn sàng"
+	var recovery_dash: bool = action==&"hurt" and player.hit_reaction!=null and player.hit_reaction.can_recover_dash()
+	if player.health.current_health<=0: dash_reason = "Đã gục"
+	elif player.motor.is_dashing: dash_reason = "Đang lướt"
+	elif player.motor.dash_cooldown_remaining>0: dash_reason = "Hồi %.1fs"%(ceilf(player.motor.dash_cooldown_remaining*10.0)/10.0)
+	elif not player.energy.can_spend(25): dash_reason = "Cần 25 năng lượng"
+	elif not player.controls_enabled or player._resume_guard>0: dash_reason = "Đang mở bảng"
+	elif not player.motor.can_dash(): dash_reason = "Cần chạm đất"
+	elif action not in [&"ready",&"attack",&"cast_spell",&"cultivation_skill"] and not recovery_dash: dash_reason = "Chờ thoát đòn"
+	dash_status.text = "Shift · Lướt · "+dash_reason
+	dash_status.modulate = Color(0.65,0.92,1) if dash_reason=="Sẵn sàng" else Color(0.92,0.80,0.58)
+	combo_hint.visible = recipe!=null and recipe.thermal_shock
+	combo_hint.text = "Tích Băng → đóng băng → Sốc Nhiệt phá băng" if combo_hint.visible else ""
+	combo_hint.modulate = Color(0.70,0.88,0.95)
 
 
 func _layout_footer() -> void:

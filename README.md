@@ -2,13 +2,13 @@
 
 | Mục | Giá trị |
 |---|---|
-| Nhánh review | `review/pc-source-sync-20261020` |
-| Commit nguồn dùng để đối chiếu | `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` |
+| Nhánh review | `review/audio-force-20261020` |
+| Commit nguồn dùng để đối chiếu | `208d14df0e71b59fb809b0b5e9b0949a94593e64` |
 | Nền snapshot | `6d73a61d640fa7d564cce30a55afc2f8afef260f` |
-| Trạng thái | **Source PC đã tích hợp; chưa phải release mới** |
-| Số file nguồn trong phạm vi snapshot | 363 |
+| Trạng thái | **Audition nguồn thu; chờ phản hồi nghe** |
+| Số file nguồn trong phạm vi snapshot | 105 |
 
-Nguồn PC tại f36b4bc, gồm các thay đổi Mac đã ghép trước đó. Snapshot này giữ nguồn runtime/test được chọn; không mang các báo cáo và log riêng. Mac chưa được đồng bộ ngược khi offline.
+105 đường dẫn gồm 86 đường dẫn milestone chung và 19 đường dẫn audio; không có production formation/telegraph-poise thử nghiệm sau đó. Tám audio resource thay đổi, hai swing giữ nguyên; routing/gain/pitch/gameplay giữ như nguồn. QA gốc: candidate 110 checks trong ba process, baseline 13. Giữ mười TRES cùng nguồn/license CC0. Bản sao manifest bỏ hai đường dẫn máy cá nhân và chuẩn hóa mười hash theo blob Git LF; audio resource không đổi.
 
 Số file ở trên là số đường dẫn thay đổi được chọn, gồm cả UID/import sidecar, không phải tổng số file trong checkout. Nhánh PC được so với nền GitHub; các nhánh còn lại được so với nguồn PC `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` và kế thừa snapshot PC gồm 363 đường dẫn thay đổi.
 

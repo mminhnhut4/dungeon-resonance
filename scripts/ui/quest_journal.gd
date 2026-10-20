@@ -47,6 +47,10 @@ var power_scroll: ScrollContainer
 var power_current: Label
 var power_steps: Label
 var _compact_layout: bool = false
+var supply_button: Button
+var supply_board: VBoxContainer
+var _supply_open: bool=false
+var rune_preparation_context_provider: Callable
 
 func _enter_tree() -> void:
 	if profile != null and not profile.changed.is_connected(_request_refresh): profile.changed.connect(_request_refresh)
@@ -63,7 +67,11 @@ func _ready() -> void:
 	var heading := HBoxContainer.new()
 	heading.add_theme_constant_override("separation",8)
 	add_child(heading)
-	heading.add_child(_label("BẢN ĐỒ & NHIỆM VỤ",20))
+	# Reuse the title's existing row; an extra toolbar would push legacy quest
+	# details outside the fixed modal at compact and desktop viewport sizes.
+	supply_button=Button.new();supply_button.text="Tầng & vật liệu";supply_button.custom_minimum_size.y=30
+	supply_button.tooltip_text="Nguồn bảo đảm ở tầng đã mở · cần gì, đi đâu, về dùng tại đâu"
+	supply_button.pressed.connect(_toggle_supply);heading.add_child(supply_button)
 	power_button = Button.new()
 	power_button.text = "Mạnh hơn"
 	power_button.icon = ItemArtCatalog.icon(&"crystal")
@@ -179,6 +187,7 @@ func _ready() -> void:
 	action_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	action_button.pressed.connect(_request_action)
 	quest_column.add_child(action_button)
+	supply_board=preload("res://scripts/ui/floor_supply_board.gd").new();supply_board.size_flags_vertical=Control.SIZE_EXPAND_FILL;add_child(supply_board);supply_board.hide()
 	refresh()
 
 func _build_detail_sections() -> void:
@@ -268,8 +277,8 @@ func _present_detail(card: Dictionary,guide: String) -> void:
 			icon.tooltip_text=RuneLearningService.NAMES[id];power_preview.add_child(icon)
 		power_preview.add_child(_label("Ví dụ Hỏa + Phong\nTrước 0 → Trúc Cơ 1 liên kết",13))
 	detail_fields[&"reward"].text = "PHẦN THƯỞNG: %s\nNHẬN THƯỞNG: %s\nTRẠNG THÁI: %s" % [card["reward"],card["reward_mode"],card["reward_status"]]
-	guide_label.text = guide
-	guide_label.visible=power.is_empty()
+	guide_label.text = power.get("guidance",guide) if not power.is_empty() else guide
+	guide_label.visible = not guide_label.text.is_empty()
 	var history: bool=selected_id==OpeningRewardCatalog.ID
 	for section: StringName in [&"objective",&"requirements"]:(detail_fields[section] as Label).get_parent().visible=not history
 	(detail_fields[&"progress"] as Label).get_parent().visible=not history and power.is_empty()
@@ -359,6 +368,8 @@ func projection_rows() -> Array[Dictionary]:
 func refresh() -> void:
 	if not is_inside_tree() or is_queued_for_deletion() or state_label == null: return
 	_projection_dirty=false
+	if _supply_open:
+		_present_supply();return
 	var focused: Control = get_viewport().gui_get_focus_owner()
 	var keep_focus: bool = focused != null and quest_list.is_ancestor_of(focused)
 	_rows_dirty = true
@@ -421,6 +432,7 @@ func _context() -> Dictionary:
 	return {"room":room,"label":MapQuestProjection.room_name(room)}
 
 func select_quest(id: StringName) -> void:
+	if _supply_open:_set_supply(false)
 	if selected_id!=id:detail_scroll.scroll_vertical=0
 	selected_id = id
 	_power_layout(false)
@@ -466,6 +478,18 @@ func _toggle_power() -> void:
 	if selected_id==PowerProgressionGuide.ID:select_quest(recommended_id())
 	else:_choose_quest(PowerProgressionGuide.ID)
 
+func _toggle_supply() -> void:
+	_set_supply(not _supply_open)
+	refresh();supply_button.grab_focus()
+func _set_supply(opened: bool) -> void:
+	_supply_open=opened;columns.visible=not opened;supply_board.visible=opened
+	supply_button.text="Về bản đồ & nhiệm vụ" if opened else "Tầng & vật liệu"
+	if opened:_present_supply()
+
+func _present_supply() -> void:
+	var context: Dictionary=rune_preparation_context_provider.call() if rune_preparation_context_provider.is_valid() else {}
+	supply_board.call("present",profile,inventory,context.get("service") as RuneLearningService)
+
 func _power_layout(enabled: bool) -> void:
 	if not is_instance_valid(power_overview):return
 	power_overview.visible=enabled;power_scroll.visible=enabled
@@ -502,6 +526,7 @@ func recommended_id() -> StringName:
 
 func focus_recommended() -> void:
 	if not is_inside_tree() or is_queued_for_deletion(): return
+	if _supply_open:refresh();supply_button.grab_focus();return
 	select_quest(selected_id if selected_id in [PowerProgressionGuide.ID,&"tan_dang_relations",OpeningRewardCatalog.ID] and quest_buttons.has(selected_id) else recommended_id())
 	focus_first()
 

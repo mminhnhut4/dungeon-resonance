@@ -48,6 +48,7 @@ var _previous_auto_accept_quit: bool = true
 var _quit_requested: bool = false
 var _external_bank := PilgrimageSoundBank.new()
 var _material_hits: Dictionary = {}
+var _recorded_pair := preload("res://scripts/audio/recorded_combat_pair.gd").new()
 
 
 func _ready() -> void:
@@ -95,12 +96,19 @@ func play_event(kind: StringName, origin: Vector2, lifetime_owner: Node = null) 
 
 func play_weighted_event(kind: StringName, origin: Vector2, lifetime_owner: Node = null) -> AudioStreamPlayer2D:
 	# The legacy API retains its exact pitch/bus contract. New presentation hooks
-	# use click + body PCM mixed once at startup, still only one capped emitter.
+	# select the recorded API explicitly; this API/getter pair remains stable.
 	var cue: StringName = _canonical_cue(kind)
 	if not _weighted_streams.has(cue):
 		return null
 	var route: StringName = COMBAT_BUS if AudioServer.get_bus_index(COMBAT_BUS) >= 0 else bus_name
 	return _play_voice(cue, _weighted_streams[cue] as AudioStreamWAV, origin, lifetime_owner, route, 0.88, 1.12, float(WEIGHTED_DB[cue]))
+
+func play_recorded_event(kind: StringName, origin: Vector2, lifetime_owner: Node = null) -> AudioStreamPlayer2D:
+	var cue: StringName = _canonical_cue(kind)
+	if not _recorded_pair.STREAMS.has(cue):
+		return play_weighted_event(kind, origin, lifetime_owner)
+	var route: StringName = COMBAT_BUS if AudioServer.get_bus_index(COMBAT_BUS) >= 0 else bus_name
+	return _play_voice(cue, _recorded_pair.pick(cue, _pitch_rng), origin, lifetime_owner, route, 1.0, 1.0, float(_recorded_pair.GAIN_DB[cue]))
 
 
 func play_fire_ambience(origin: Vector2, lifetime_owner: Node = null) -> AudioStreamPlayer2D:

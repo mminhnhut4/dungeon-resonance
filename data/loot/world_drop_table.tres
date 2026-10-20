@@ -3,3 +3,14 @@
 [resource]
 script = ExtResource("1")
 blueprint_ids = Array[StringName]([&"world_saber", &"world_greatsword", &"world_twinblades", &"world_spear", &"world_halberd", &"world_axe", &"world_mace", &"world_chain", &"world_fan", &"world_staff"])
+material_pools = {
+&"slime": [&"slime_essence", &"healing_herb", &"detox_root"],
+&"runic_slime": [&"slime_essence", &"healing_herb", &"detox_root"],
+&"ancient_guard": [&"metal", &"armor_scrap", &"linen_fiber"],
+&"bloodwing_bat": [&"detox_root", &"healing_herb", &"dust"],
+&"sword_wraith": [&"dust", &"crystal", &"linen_fiber"],
+&"runic_champion": [&"armor_scrap", &"dust", &"crystal", &"metal"],
+&"golem": [&"metal", &"dust", &"crystal", &"armor_scrap"],
+&"depth_stone_guard": [&"metal", &"armor_scrap", &"linen_fiber"],
+&"depth_root_bat": [&"detox_root", &"healing_herb", &"dust"]
+}

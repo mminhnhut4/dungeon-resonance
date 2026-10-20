@@ -240,13 +240,6 @@ func _actor_left(id: int) -> void:
 	bound_actors.erase(id)
 
 func _process(delta: float) -> void:
-	if _swing_pending:
-		var weapon: Weapon = actor.equipped_weapon
-		if weapon.snapshot == null or weapon.snapshot.attack_id != _swing_id or weapon.phase == Weapon.Phase.NONE:
-			_swing_pending = false
-		elif weapon.phase == Weapon.Phase.ACTIVE:
-			_sound(&"sword_swing", actor.aim.global_position)
-			_swing_pending = false
 	scan_remaining -= delta
 	if scan_remaining <= 0:
 		scan_remaining = 0.08
@@ -389,6 +382,8 @@ func _field_left(id: int) -> void:
 	field_vfx_owners.erase(id)
 
 func _physics_process(delta: float) -> void:
+	if not feedback.is_frozen():
+		_consume_swing()
 	if is_instance_valid(actor) and not feedback.is_frozen():
 		var grounded: bool = actor.motor.is_grounded()
 		if grounded and not _was_grounded and _last_vertical_speed > 100.0:
@@ -453,8 +448,18 @@ func _update_footsteps(delta: float, grounded: bool) -> void:
 
 func _on_attack(snapshot: AttackSnapshot) -> void:
 	_swing_id = snapshot.attack_id
-	_swing_pending = true
-	_wall_probe_pending = true
+	_swing_pending = snapshot.weapon_definition.attack_kind == &"melee"
+	_wall_probe_pending = _swing_pending
+
+func _consume_swing() -> void:
+	if not _swing_pending or not is_instance_valid(actor):
+		return
+	var weapon: Weapon = actor.equipped_weapon
+	if weapon.snapshot == null or weapon.snapshot.attack_id != _swing_id or weapon.phase == Weapon.Phase.NONE:
+		_swing_pending = false
+	elif weapon.phase == Weapon.Phase.ACTIVE:
+		_swing_pending = false
+		_sound(&"sword_swing", actor.aim.global_position)
 
 func _on_action(_previous: StringName, next: StringName) -> void:
 	if next == &"dash":
@@ -480,12 +485,16 @@ func _on_enemy_state(previous: StringName, next: StringName, enemy: SlimeEnemy) 
 		_sound(&"aggro", enemy.global_position)
 
 func _on_spell(location: Vector2) -> void:
-	_sound(&"spell_explosion", location)
+	# presentation_cast also serves ranged weapons. Only the committed rune
+	# release owns paper; do not read a potentially changed current loadout.
+	var state: PlayerCastState = actor.action_state_machine.current_state as PlayerCastState
+	var rune_release: bool = state != null and state.payload != null and state._launched and state.payload.source_id == actor.get_instance_id()
+	_sound(&"spell_cast" if rune_release else &"spell_explosion", location)
 
 func _on_explosion(location: Vector2, color: Color, element: StringName) -> void:
 	spawn_impact(location, color, element)
 	feedback.notify_spell_explosion()
-	_sound(&"spell_explosion", location)
+	_sound(&"spell_impact", location)
 
 func _on_spell_contact(location: Vector2, color: Color, direction: Vector2) -> void:
 	spawn_impact(location, color, &"spell_contact", direction)
@@ -496,10 +505,15 @@ func _on_committed_spell_contact(location: Vector2, color: Color, direction: Vec
 	# Scalars stay with the finite paint owner; no actor or cast context is held.
 	burst.set_meta(&"committed_root_id", root_id)
 	burst.set_meta(&"committed_source_id", source_id)
+	_sound(&"spell_impact", location)
 
 func _on_hit(event: DamageEvent, result: DamageResult, hurt: Hurtbox) -> void:
 	if result.blocked or result.actual_damage <= 0 or event.source_kind == DamageEvent.SourceKind.DOT:
 		return
+	# Player hit sampling runs before this adapter's physics callback. Flush
+	# the matching Active swing before contact, even if hitstop just began.
+	if event.melee_hit and event.source_id == actor.get_instance_id() and event.attack_id == _swing_id:
+		_consume_swing()
 	var element: StringName = &"physical"
 	var color := Color(1, 0.85, 0.6)
 	if event.spell_id == &"overload":
@@ -532,7 +546,19 @@ func _on_hit(event: DamageEvent, result: DamageResult, hurt: Hurtbox) -> void:
 	if event.melee_hit:
 		burst.configure_combat(event.cosmetic_quality, event.critical, event.cosmetic_combo_index)
 		burst.enable_melee_sparks()
-	_sound(&"melee_impact" if event.melee_hit else &"hurt", hurt.global_position)
+	# Secondary explosion/chain/field contacts keep their damage and VFX.
+	# The primary contact and one burst carry the audible event.
+	if event.source_kind == DamageEvent.SourceKind.RESONANCE:
+		return
+	if event.melee_hit:
+		var target: BaseEnemy = hurt.actor_body as BaseEnemy
+		# An authored contact timbre, not a block/parry or damage decision.
+		var armored: bool = target != null and target.definition.id in [&"ancient_guard", &"runic_champion"]
+		_sound(&"armor_impact" if armored else &"melee_impact", hurt.global_position)
+	elif not event.spell_id.is_empty():
+		_sound(&"spell_impact", hurt.global_position)
+	else:
+		_sound(&"hurt", hurt.global_position)
 
 func _player_foot() -> Vector2:
 	var collision: CollisionShape2D = actor.get_node("BodyCollision") as CollisionShape2D
@@ -569,7 +595,7 @@ func spawn_impact(location: Vector2, color: Color, element: StringName, directio
 	return burst
 
 func _sound(cue: StringName, location: Vector2) -> void:
-	if audio.play_weighted_event(cue, location, self) != null:
+	if audio.play_recorded_event(cue, location, self) != null:
 		sfx_count += 1
 
 func _exit_tree() -> void:
