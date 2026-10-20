@@ -2,13 +2,13 @@
 
 | Mục | Giá trị |
 |---|---|
-| Nhánh review | `review/pc-source-sync-20261020` |
-| Commit nguồn dùng để đối chiếu | `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` |
+| Nhánh review | `review/sword-buffer-hold-20261020` |
+| Commit nguồn dùng để đối chiếu | `a4e48712e4ee3a50215d1c7bef0f33d3934f1d15` |
 | Nền snapshot | `6d73a61d640fa7d564cce30a55afc2f8afef260f` |
-| Trạng thái | **Source PC đã tích hợp; chưa phải release mới** |
-| Số file nguồn trong phạm vi snapshot | 363 |
+| Trạng thái | **HOLD: policy tap rồi đứng yên không đạt recovery hit** |
+| Số file nguồn trong phạm vi snapshot | 94 |
 
-Nguồn PC tại f36b4bc, gồm các thay đổi Mac đã ghép trước đó. Snapshot này giữ nguồn runtime/test được chọn; không mang các báo cáo và log riêng. Mac chưa được đồng bộ ngược khi offline.
+Nguồn buffer giống snapshot reentry; test policy cũ tap cuối dash rồi đứng yên. Candidate nhận đủ 3 tap/commit nhưng không trúng đúng Guard trong recovery. Kiểm buffer 134 checks ở 60 Hz và 134 ở 120 Hz, Movement55/Combat100/Resolver20; không gọi mục tiêu phản công của policy này PASS. Kế thừa formation stage-1 còn HOLD, không có production telegraph-poise. Test guard_telegraph_poise_test.gd kế thừa đòi poise lúc telegraph trong khi runtime chỉ cho lúc attack: mâu thuẫn tĩnh chưa chạy lại, không coi toàn bộ suite PASS.
 
 Số file ở trên là số đường dẫn thay đổi được chọn, gồm cả UID/import sidecar, không phải tổng số file trong checkout. Nhánh PC được so với nền GitHub; các nhánh còn lại được so với nguồn PC `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` và kế thừa snapshot PC gồm 363 đường dẫn thay đổi.
 

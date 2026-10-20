@@ -74,6 +74,13 @@ func _physics_process(delta: float) -> void:
 	_pending_dash = _pending_dash or (accepts_input and Input.is_action_just_pressed(&"dash"))
 	_pending_attack = _pending_attack or (accepts_input and Input.is_action_just_pressed(&"attack"))
 	_pending_cast = _pending_cast or (accepts_input and Input.is_action_just_pressed(&"spell_cast"))
+	# The existing input owner forwards at most one late-dash attack intent.
+	# Sample before hitstop so disabling controls also clears a frozen buffer.
+	var dash_state := action_state_machine.current_state as PlayerDashState
+	if dash_state != null:
+		if not accepts_input:
+			_pending_attack = false
+		dash_state.buffer_attack(_pending_attack, accepts_input)
 	# Sample presses during freeze, but do not advance gameplay clocks or physics.
 	if is_instance_valid(combat_feedback) and combat_feedback.is_frozen():
 		return
