@@ -2,13 +2,13 @@
 
 | Mục | Giá trị |
 |---|---|
-| Nhánh review | `review/pc-source-sync-20261020` |
-| Commit nguồn dùng để đối chiếu | `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` |
+| Nhánh review | `review/tan-dang-snapshot-20261020` |
+| Commit nguồn dùng để đối chiếu | `3fdb83816e023f43acebc78122c624eb6fb8058a` |
 | Nền snapshot | `6d73a61d640fa7d564cce30a55afc2f8afef260f` |
-| Trạng thái | **Source PC đã tích hợp; chưa phải release mới** |
-| Số file nguồn trong phạm vi snapshot | 363 |
+| Trạng thái | **Playable private; crash/leak còn FAIL_UNRESOLVED** |
+| Số file nguồn trong phạm vi snapshot | 122 |
 
-Nguồn PC tại f36b4bc, gồm các thay đổi Mac đã ghép trước đó. Snapshot này giữ nguồn runtime/test được chọn; không mang các báo cáo và log riêng. Mac chưa được đồng bộ ngược khi offline.
+Khuôn viên Tàn Đăng, hai officer và hướng dẫn; dùng lại hai nhánh nhiệm vụ, thưởng, sách và nhập môn hiện có. 122 đường dẫn gồm 86 đường dẫn milestone chung và 36 đường dẫn Tàn Đăng; không có production formation/telegraph-poise thử nghiệm sau đó. QA gốc: 194 focused, 139 native, 22 cold. Route leak và crash native lịch sử chưa được sửa.
 
 Số file ở trên là số đường dẫn thay đổi được chọn, gồm cả UID/import sidecar, không phải tổng số file trong checkout. Nhánh PC được so với nền GitHub; các nhánh còn lại được so với nguồn PC `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` và kế thừa snapshot PC gồm 363 đường dẫn thay đổi.
 

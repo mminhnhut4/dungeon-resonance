@@ -3,6 +3,7 @@ extends RefCounted
 ## Detached, read-only hints. Existing quest, inventory and profile owners decide
 ## rewards, travel, transactions and completion. Never initialize a save/session.
 const Cultivation = preload("res://scripts/cultivation/opening_cultivation_state.gd")
+const CultivationLabels = preload("res://scripts/cultivation/opening_cultivation_labels.gd")
 const FIRESTORM: ResonanceDefinition = preload("res://data/resonances/firestorm.tres")
 const RECIPES: Array[ResonanceDefinition] = [
 	preload("res://data/resonances/basic.tres"), preload("res://data/resonances/fire_bolt.tres"),
@@ -216,7 +217,7 @@ static func cultivation_view(profile: SanctuaryProfile, inventory: GearInventory
 	if souls > 0: blockers.append("souls_required"); missing.append("%d Tàn Hồn" % souls)
 	if proof > 0: blockers.append("boss_proof_required"); missing.append("%d chứng tích Golem" % proof)
 	if energy > 0 and crystal > 0: blockers.append("training_crystal_required"); missing.append("%d Tinh Thạch trong túi cho một phiên điều tức" % crystal)
-	var action: String = "Đủ điều kiện lên %s: về SÂN LUYỆN → TU LUYỆN → Đột phá%s." % [config["stage_labels"][stage + 1], " và chọn Hồi Phong Kiếm hoặc Tỏa Linh Ấn" if stage == 2 else ""]
+	var action: String = "Đủ điều kiện lên %s: về SÂN LUYỆN → TU LUYỆN → %s%s." % [config["stage_labels"][stage + 1], CultivationLabels.breakthrough_action(stage), " và chọn Hồi Phong Kiếm hoặc Tỏa Linh Ấn" if stage == 2 else ""]
 	var location: String = "Căn Cứ Lữ Khách · Sân Luyện"
 	if mastery > 0:
 		action = "Đến mộc nhân ở SÂN LUYỆN; đánh cận chiến trúng thêm %d lần hợp lệ để đủ thông thạo cho %s." % [mastery, config["stage_labels"][stage + 1]]
@@ -277,12 +278,12 @@ static func cultivation_station(profile: SanctuaryProfile, carried: GearInventor
 	var materials: Dictionary = profile.cultivation_materials(carried)
 	if int(actor["energy"]) < int(config["energy_thresholds"][stage]):
 		if int(materials.get(&"crystal",0)) >= int(config["training_cost"]): return &"training"
-		return &"stash" if int(profile.material_stash.get(&"crystal",0)) >= int(config["training_cost"]) else &"portal"
+		return &"stash" if int(profile.material_stash.get(&"crystal",0)) > 0 else &"portal"
 	if actor["insight_ids"].size() < int(config["insight_thresholds"][stage]):
 		if not actor["insight_ids"].has("explored"): return &"exterior_road"
 		if not actor["insight_ids"].has("thanh_vy_met"): return NpcCatalog.HEALER
 		return &"portal"
 	var dust: int = int(config["final_dust_cost"] if stage == 2 else config["interim_dust_cost"])
-	if int(materials.get(&"dust",0)) < dust: return &"stash" if int(profile.material_stash.get(&"dust",0)) >= dust else &"portal"
+	if int(materials.get(&"dust",0)) < dust: return &"stash" if int(profile.material_stash.get(&"dust",0)) > 0 else &"portal"
 	if stage == 2 and (int(profile.boss_proofs.get(&"golem",0)) < int(config["final_golem_proof"]) or profile.souls < int(config["final_soul_cost"])): return &"portal"
 	return &"training"

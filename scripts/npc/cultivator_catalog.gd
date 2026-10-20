@@ -3,12 +3,15 @@ extends RefCounted
 ## Combat/presentation prototype only. NpcPilotCatalog owns world placement.
 const IDS: Array[String] = ["thanh_van_disciple_01", "xich_lo_guard_01", "thanh_van_steward_01", "xich_lo_steward_01"]
 const TAN_DANG_IDS: Array[String] = ["tan_dang_moc_yen", "tan_dang_lam_tuoc", "tan_dang_du_hanh"]
+const HOME_OFFICER_IDS: Array[String] = ["tan_dang_leader", "tan_dang_deputy"]
 const UNIFORMS: Dictionary={"thanh_van_steward_01":"thanh_van_disciple_01","xich_lo_steward_01":"xich_lo_guard_01"}
 const PORTRAITS: Dictionary = {
 	"thanh_van_disciple_01": preload("res://assets/npc/cultivators/thanh_van_disciple.png"),
 	"xich_lo_guard_01": preload("res://assets/npc/cultivators/xich_lo_guard.png")
 }
 const SPECS: Dictionary = {
+	"tan_dang_leader": {"sect":"Tàn Đăng Môn", "style":"Phù ấn · Khóa điểm đã báo", "skill":"Hộ Đăng Ấn", "pattern":"seal", "tint":Color(1.0,0.79,0.38), "damage":10.0, "speed":35.0, "spacing":96.0, "reach":136.0, "height":68.0, "radius":34.0, "tell":1.1, "active":0.16, "recover":0.9, "cooldown":3.0, "hurt":0.4, "aggro":20.0, "leash":140.0},
+	"tan_dang_deputy": {"sect":"Tàn Đăng Môn", "style":"Kiếm · Giữ khoảng trống", "skill":"Thủ Đăng Kiếm", "pattern":"thrust", "tint":Color(0.70,0.90,0.84), "damage":8.0, "speed":70.0, "spacing":62.0, "reach":88.0, "height":48.0, "tell":0.65, "active":0.14, "recover":0.7, "cooldown":1.5, "hurt":0.35, "aggro":20.0, "leash":140.0},
 	"thanh_van_disciple_01": {"sect":"Thanh Vân Môn", "style":"Kiếm · Giữ khoảng trống", "skill":"Vân Kiếm", "pattern":"thrust", "tint":Color(0.68,0.90,1.0), "damage":8.0, "speed":70.0, "spacing":62.0, "reach":88.0, "height":48.0, "tell":0.65, "active":0.14, "recover":0.7, "cooldown":1.5, "hurt":0.35, "aggro":20.0, "leash":180.0},
 	"xich_lo_guard_01": {"sect":"Xích Lô Phái", "style":"Hộ vệ · Trọng đòn", "skill":"Xích Lô Trảm", "pattern":"cleave", "tint":Color(1.0,0.76,0.57), "damage":14.0, "speed":44.0, "spacing":38.0, "reach":70.0, "height":56.0, "tell":0.95, "active":0.18, "recover":1.05, "cooldown":2.2, "hurt":0.4, "aggro":20.0, "leash":180.0},
 	"tan_dang_moc_yen": {"sect":"Tàn Đăng Môn", "style":"Phù ấn · Khóa điểm đã báo", "skill":"Hộ Đăng Ấn", "pattern":"seal", "tint":Color(1.0,0.79,0.38), "damage":10.0, "speed":35.0, "spacing":96.0, "reach":136.0, "height":68.0, "radius":34.0, "tell":1.1, "active":0.16, "recover":0.9, "cooldown":3.0, "hurt":0.4, "aggro":20.0, "leash":180.0},
@@ -31,6 +34,8 @@ static func portrait(id: String) -> Texture2D:
 
 static func dialogue_lines(id: String) -> Array[String]:
 	match id:
+		"tan_dang_leader": return ["Ta là Đỗ Thanh Đăng, tông chủ Tàn Đăng. Chuyện ngoài đường do Mộc Yên, Lâm Tước và người đã chứng kiến giữ lời; chức vị của ta không thay được việc đã xảy ra.", "Hà Nghi giữ sổ công việc trong sân. Nhận việc, làm đủ rồi trở lại nhận phần của mình; nhập môn vẫn là lựa chọn của ngươi."]
+		"tan_dang_deputy": return ["Ta là Hà Nghi, phó tông chủ. Ta giữ sổ việc và đối chiếu cống hiến, không thay lời của Mộc Yên hay Lâm Tước.", "Sổ trong sân còn dùng được khi người giữ sổ phải dưỡng thương. Đọc điều kiện và phần thưởng trước khi nhận; việc đã lĩnh thưởng không được tính lần nữa."]
 		"thanh_van_steward_01": return ["Ta là Phùng Yên Trúc, chấp sự giữ sổ. Đọc mốc tây và đông rồi nộp ở sổ tiếp nhận bên phải; quyền khách mở lối vào Tùng Đình. Ta sẽ không kết tội một môn phái chỉ vì một lời đồn."]
 		"xich_lo_steward_01": return ["Ta là Tống Hồng Diệp. Ghi mực nước và dấu cặn trên đê; sổ tiếp nhận phía đông đối chiếu đủ hai mốc sẽ mở Sân Dẫn Thủy. Người trọng thương được nghỉ, nhưng việc đã làm vẫn được nhớ."]
 		"thanh_van_disciple_01": return [

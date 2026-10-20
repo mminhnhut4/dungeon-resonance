@@ -24,6 +24,12 @@ func _ready() -> void:
 
 func _spawn_wave() -> void:
 	if stage == 2: return
+	var attack_window: Node=null
+	if stage==1:
+		attack_window=room.get_node_or_null("OpeningAttackWindow")
+		if attack_window==null:
+			attack_window=preload("res://scripts/combat/opening_attack_window.gd").new()
+			attack_window.name="OpeningAttackWindow";attack_window.set("feedback",feedback);room.add_child(attack_window)
 	var roster: Array[StringName] = []
 	roster.assign([&"ancient_guard", &"ancient_guard", &"bloodwing_bat", &"runic_slime"] if stage == 1 else [&"ancient_guard", &"sword_wraith", &"runic_champion", &"runic_slime"] if wave == 1 else [&"bloodwing_bat", &"sword_wraith", &"ancient_guard", &"runic_slime"])
 	# Only horizontal floor anchors vary. No unsafe arbitrary platform/wall seeds.
@@ -36,17 +42,30 @@ func _spawn_wave() -> void:
 	for index: int in roster.size():
 		var id: StringName = roster[index]
 		if id == &"runic_slime":
-			var slime: SlimeEnemy = _spawn_slime(Vector2(positions[index], 640))
+			var slime: SlimeEnemy = _spawn_runic_harrier(Vector2(positions[index], 640)) if stage==1 else _spawn_slime(Vector2(positions[index], 640))
 			slime.set_meta(&"enemy_type", &"runic_slime")
+			slime.opening_attack_window=attack_window
 			continue
 		var enemy: BaseEnemy = MONSTERS[id].instantiate() as BaseEnemy
 		enemy.position = Vector2(positions[index], 500 if id == &"bloodwing_bat" else 610 if id == &"sword_wraith" else 640)
 		enemy.player = player
 		enemy.combat_feedback = feedback
+		enemy.opening_attack_window=attack_window
 		enemy.is_elite = id == &"runic_champion"
 		room.add_child(enemy)
 		if survival.enabled: survival._attach_condition(enemy)
 		enemy.defeated.connect(_world_enemy_died)
+
+func _spawn_runic_harrier(location: Vector2) -> SlimeEnemy:
+	# Exactly one existing slot in stage1. Later opening waves retain their roster.
+	var slime: SlimeEnemy=preload("res://scenes/enemies/runic_slime_harrier.tscn").instantiate() as SlimeEnemy
+	slime.position=location;slime.player=player;slime.combat_feedback=feedback
+	# This opening role hurts through its warned bite/shot, not passive body touch.
+	slime.contact_damage_enabled=false
+	room.add_child(slime);slime.statuses.combat_feedback=feedback
+	if survival.enabled:survival._attach_condition(slime)
+	slime.health.died.connect(_enemy_died.bind(slime))
+	return slime
 
 func _world_enemy_died(enemy: BaseEnemy) -> void:
 	var id: int = enemy.get_instance_id()

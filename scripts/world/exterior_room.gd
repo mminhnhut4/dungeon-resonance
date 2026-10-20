@@ -1,5 +1,7 @@
 class_name ExteriorRoom
 extends Node2D
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
+const HomeArt = preload("res://scripts/presentation/tan_dang_home_art.gd")
 ## Solid authored heightfield; optional shelves have a walkable catch floor.
 var room_id: StringName
 var route_id: StringName
@@ -67,7 +69,10 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 		var art: Node2D = ROUTE_PRESENTATION.new()
 		add_child(art)
 		art.initialize(self)
-	if room_id in SectRouteCatalog.ROOMS:
+	if room_id == HomeCatalog.ROOM:
+		bounds = Rect2(0,min_y-540,width,960)
+		HomeArt.attach(self)
+	elif room_id in SectRouteCatalog.ROOMS:
 		var lowest: float=surface[0].y
 		for point: Vector2 in surface: lowest=maxf(lowest,point.y)
 		bounds=Rect2(0,min_y-540,width,maxf(960,lowest-min_y+900))

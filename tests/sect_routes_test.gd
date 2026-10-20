@@ -17,7 +17,10 @@ func _run() -> void:
 	if hub==null or hub.sect_journey==null: await _close(); _finish(); return
 	var actor: Node2D=hub.player
 	var uid_snapshot: Array=hub.gear.inventory.items.keys()
-	_check(ExteriorRouteCatalog.ROOMS.size()==8 and ExteriorRouteCatalog.all_rooms().size()==12,"Eight stable roads plus four actual branches")
+	_check(ExteriorRouteCatalog.ROOMS.size()==8 and ExteriorRouteCatalog.all_rooms().size()==13,"Eight stable roads plus four existing branches and the Tàn Đăng home")
+	var old_rooms: Array[StringName] = [&"o01_p01",&"o01_p02",&"o01_p03",&"o01_p04",&"o02_b01",&"o02_b02",&"o02_b03",&"o02_b04",&"tv01_cloud_gate",&"tv02_pine_court",&"xl01_red_causeway",&"xl02_cooling_yard"]
+	for old_room: StringName in old_rooms:
+		_check(old_room in ExteriorRouteCatalog.all_rooms(),"Prior route is retained: "+String(old_room))
 	for faction_id: String in SectRouteCatalog.FACTIONS:
 		var first: StringName=SectRouteCatalog.first(faction_id)
 		var inner: StringName=SectRouteCatalog.link(first,&"door_east")["room"]
@@ -126,7 +129,7 @@ func _journal() -> void:
 		var screen: InventoryScreen=hub.gear.modal as InventoryScreen
 		await _step(4)
 		var journal: QuestJournal=screen.journal
-		_check(screen.is_open and journal.graph.buttons.size()==13,"Map journal includes all thirteen locations at %s" % extent)
+		_check(screen.is_open and journal.graph.buttons.size()==14,"Map journal includes all fourteen locations at %s" % extent)
 		_check(SectJourneyProgress.rows(flow.profile).size()==2,"Both completed sect quests remain readable")
 		_check(root.get_visible_rect().encloses(screen.panel.get_global_rect()),"Inventory/map panel fits viewport")
 		journal.select_quest(&"sect_xich_lo")

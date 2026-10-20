@@ -42,6 +42,13 @@ var hit_count: int = 0
 var last_damage_event: DamageEvent
 var state_history: Array[StringName] = []
 var hit_aggro: EnemyHitAggro=EnemyHitAggro.new()
+var opening_attack_window: Node
+
+func _request_opening_attack() -> bool:
+	return not is_instance_valid(opening_attack_window) or bool(opening_attack_window.call("request",self))
+
+func opening_attack_committed() -> bool:
+	return ai_enabled and health.current_health>0 and is_visible_in_tree() and state_machine.get_state_id()==&"attack"
 
 
 func _ready() -> void:
@@ -143,7 +150,7 @@ func tick_state(id: StringName, delta: float) -> void:
 			var offset: Vector2 = player.global_position - global_position
 			_facing = -1.0 if offset.x < 0.0 else 1.0
 			if offset.length() <= attack_range and _target_path_clear():
-				if _attack_cooldown <= 0.0:
+				if _attack_cooldown <= 0.0 and _request_opening_attack():
 					state_machine.transition_to(&"attack")
 			elif not is_on_floor() or _has_floor_ahead(_facing):
 				_desired_velocity = _facing * chase_speed
@@ -228,16 +235,20 @@ func _on_hit(event: DamageEvent, result: DamageResult) -> void:
 	if hit_aggro.record(event,result): player=hit_aggro.target()
 	hit_count += 1
 	last_damage_event = event
-	_flash_remaining = 0.16
-	visual.color = Color.WHITE
-	if not event.knockback.is_zero_approx():
-		motor.stop_horizontal()
-	motor.add_knockback(event.knockback)
-	_hurt_remaining = 0.18
-	if health.current_health > 0.0:
-		state_machine.transition_to(&"hurt")
-	if is_instance_valid(combat_feedback):
-		combat_feedback.on_hit_confirmed(event, result)
+	# Periodic damage is not a new physical impact. Keep its health/text/aggro
+	# receipt, but don't reset the bite phase on every burn/poison tick. Actual
+	# stun/freeze still stops attacks in tick_state, like the other enemy owner.
+	if event.source_kind != DamageEvent.SourceKind.DOT:
+		_flash_remaining = 0.16
+		visual.color = Color.WHITE
+		if not event.knockback.is_zero_approx():
+			motor.stop_horizontal()
+		motor.add_knockback(event.knockback)
+		_hurt_remaining = 0.18
+		if health.current_health > 0.0:
+			state_machine.transition_to(&"hurt")
+		if is_instance_valid(combat_feedback):
+			combat_feedback.on_hit_confirmed(event, result)
 	var number_position: Vector2 = global_position + Vector2(0, -60)
 	if is_instance_valid(damage_number_spawner):
 		damage_number_spawner.spawn_damage(event, result, number_position, combat_feedback)

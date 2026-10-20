@@ -30,6 +30,7 @@ func _five() -> Dictionary:
 	_check(p.life.receive_hit(DU,1.0,1300,true) and p.life.decide(DU,p.life.decision_token(DU),true,true),"Declared donor keeps rescue before a confirmed later death")
 	_unchanged_rejection(p,"assist",DU,DU)
 	var s: Dictionary=p.life.snapshot();s["npc_schema"]=5
+	for id: String in NpcPilotCatalog.HOME_OFFICER_IDS: s["records"].erase(id)
 	for id: String in TanDangProgress.NPC_IDS:
 		s["records"][id].erase("causality")
 		s["records"][id].erase("living")

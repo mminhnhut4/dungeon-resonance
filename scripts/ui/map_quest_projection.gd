@@ -1,5 +1,6 @@
 class_name MapQuestProjection
 extends RefCounted
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## Read-only views of canonical opening milestones and saved exterior discoveries.
 
 static func known_rooms(profile: SanctuaryProfile) -> Dictionary:
@@ -58,6 +59,7 @@ static func rows(profile: SanctuaryProfile, inventory: GearInventory = null) -> 
 
 static func room_name(room: StringName) -> String:
 	if room == ExteriorRouteCatalog.HUB: return "Căn Cứ Lữ Khách"
+	if room == HomeCatalog.ROOM: return HomeCatalog.TITLE
 	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.title(room)
 	var index: int = ExteriorRouteCatalog.ROOMS.find(room)
 	return ExteriorRouteCatalog.TITLES[index] if index >= 0 else ""

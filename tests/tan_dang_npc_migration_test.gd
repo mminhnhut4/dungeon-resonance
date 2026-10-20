@@ -76,7 +76,7 @@ func _migrations() -> void:
 		_write(path,source)
 		var original: PackedByteArray=FileAccess.get_file_as_bytes(path)
 		var state: NpcWorldState=_reader(path)
-		_check(state.load_state() and not state.read_only and state.snapshot()["npc_schema"]==NpcWorldState.SCHEMA and state.records.size()==13,"Schema%d adds only three authored identities" % schema)
+		_check(state.load_state() and not state.read_only and state.snapshot()["npc_schema"]==NpcWorldState.SCHEMA and state.records.size()==15,"Schema%d reaches the authored fifteen identities without replacing historical lives" % schema)
 		var backup: String=path+(".pre_tan_dang_v4.json" if schema==4 else ".pre_sect_v3.json" if schema==3 else ".pre_nonlethal_v%d.json" % schema)
 		_check(FileAccess.get_file_as_bytes(backup)==original,"Schema%d backup is exact immutable source" % schema)
 		for id: String in source["records"]:
@@ -102,7 +102,7 @@ func _migration_faults() -> void:
 		var fault := MigrationFault.new(); fault.fail_copy=fail_copy; fault.primary=path; state.io=fault
 		_check(not state.load_state() and state.read_only and state.records.size()==10 and FileAccess.get_file_as_bytes(path)==original,"Backup/replace failure retains old authority read-only")
 		var retry: NpcWorldState=_reader(path)
-		_check(retry.load_state() and retry.records.size()==13,"Fresh owner retries transient migration fault once")
+		_check(retry.load_state() and retry.records.size()==15,"Fresh owner retries transient migration fault once")
 	var conflict: String=directory+"/conflict/profile.json.npc_v1.json"
 	_write(conflict,_source(4))
 	var other: Dictionary=_source(4); other["tick"]=101

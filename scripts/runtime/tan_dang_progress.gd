@@ -1,5 +1,6 @@
 class_name TanDangProgress
 extends RefCounted
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## Finite quest facts only. NPC life/karma stays in NpcWorldState; one writer
 ## commits the quest, knowledge/bank and NPC proposal before publishing either.
 const SCOPE: String = "tan_dang_mon_v1"
@@ -7,6 +8,9 @@ const MOC: String = "tan_dang_moc_yen"
 const LAM: String = "tan_dang_lam_tuoc"
 const DU: String = "tan_dang_du_hanh"
 const NPC_IDS: Array[String] = [MOC, LAM, DU]
+const LEADER: String = "tan_dang_leader"
+const DEPUTY: String = "tan_dang_deputy"
+const HOME_OFFICER_IDS: Array[String] = [LEADER, DEPUTY]
 const RECIPE: StringName = &"firestorm"
 const RECIPE_COST: int = 6
 const QUEST_REWARD: int = 2
@@ -71,6 +75,14 @@ static func state_for(owner: SanctuaryProfile) -> Dictionary:
 	var saved: Dictionary = owner.extension_state(SCOPE)
 	return saved if valid(saved) else empty()
 
+func earned_merit() -> int:
+	# Lifetime merit is a projection of existing, once-only quest receipts.
+	# Spending contribution never changes the admission requirement.
+	return QUEST_REWARD * state()["rewards"].size()
+
+func officer_available(id: String) -> bool:
+	return available() and id in HOME_OFFICER_IDS and alive(id) and life.records[id]["room"] == String(HomeCatalog.ROOM) and life.records[id]["mode"] not in ["downed","recovering"]
+
 func alive(id: String) -> bool:
 	return life != null and life.records.has(id) and life.records[id]["death"].is_empty() and life.records[id]["mode"] != "dead"
 
@@ -86,6 +98,10 @@ func knows_murder(listener: String) -> bool:
 	return false
 
 func can_join(listener: String = MOC) -> bool:
+	if listener == LEADER:
+		# The leader considers the same story's surviving sponsors; a new room
+		# cannot erase a grievance or turn distant murder into omniscient news.
+		return officer_available(LEADER) and earned_merit() >= QUEST_REWARD * 3 and (can_join(MOC) or can_join(LAM))
 	return available() and alive(listener) and listener in [MOC,LAM] and not knows_murder(listener) and life.karma(listener).get("grievance","")==""
 
 func can_reconcile(id: String) -> bool:
@@ -101,6 +117,10 @@ static func _reward(next: Dictionary, id: String) -> void:
 func apply(action: String, actor_id: String = "", place: String = "") -> Dictionary:
 	last_result = {"ok":false,"error":"precondition"}
 	if not available(): return last_result
+	if actor_id in HOME_OFFICER_IDS or place in HOME_OFFICER_IDS:
+		if actor_id != place or not officer_available(place): return last_result
+		var permitted: Array = ["accept","q1_reward","q3_reward","recipe","support"] if place == DEPUTY else ["join","decline","leave"]
+		if action not in permitted: return last_result
 	var next: Dictionary = state()
 	var edits: Dictionary = {}
 	var knowledge: String = ""
@@ -109,7 +129,7 @@ func apply(action: String, actor_id: String = "", place: String = "") -> Diction
 	var q3: bool = next["rewards"].has("q3")
 	match action:
 		"accept":
-			if next["accepted"] or place not in ["ledger",MOC,LAM,"refuge"]: return last_result
+			if next["accepted"] or place not in ["ledger",MOC,LAM,"refuge",DEPUTY]: return last_result
 			next["accepted"] = true
 		"observe_lamp", "find_lam", "inspect_core":
 			var fact: String = {"observe_lamp":"lamp","find_lam":"lam","inspect_core":"core"}[action]
@@ -160,7 +180,7 @@ func apply(action: String, actor_id: String = "", place: String = "") -> Diction
 			if not q3 or next["support_claimed"]: return last_result
 			next["support_claimed"] = true
 		"join":
-			if not q3 or next["membership"] != "guest" or place not in [MOC,LAM] or not can_join(place): return last_result
+			if not q3 or next["membership"] != "guest" or place not in [MOC,LAM,LEADER] or not can_join(place): return last_result
 			next["membership"] = "member"
 		"decline":
 			if not q3 or next["declined"] or next["membership"] != "guest": return last_result

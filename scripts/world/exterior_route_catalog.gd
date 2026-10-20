@@ -1,5 +1,6 @@
 class_name ExteriorRouteCatalog
 extends RefCounted
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## Authored first prototype. Widths follow the measured motor, not diagram scale.
 const HUB: StringName = &"h00_traveler_hub"
 const MAIN: StringName = &"main"
@@ -17,20 +18,22 @@ const BASE_Y: float = 2100.0
 static func all_rooms() -> Array[StringName]:
 	var rooms: Array[StringName]=ROOMS.duplicate()
 	rooms.append_array(SectRouteCatalog.ROOMS)
+	rooms.append(HomeCatalog.ROOM)
 	return rooms
 
 static func region(room: StringName) -> StringName:
+	if room == HomeCatalog.ROOM: return HomeCatalog.REGION
 	if room in SectRouteCatalog.ROOMS: return StringName(SectRouteCatalog.faction(room))
 	if room == HUB: return HUB
 	var index: int = ROOMS.find(room)
 	return &"o01_duong_hanh_huong" if index >= 0 and index < 4 else &"o02_ben_tram" if index >= 4 else &""
 
 static func valid_route(room: StringName, route: StringName) -> bool:
-	return (room == HUB or room in ROOMS or room in SectRouteCatalog.ROOMS) and (route == MAIN or (room == ROOMS[1] and route == TUNNEL))
+	return (room == HUB or room == HomeCatalog.ROOM or room in ROOMS or room in SectRouteCatalog.ROOMS) and (route == MAIN or (room == ROOMS[1] and route == TUNNEL))
 
 static func valid_anchor(room: StringName, route: StringName, anchor: StringName) -> bool:
 	if not valid_route(room,route): return false
-	if room == HUB: return anchor == &"road"
+	if room == HUB: return anchor in [&"road",HomeCatalog.HUB_DOOR]
 	if anchor == &"sect" and route == MAIN: return room in [&"o01_p03",&"o02_b04"]
 	if anchor in [&"west",&"east"]: return true
 	if route == TUNNEL: return false
@@ -38,6 +41,7 @@ static func valid_anchor(room: StringName, route: StringName, anchor: StringName
 
 static func title(room: StringName, route: StringName = MAIN) -> String:
 	if room == HUB: return "Căn Cứ Lữ Khách"
+	if room == HomeCatalog.ROOM: return HomeCatalog.TITLE
 	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.title(room)
 	var index: int = ROOMS.find(room)
 	if index < 0: return ""
@@ -45,6 +49,7 @@ static func title(room: StringName, route: StringName = MAIN) -> String:
 
 static func layout(room: StringName, route: StringName) -> Dictionary:
 	if not valid_route(room,route) or room == HUB: return {}
+	if room == HomeCatalog.ROOM: return HomeCatalog.layout()
 	if room in SectRouteCatalog.ROOMS: return SectRouteCatalog.layout(room)
 	if route == TUNNEL: return {"start":5.0,"beats":[Vector2(800,5),Vector2(680,4),Vector2(360,4)]}
 	match room:
@@ -61,6 +66,10 @@ static func layout(room: StringName, route: StringName) -> Dictionary:
 	return {}
 
 static func link(room: StringName, route: StringName, door: StringName) -> Dictionary:
+	if room == HomeCatalog.ROOM:
+		return {"room":HUB,"route":MAIN,"anchor":HomeCatalog.HUB_DOOR} if route == MAIN and door == &"door_west" else {}
+	if room == HUB and route == MAIN and door == HomeCatalog.HUB_DOOR:
+		return {"room":HomeCatalog.ROOM,"route":MAIN,"anchor":&"west"}
 	if route==MAIN and (room in SectRouteCatalog.ROOMS or door==&"sect_branch"): return SectRouteCatalog.link(room,door)
 	if route == TUNNEL:
 		return {"room":ROOMS[0] if door == &"door_west" else ROOMS[2],"route":MAIN,"anchor":&"tunnel"}

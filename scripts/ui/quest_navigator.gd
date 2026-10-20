@@ -1,5 +1,6 @@
 class_name QuestNavigator
 extends Control
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## One session selection; canonical quests, travel, rewards and save stay owned.
 const TRACKED: StringName = &"quest_navigation_id"
 const Route = preload("res://scripts/ui/quest_navigation_route.gd")
@@ -56,7 +57,7 @@ func _station(world: Node,id: StringName) -> Dictionary:
 		var health: Object = property(npc,&"health")
 		if bool(npc.get_meta(&"dead",false)) or (is_instance_valid(health) and float(property(health,&"current_health",0.0)) <= 0.0): return _fallback("npc_dead","NPC cần gặp đã chết / không còn hoạt động; nhiệm vụ chưa tự hoàn tất. Không có mũi tên tới NPC này.")
 	if not is_instance_valid(marker) or marker.is_queued_for_deletion(): return _fallback("anchor_missing","Chưa có điểm tương tác hợp lệ cho bước này; xem chi tiết nhiệm vụ.")
-	var names: Dictionary = {&"exterior_road":"ĐƯỜNG BỘ",&"portal":"cổng hầm ngục",&"training":"SÂN LUYỆN"}
+	var names: Dictionary = {&"exterior_road":"ĐƯỜNG BỘ",&"portal":"cổng hầm ngục",&"training":"SÂN LUYỆN",HomeCatalog.HUB_DOOR:"cổng Tàn Đăng Môn"}
 	return _point(marker.global_position,"Đi tới %s rồi nhấn E; hướng dẫn và giá thực nằm ở thẻ nhiệm vụ." % NpcCatalog.NAMES.get(id,names.get(id,"điểm tương tác")),id)
 
 func _outside(world: Node,actor: Node2D,target: StringName) -> Dictionary:
@@ -149,7 +150,7 @@ func _tan_dang_goal(world: Node, actor: Node2D, id: StringName) -> Dictionary:
 	var target: Dictionary = world.tan_dang.navigation_target(id)
 	var here: StringName = world.exterior.room_id if world.outside and is_instance_valid(world.exterior) else ExteriorRouteCatalog.HUB
 	if here == target["room"]: return _point(target["point"]+(ExteriorHub.ORIGIN if world.outside else Vector2.ZERO),target["hint"],id)
-	return _outside(world,actor,target["room"]) if world.outside else _station(world,&"exterior_road")
+	return _outside(world,actor,target["room"]) if world.outside else _station(world,HomeCatalog.HUB_DOOR if target["room"] == HomeCatalog.ROOM else &"exterior_road")
 
 func _sect_goal(world: Node, actor: Node2D, faction_id: String) -> Dictionary:
 	if faction_id not in SectRouteCatalog.FACTIONS: return _fallback("quest_missing","Nhiệm vụ môn phái không hợp lệ.")

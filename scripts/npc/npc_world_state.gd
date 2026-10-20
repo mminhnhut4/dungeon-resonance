@@ -4,7 +4,8 @@ extends RefCounted
 signal activity_changed(id: String, activity: String)
 const STEP: float = 0.25
 const MAX_TICKS: int = 1000000000
-const SCHEMA: int = 8
+const SCHEMA: int = 9
+const HOME_BACKUP_SUFFIX: String = ".pre_tan_dang_home_v8.json"
 const NPC_SUFFIX: String = ".npc_v1.json"
 var tick: int = 0
 var records: Dictionary = {}
@@ -541,7 +542,7 @@ static func valid(data: Variant) -> bool:
 	var current: bool = int(data["npc_schema"]) >= 5
 	var causal: bool = int(data["npc_schema"]) >= 6
 	var living: bool = int(data["npc_schema"]) >= 7
-	var ids: Array[String] = NpcPilotCatalog.IDS if current else NpcPilotCatalog.LEGACY_IDS if legacy else NpcPilotCatalog.SCHEMA_FOUR_IDS if int(data["npc_schema"])==4 else NpcPilotCatalog.SCHEMA_THREE_IDS if nonlethal else NpcPilotCatalog.SCHEMA_TWO_IDS
+	var ids: Array[String] = NpcPilotCatalog.IDS if int(data["npc_schema"])>=9 else NpcPilotCatalog.SCHEMA_EIGHT_IDS if current else NpcPilotCatalog.LEGACY_IDS if legacy else NpcPilotCatalog.SCHEMA_FOUR_IDS if int(data["npc_schema"])==4 else NpcPilotCatalog.SCHEMA_THREE_IDS if nonlethal else NpcPilotCatalog.SCHEMA_TWO_IDS
 	if not _integer(data.get("tick"), 0, MAX_TICKS) or data["records"].size() != ids.size(): return false
 	for id: String in ids:
 		var record: Variant = data["records"].get(id)
@@ -551,7 +552,8 @@ static func valid(data: Variant) -> bool:
 		if record.get("room") != spec["room"] and not (sect and id in ["tan_dang_lam_tuoc","tan_dang_du_hanh"] and record.get("room")=="h00_traveler_hub") and not (living and id==TanDangLivingState.LAM and record.get("room")==TanDangLivingState.P01): return false
 		if sect and not _valid_karma(record.get("karma")): return false
 		if sect and causal and not TanDangCausality.valid(record.get("causality"),id):return false
-		if sect and living and not TanDangLivingState.valid(record.get("living"),id,record,int(data["npc_schema"])): return false
+		# NPC9 adds two independent roles; the three story residents retain NPC8's living payload.
+		if sect and living and not TanDangLivingState.valid(record.get("living"),id,record,mini(int(data["npc_schema"]),8)): return false
 		if sect and record["karma"]["player_murdered"] and record.get("mode")!="dead": return false
 		if record.get("mode") not in NpcPilotCatalog.MODE_LABELS and ((nonlethal and not current) or record.get("mode") != "dead"): return false
 		var low: float = 520.0 if legacy and id == "pilot_traveler" else float(spec["left"])
@@ -672,6 +674,8 @@ func _restore(data: Dictionary) -> void:
 	# not a reconstruction from world ticks or wall time. Preserve every old fact.
 	for id: String in NpcPilotCatalog.TAN_DANG_IDS:
 		records[id]["living"]["danger_elapsed"] = 0.0 if int(data["npc_schema"])<8 else float(records[id]["living"]["danger_elapsed"])
+	if int(data["npc_schema"]) < 9:
+		for id: String in NpcPilotCatalog.HOME_OFFICER_IDS: records[id] = NpcPilotCatalog.initial_record(id)
 
 func load_state() -> bool:
 	if compound_locked or _compound_pending():
@@ -680,7 +684,7 @@ func load_state() -> bool:
 	if not FileAccess.file_exists(save_path):
 		# A valid tmp can still be an execution whose commit was reported failed.
 		# An older backup can predate a committed death. Neither proves history.
-		for suffix: String in [".previous", ".tmp", ".bak", ".compound.tmp", ".compound.previous", ".pre_nonlethal_v1.json", ".pre_nonlethal_v2.json", ".pre_sect_v3.json", ".pre_tan_dang_v4.json", ".pre_causality_v5.json", ".pre_living_v6.json", ".pre_horizon_v7.json"]:
+		for suffix: String in [".previous", ".tmp", ".bak", ".compound.tmp", ".compound.previous", ".pre_nonlethal_v1.json", ".pre_nonlethal_v2.json", ".pre_sect_v3.json", ".pre_tan_dang_v4.json", ".pre_causality_v5.json", ".pre_living_v6.json", ".pre_horizon_v7.json", HOME_BACKUP_SUFFIX]:
 			if not FileAccess.file_exists(save_path + suffix): continue
 			read_only = true
 			return false
@@ -714,7 +718,7 @@ func _preserve_legacy_source(data: Dictionary) -> bool:
 	# with different bytes is evidence to preserve, never permission to replace.
 	var original: PackedByteArray = FileAccess.get_file_as_bytes(save_path)
 	if original.is_empty() or JSON.parse_string(original.get_string_from_utf8()) != data: return false
-	var backup_path: String = save_path + (".pre_horizon_v7.json" if int(data["npc_schema"])==7 else ".pre_living_v6.json" if int(data["npc_schema"])==6 else ".pre_causality_v5.json" if int(data["npc_schema"])==5 else ".pre_tan_dang_v4.json" if int(data["npc_schema"])==4 else ".pre_sect_v3.json" if int(data["npc_schema"])==3 else ".pre_nonlethal_v%d.json" % int(data["npc_schema"]))
+	var backup_path: String = save_path + (HOME_BACKUP_SUFFIX if int(data["npc_schema"])==8 else ".pre_horizon_v7.json" if int(data["npc_schema"])==7 else ".pre_living_v6.json" if int(data["npc_schema"])==6 else ".pre_causality_v5.json" if int(data["npc_schema"])==5 else ".pre_tan_dang_v4.json" if int(data["npc_schema"])==4 else ".pre_sect_v3.json" if int(data["npc_schema"])==3 else ".pre_nonlethal_v%d.json" % int(data["npc_schema"]))
 	if FileAccess.file_exists(backup_path):
 		return FileAccess.get_file_as_bytes(backup_path) == original
 	if io._copy_file(save_path,backup_path) != OK: return false

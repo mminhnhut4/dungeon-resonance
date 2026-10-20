@@ -1,5 +1,6 @@
 class_name TanDangJourney
 extends Node
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## One finite quest adapter. Life, karma, rewards and saves use existing owners.
 const LEDGER: StringName = &"tan_ledger"
 const LAMP: StringName = &"tan_lamp"
@@ -121,13 +122,14 @@ func _place() -> String:
 	return String(context)
 
 func handles(id: StringName) -> bool:
-	return id in [LEDGER,LAMP,REFUGE] or String(id) in TanDangProgress.NPC_IDS
+	return id in [LEDGER,LAMP,REFUGE] or String(id) in TanDangProgress.NPC_IDS or String(id) in TanDangProgress.HOME_OFFICER_IDS
 
 func interact(id: StringName) -> bool:
 	if not handles(id) or not hub._can_travel() or id != hub.nearest_station() or not hub.player.motor.is_grounded(): return false
-	if String(id) in TanDangProgress.NPC_IDS:
+	if String(id) in TanDangProgress.NPC_IDS or String(id) in TanDangProgress.HOME_OFFICER_IDS:
 		if not progress.alive(String(id)): return false
 		if progress.life.records[String(id)]["mode"] == "downed": return hub.npc_population.interact(String(id))
+	if String(id) in TanDangProgress.HOME_OFFICER_IDS and (_room_id() != HomeCatalog.ROOM or not progress.officer_available(String(id))): return false
 	context = id
 	context_room = _room_id()
 	_open()
@@ -145,6 +147,10 @@ func _offer(choices: Array[Dictionary], action: String, text: String, enabled: b
 func _speaker_lines() -> Array[String]:
 	if not progress.available(): return ["Ghi chép chưa xác minh; chưa thể kết luận sống/chết. Hãy khôi phục hồ sơ trước khi tiếp tục."]
 	var s: Dictionary = progress.state()
+	if String(context) == TanDangProgress.DEPUTY:
+		return ["Ta là Hà Nghi, phó tông chủ. Ta nhận việc chiếc đèn và khép sổ công việc; Mộc Yên và Lâm Tước vẫn nhận phần báo cáo của họ.","Hoàn tất việc thực tế rồi trở lại nhận cống hiến. Hồi Đăng đổi một lần bằng 6 cống hiến; công trạng đã ghi vẫn giữ nguyên."]
+	if String(context) == TanDangProgress.LEADER:
+		return ["Ta là Đỗ Thanh Đăng, tông chủ. Thử thách nhập môn là giữ trọn trách nhiệm với chiếc đèn, lời hứa và người liên quan.",_admission_step(s)]
 	if context == LEDGER:
 		if not s["accepted"]: return ["Sổ việc còn để ngỏ: đèn cổng thiếu lõi. Hãy nhận việc, kiểm đèn rồi xem ghi chép ở trú ẩn."]
 		if s["choice"] == "":
@@ -329,7 +335,36 @@ func _karma_lines(only_id: String = "") -> Array[String]:
 
 func relation_rows() -> Array[Dictionary]:
 	if not progress.available():return []
-	return [{"id":&"tan_dang_relations","title":"Nhật ký quan hệ · Tàn Đăng","body":"GHI CHÉP CỦA BẠN · Người ở vùng khác không tự biết chuyện đã xảy ra. Phản kích tối đa 20 giây; oán hận dài hạn và tin công khai là các việc riêng.\n\n"+"\n\n".join(_karma_lines()),"target":ExteriorRouteCatalog.HUB,"done":false,"next":false}]
+	return [
+		{"id":&"tan_dang_home","title":"Tàn Đăng Môn · Sân đèn","body":"Từ căn cứ, qua cổng Tàn Đăng cạnh sân thuốc. Hà Nghi nhận và khép việc; Đỗ Thanh Đăng xét nhập môn.\nCống hiến còn %d · Công trạng đã ghi %d/6.\n%s" % [progress.state()["contribution"],progress.earned_merit(),_admission_step(progress.state())],"target":HomeCatalog.ROOM,"done":false,"next":false},
+		{"id":&"tan_dang_relations","title":"Nhật ký quan hệ · Tàn Đăng","body":"GHI CHÉP CỦA BẠN · Người ở vùng khác không tự biết chuyện đã xảy ra. Phản kích tối đa 20 giây; oán hận dài hạn và tin công khai là các việc riêng.\n\n"+"\n\n".join(_karma_lines()),"target":ExteriorRouteCatalog.HUB,"done":false,"next":false}
+	]
+
+func _admission_step(s: Dictionary) -> String:
+	if s["membership"] == "member": return "Đã nhập môn. Công trạng không mất khi đổi sách; vẫn dùng trang bị và bùa theo lựa chọn của mình."
+	if s["membership"] == "left": return "Đã tự nguyện rời môn. Công trạng, công thức và hậu quả đã ghi vẫn được giữ."
+	if not s["accepted"]: return "Bước 1/3 · Gặp Hà Nghi ở sân trước, nhận việc Ngọn đèn thiếu lõi; sau đó kiểm đèn tại căn cứ."
+	if not s["rewards"].has("q1"): return "Bước 1/3 · Kiểm đèn, nghe chuyện Lâm Tước và xem lõi ở trú ẩn P03; khép ghi chép với Hà Nghi."
+	if not s["rewards"].has("q2"): return "Bước 2/3 · Trở lại trú ẩn P03 và tự quyết việc chiếc lõi. Cả hai lựa chọn đều được ghi nhận."
+	if not s["rewards"].has("q3"): return "Bước 3/3 · Hoàn tất việc lõi, báo Mộc Yên rồi Lâm Tước; gặp Hà Nghi nhận phần trách nhiệm. Nếu người nhận đã chết, bàn sổ căn cứ giữ phần báo cáo."
+	if not (progress.can_join(TanDangProgress.MOC) or progress.can_join(TanDangProgress.LAM)): return "Đã đủ công trạng. Nhập môn còn cần một lời giới thiệu hợp lệ từ Mộc Yên hoặc Lâm Tước; chuyện gây hại đã ghi không bị xóa."
+	if not progress.officer_available(TanDangProgress.LEADER):
+		for sponsor: String in [TanDangProgress.MOC,TanDangProgress.LAM]:
+			if progress.can_join(sponsor) and progress.life.records[sponsor]["mode"] not in ["downed","recovering"]:
+				return "Đã đủ công trạng và lời giới thiệu. Tông chủ hiện vắng mặt; gặp %s để tự nguyện nhập môn." % NpcPilotCatalog.definition(sponsor)["name"]
+		return "Đã đủ công trạng và lời giới thiệu. Tông chủ hiện vắng mặt. Nếu người giới thiệu đang trọng thương, gặp họ và chọn Tha mạng · Cho rút lui; khi họ đang dưỡng thương, hoàn tất một chuyến ngục được lưu rồi trở về. Sổ căn cứ vẫn nhận việc và đổi sách."
+	return "Đã hoàn tất ba việc, công trạng 6/6. Có thể tự nguyện nhập môn dù đã dùng cống hiến đổi Hồi Đăng."
+
+func _officer_choices(choices: Array[Dictionary], s: Dictionary, place: String) -> void:
+	if place == TanDangProgress.DEPUTY:
+		_quest_choices(choices,s,place)
+		_reward_choices(choices,s,place)
+		return
+	if not s["rewards"].has("q3"): return
+	if s["membership"] == "guest":
+		_offer(choices,"join","Trình công trạng · Tự nguyện nhập môn",progress.can_join(TanDangProgress.LEADER),"Gia nhập Tàn Đăng sau ba việc đã hoàn tất? Công trạng không bị trừ; trang bị, bùa và công thức vẫn tự do.")
+		if not s["declined"]: _offer(choices,"decline","Giữ thân phận tán tu · Vẫn nhận đủ thưởng")
+	elif s["membership"] == "member": _offer(choices,"leave","Rời môn · Giữ công thức và công trạng",true,"Rời môn tự nguyện? Giữ công thức, cống hiến, công trạng và những hậu quả đã ghi.")
 
 func _relations_changed(_id: String,_mode: String) -> void:
 	var journal: QuestJournal=(hub.gear.modal as InventoryScreen).journal
@@ -337,7 +372,7 @@ func _relations_changed(_id: String,_mode: String) -> void:
 
 func _quest_choices(choices: Array[Dictionary], s: Dictionary, place: String) -> void:
 	if not s["accepted"]:
-		if place in ["ledger",TanDangProgress.MOC,TanDangProgress.LAM,"refuge"]: _offer(choices,"accept","Nhận việc · Ngọn đèn thiếu lõi")
+		if place in ["ledger",TanDangProgress.MOC,TanDangProgress.LAM,"refuge",TanDangProgress.DEPUTY]: _offer(choices,"accept","Nhận việc · Ngọn đèn thiếu lõi")
 		return
 	if place == "lamp" and "lamp" not in s["discoveries"]: _offer(choices,"observe_lamp","Kiểm đèn · Ghi chỗ thiếu lõi")
 	if place == "refuge":
@@ -355,7 +390,7 @@ func _quest_choices(choices: Array[Dictionary], s: Dictionary, place: String) ->
 	if s["reports"].size() == 2 and not s["rewards"].has("q3"): _offer(choices,"q3_reward","Nhận phần trách nhiệm · 2 cống hiến")
 
 func _reward_choices(choices: Array[Dictionary], s: Dictionary, place: String) -> void:
-	if not s["rewards"].has("q3") or place not in ["ledger",TanDangProgress.MOC,TanDangProgress.LAM]: return
+	if not s["rewards"].has("q3") or place not in ["ledger",TanDangProgress.MOC,TanDangProgress.LAM,TanDangProgress.DEPUTY]: return
 	if not s["recipe_claimed"]:
 		var known: bool = progress.known_recipe()
 		_offer(choices,"recipe","Ghi nhận Hồi Đăng · Đã biết, không trừ cống hiến" if known else "Đổi sách Hồi Đăng · 6 cống hiến",known or int(s["contribution"]) >= TanDangProgress.RECIPE_COST,"Ghi tri thức Bão Lửa (Hỏa + Phong) hiện có. %s Không trừ Tàn Hồn, không khóa cách ghép hoặc đổi damage/cooldown." % ("Đã biết nên không trừ cống hiến." if known else "Trừ 6 cống hiến một lần."))
@@ -363,7 +398,7 @@ func _reward_choices(choices: Array[Dictionary], s: Dictionary, place: String) -
 	if s["membership"] == "guest" and place in [TanDangProgress.MOC,TanDangProgress.LAM]:
 		_offer(choices,"join","Tự nguyện nhập môn",progress.can_join(place),"Gia nhập Tàn Đăng Môn? Class vẫn theo trang bị, bùa/công thức giữ nguyên. Khách và tán tu vẫn có đủ đường tiến trình.")
 		if not s["declined"]: _offer(choices,"decline","Giữ thân phận tán tu · Vẫn nhận đủ thưởng")
-	elif s["membership"] == "member": _offer(choices,"leave","Rời môn · Giữ công thức và cống hiến",true,"Rời môn tự nguyện không phải phản bội. Giữ gear/class, công thức, cống hiến và mọi hậu quả đã ghi.")
+	elif s["membership"] == "member" and place != TanDangProgress.DEPUTY: _offer(choices,"leave","Rời môn · Giữ công thức và cống hiến",true,"Rời môn tự nguyện không phải phản bội. Giữ gear/class, công thức, cống hiến và mọi hậu quả đã ghi.")
 
 func _open(message: String = "") -> void:
 	offered.clear()
@@ -376,10 +411,18 @@ func _open(message: String = "") -> void:
 		lines.append_array(_living_memory_speech(String(context)))
 	var choices: Array[Dictionary] = []
 	var who: String = "Sổ Tàn Đăng Môn" if context == LEDGER else "Đèn cổng Tàn Đăng" if context == LAMP else "Trú ẩn · Cổ phù" if context == REFUGE else NpcPilotCatalog.definition(String(context)).get("name","Tàn Đăng Môn")
+	if String(context) == TanDangProgress.LEADER: who = "Tông chủ "+who
+	elif String(context) == TanDangProgress.DEPUTY: who = "Phó tông chủ "+who
 	if not message.is_empty(): lines.insert(0,message)
-	lines.append("Cống hiến %d · %s. M → Quan hệ để xem điều đã xảy ra." % [s["contribution"],{"guest":"Khách / tán tu","member":"Thành viên","left":"Đã rời môn"}[s["membership"]]])
-	_quest_choices(choices,s,place)
-	_reward_choices(choices,s,place)
+	if place in TanDangProgress.HOME_OFFICER_IDS:
+		lines.append("Cống hiến %d · Công trạng %d/6 · %s." % [s["contribution"],progress.earned_merit(),{"guest":"Khách / tán tu","member":"Thành viên","left":"Đã rời môn"}[s["membership"]]])
+	else:
+		lines.append("Cống hiến %d · %s. M → Quan hệ để xem điều đã xảy ra." % [s["contribution"],{"guest":"Khách / tán tu","member":"Thành viên","left":"Đã rời môn"}[s["membership"]]])
+	if place in TanDangProgress.HOME_OFFICER_IDS:
+		_officer_choices(choices,s,place)
+	else:
+		_quest_choices(choices,s,place)
+		_reward_choices(choices,s,place)
 	if String(context) in TanDangProgress.NPC_IDS and progress.alive(String(context)):
 		var karma: Dictionary = progress.life.karma(String(context))
 		var causal: Dictionary = progress.life.records[String(context)]["causality"]
@@ -435,7 +478,22 @@ func navigation_target(id: StringName) -> Dictionary:
 	var room: StringName = ExteriorRouteCatalog.HUB
 	var x: float = LEDGER_X
 	var hint: String = "Sổ Tàn Đăng tại căn cứ"
-	if id == &"tan_dang_q1" and s["accepted"]:
+	if id == &"tan_dang_home":
+		var officer: String = TanDangProgress.LEADER if s["rewards"].has("q3") else TanDangProgress.DEPUTY
+		if progress.officer_available(officer):
+			room = HomeCatalog.ROOM
+			x = float(progress.life.records[officer]["x"])
+			hint = "E · Tông chủ · Xét công trạng / nhập môn" if officer == TanDangProgress.LEADER else "E · Phó tông chủ · Nhận việc / khép sổ"
+		else:
+			hint = "Vị phụ trách đang vắng mặt · E dùng sổ căn cứ để tiếp tục việc và đổi sách"
+			if officer == TanDangProgress.LEADER and s["membership"] == "guest":
+				for sponsor: String in [TanDangProgress.MOC,TanDangProgress.LAM]:
+					if progress.can_join(sponsor) and progress.life.records[sponsor]["mode"] not in ["downed","recovering"]:
+						room = StringName(progress.life.records[sponsor]["room"])
+						x = float(progress.life.records[sponsor]["x"])
+						hint = "E · "+String(NpcPilotCatalog.definition(sponsor)["name"])+" · Lời giới thiệu nhập môn còn hợp lệ"
+						break
+	elif id == &"tan_dang_q1" and s["accepted"]:
 		if "lamp" not in s["discoveries"]: x = LAMP_X; hint = "E · Kiểm đèn thiếu lõi"
 		else: room = &"o01_p03"; x = REFUGE_X; hint = "E · Lời kể / ghi chép và lõi tại trú ẩn P03"
 	elif id == &"tan_dang_q2": room = &"o01_p03"; x = REFUGE_X; hint = "Trú ẩn P03 · Nghe đủ rồi xác nhận một lựa chọn"
@@ -455,6 +513,7 @@ func _process(delta: float) -> void:
 	if not hub._can_travel() or hub.inside_house or not progress.available():_clear_reporting();return
 	var near: StringName = hub.nearest_station()
 	if near in [LEDGER,LAMP,REFUGE]: hub.prompt.text = {LEDGER:"E · Sổ Tàn Đăng · Nhiệm vụ / nhân quả",LAMP:"E · Đèn cổng Tàn Đăng",REFUGE:"E · Trú ẩn · Lời kể / ghi chép / lõi cổ phù"}[near]
+	elif String(near) in TanDangProgress.HOME_OFFICER_IDS: hub.prompt.text = "E · Tông chủ · Xét công trạng" if String(near) == TanDangProgress.LEADER else "E · Phó tông chủ · Nhiệm vụ / đổi Hồi Đăng"
 	_tick_reporting(delta)
 	_notice_clock += delta
 	if _notice_clock < 0.5: return

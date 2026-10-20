@@ -49,7 +49,7 @@ func _pure_simulation() -> void:
 	_check(first.snapshot() == second.snapshot(), "Same authored inputs and 600 in-game ticks produce identical snapshots")
 	_check(NpcWorldState.valid(first.snapshot()), "Longer authored schedules stay within validated room bounds")
 	for id: String in NpcPilotCatalog.IDS:
-		if id in NpcPilotCatalog.TAN_DANG_IDS:
+		if id in NpcPilotCatalog.TAN_DANG_IDS or id in NpcPilotCatalog.HOME_OFFICER_IDS:
 			var stop: Dictionary = NpcPilotCatalog.stop(id,0)
 			_check(observed[id].has(stop["mode"]) and observed[id].keys().all(func(mode: String) -> bool: return mode in ["walk",stop["mode"]]) and first.records[id]["x"] == stop["x"] and first.records[id]["target"] == stop["x"],"%s retains its authored fixed station and activity" % id)
 		else:
@@ -151,7 +151,7 @@ func _integration() -> void:
 	hub = flow.active_scene as ExteriorHub
 	var population: NpcPopulation = hub.npc_population
 	population.cue_requested.connect(func(_id: String, _cue: StringName, _at: Vector2, _owner: Node) -> void: cues += 1)
-	_check(population != null and population.state.records.size() == 13 and population.actors.size() == 1 and population.actors.has("tan_dang_moc_yen") and _actor_count() == 1,"H00 owns one thirteen-NPC registry and only its authored Mộc Yên representation")
+	_check(population != null and population.state.records.size() == 15 and population.actors.size() == 1 and population.actors.has("tan_dang_moc_yen") and _actor_count() == 1,"H00 owns one fifteen-NPC registry and only its authored Mộc Yên representation")
 	_check(population.actors["tan_dang_moc_yen"].room == population.hub_ground and population.hub_ground.room_id == ExteriorRouteCatalog.HUB and population.hub_ground.get_parent() == hub.yard,"The Hub keeper uses the existing population owner and Hub ground reference")
 	var player_id: int = hub.player.get_instance_id()
 	var owned: Array = hub.gear.inventory.items.keys()
@@ -278,7 +278,7 @@ func _integration() -> void:
 	var cold := NpcWorldState.new()
 	cold.save_path = sidecar
 	_check(cold.load_state() and cold.records[id]["mode"] == "recovering", "Full scene teardown and cold load do not heal a withdrawn identity")
-	_check(cold.records.size() == 13 and NpcWorldState.life_id(id) == id+":opening:1","Cold load retains all thirteen canonical records and the original same-life identity")
+	_check(cold.records.size() == 15 and NpcWorldState.life_id(id) == id+":opening:1","Cold load retains all fifteen canonical records and the original same-life identity")
 	flow = preload("res://scenes/maps/prologue_hub.tscn").instantiate() as GameFlow
 	flow.save_path_override = path_prefix + "_profile.json"
 	root.add_child(flow)

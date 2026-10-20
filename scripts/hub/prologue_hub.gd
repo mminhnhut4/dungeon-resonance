@@ -1,6 +1,7 @@
 class_name PrologueHub
 extends Node2D
 const Quantities = preload("res://scripts/runtime/bag_quantity_transactions.gd")
+const RunePreparation = preload("res://scripts/ui/rune_preparation.gd")
 var _service_quantities: Dictionary = {}
 ## Safe preparation world: existing combat, equipment and room-owned presentation.
 
@@ -267,6 +268,7 @@ func _npc_choices(id: StringName, courier_detail: bool = false) -> Array[Diction
 				choices.append({"id": StringName("upgrade_" + String(upgrade_id)), "text": text, "enabled": quote.get("can_buy", false), "requires_confirmation":true, "confirm_text":"%s\nGiá: %d Tàn Hồn. Sau khi mua còn %d Tàn Hồn.\nXác nhận tịnh hóa?" % [upgrade_name,int(quote.get("cost",0)),maxi(0,profile.souls-int(quote.get("cost",0)))]})
 			choices.append({"id": &"healer_consumables", "text": "Mua thuốc và chế thuốc, băng gạc, thuốc giải độc"})
 			choices.append({"id": &"rune_learning", "text": "Học & chế bùa · Học vĩnh viễn, nhận 1 bùa Thường"})
+			choices.append({"id": &"rune_preparation", "text": "Một lá bùa cho chuyến sau · Hướng dẫn tự chọn"})
 			if courier != null: choices.append({"id": &"courier_open", "text": "Hỏi việc đưa vật tư · Phiếu tiếp tế tùy chọn"})
 		NpcCatalog.WANDERER:
 			var quote: Dictionary = _economy_quote(&"quote_bounty", &"golem_hunt")
@@ -304,7 +306,7 @@ func _dialogue_choice(id: StringName) -> void:
 	elif id in [&"smith_enhance", &"smith_stones"]:
 		smith_requested.emit(self)
 		open_station(id)
-	elif id in [&"healer_consumables", &"rune_learning"]:
+	elif id in [&"healer_consumables", &"rune_learning", &"rune_preparation"]:
 		open_station(id)
 	elif String(id).begins_with("upgrade_"):
 		var upgrade_id := StringName(String(id).trim_prefix("upgrade_"))
@@ -631,6 +633,8 @@ func _refresh_station() -> void:
 			_build_consumable_menu()
 		&"rune_learning":
 			_build_rune_learning_menu()
+		&"rune_preparation":
+			_build_rune_preparation()
 	if station_notice != "": _label(station_content, Vector2.ZERO, station_notice)
 	_resize_station_panel.call_deferred()
 	_restore_station_scroll.call_deferred(_station_refresh_serial, _station_list_scroll)
@@ -944,6 +948,17 @@ func _build_consumable_menu() -> void:
 func _buy_consumable(id: StringName) -> void:
 	_request_purchase(&"consumable",id)
 
+func _build_rune_preparation() -> void:
+	_label(station_content,Vector2.ZERO,"THANH VY · CHUẨN BỊ CHUYẾN SAU")
+	var panel: VBoxContainer = preload("res://scripts/ui/rune_preparation_panel.gd").new()
+	panel.name="RunePreparationPanel";station_content.add_child(panel)
+	panel.call("present",profile,gear.inventory,rune_learning,true)
+	panel.connect("service_requested",_preparation_open_service)
+
+func _preparation_open_service() -> void:
+	if not station_open or current_station!=&"rune_preparation":return
+	current_station=&"rune_learning";station_notice="";_station_list_scroll=0;_refresh_station()
+
 func _build_rune_learning_menu() -> void:
 	_label(station_content,Vector2.ZERO,"THANH VY · HỌC & CHẾ BÙA\nHọc một lần để nhớ vĩnh viễn và nhận 1 bùa Thường. Bùa nhặt được vẫn ghép được ngay.\nSau khi học, chế thêm bằng nguyên liệu đang mang. Mở Hành trang → chọn trang bị → ghép vào ô bùa.")
 	for id: StringName in RuneLearningService.IDS:
@@ -1054,8 +1069,11 @@ func _confirm_purchase(token: int) -> void:
 	# Consume before calling the owner: reentrant signals/stale buttons cannot pay twice.
 	_pending_purchase.clear()
 	if offer.has("batch_offer"):
-		var success: bool = current_station == offer["station"] and bool(Quantities.commit(economy,offer["batch_offer"],rune_learning)["committed"])
+		var result: Dictionary = Quantities.commit(economy,offer["batch_offer"],rune_learning) if current_station == offer["station"] else {"committed":false,"successes":0}
+		var success: bool = bool(result["committed"])
 		station_notice = "Đã hoàn tất %d món; vật phẩm và tổng chi phí đã được lưu." % int(offer.get("quantity",1)) if success else "Chưa mua / chế được: số lượng, chi phí hoặc hành trang đã thay đổi. Hãy chọn lại."
+		if offer["kind"]==&"rune_craft" and offer["batch_offer"].get("kind")==&"rune_craft" and offer["batch_offer"].get("id")==offer["id"]:
+			_preparation_craft_result(offer,success and int(result.get("successes",0))>0,int(result.get("successes",0)))
 		_refresh_station()
 		return
 	if offer["kind"] in [&"rune_learn",&"rune_craft"]:
@@ -1076,7 +1094,13 @@ func _confirm_rune_purchase(offer: Dictionary) -> void:
 	var success: bool = false
 	if permitted: success = rune_learning.learn(offer["id"]) if learning else rune_learning.craft(offer["id"])
 	station_notice = ("Đã học vĩnh viễn và nhận 1 bùa Thường. Mở Hành trang để ghép bùa vào trang bị." if learning else "Đã chế 1 bùa Thường và cất vào hành trang.") if success else "Chưa hoàn tất. Điều kiện, chi phí hoặc dữ liệu lưu đã thay đổi; hãy chọn lại bùa."
+	if not learning:_preparation_craft_result(offer,success,1 if success else 0)
 	_refresh_station()
+
+func _preparation_craft_result(offer: Dictionary, committed: bool, quantity: int) -> void:
+	RunePreparation.result(profile,offer["id"],"%d:%d"%[get_instance_id(),int(offer["token"])],committed,quantity)
+	if RunePreparation.session(profile).get("selected")==offer["id"]:
+		station_notice=RunePreparation.view(profile,gear.inventory,rune_learning)["body"]
 
 func _craft_consumable(id: StringName) -> void:
 	var offer: Dictionary = Quantities.quote(economy,&"consumable_craft",id,_service_amount(&"craft"))

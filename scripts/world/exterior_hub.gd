@@ -1,5 +1,6 @@
 class_name ExteriorHub
 extends PrologueHub
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## The approved quiet exploration slice retains the Hub's one actor/session.
 const ORIGIN := Vector2(8000,0)
 var exterior: ExteriorRoom
@@ -36,11 +37,13 @@ func _ready() -> void:
 		add_child(living)
 		living.initialize(self,npc_population,tan_dang.progress)
 	_station(&"exterior_road",Vector2(750,640),"ĐƯỜNG BỘ · BẾN TRẦM →")
+	if world_building_enabled:
+		_station(HomeCatalog.HUB_DOOR,Vector2(1660,640),"TÀN ĐĂNG MÔN · SÂN ĐÈN →")
 	entry_card = RegionEntryCard.new()
 	add_child(entry_card)
 	# A new process uses the existing GameFlow startup contract. Geographic
 	# progress is restored separately; ordinary doors never create another actor.
-	if world_building_enabled and not from_defeat and not profile.exterior_progress_quarantined and profile.exterior_progress["room_id"] != String(ExteriorRouteCatalog.HUB):
+	if world_building_enabled and not from_defeat and not profile.exterior_progress_quarantined and (profile.exterior_progress["room_id"] != String(ExteriorRouteCatalog.HUB) or profile.exterior_progress["anchor_id"] == String(HomeCatalog.HUB_DOOR)):
 		call_deferred("restore_exterior_anchor")
 
 func _can_travel() -> bool:
@@ -48,7 +51,7 @@ func _can_travel() -> bool:
 
 func enter_exterior(room: StringName, route: StringName = ExteriorRouteCatalog.MAIN, entry: StringName = &"west", commit: bool = true) -> bool:
 	if not _can_travel() or not ExteriorRouteCatalog.valid_anchor(room,route,entry): return false
-	if room == ExteriorRouteCatalog.HUB: return return_to_hub(commit)
+	if room == ExteriorRouteCatalog.HUB: return return_to_hub(commit,entry)
 	if room in SectRouteCatalog.ROOMS and (sect_journey==null or not sect_journey.can_enter(room)):
 		prompt.text="Lối môn phái chưa mở. Đọc sổ tiếp nhận gần cổng; sân trong cần đủ hai ghi chép và quyền khách."
 		return false
@@ -68,7 +71,7 @@ func enter_exterior(room: StringName, route: StringName = ExteriorRouteCatalog.M
 	next["anchor_id"] = String(entry)
 	if not next["discovered_rooms"].has(String(room)): next["discovered_rooms"].append(String(room))
 	profile.exterior_progress = next
-	if commit and world_building_enabled: profile.opening_progress = OpeningProgress.with_event(profile.opening_progress, &"explored")
+	if commit and world_building_enabled and room != HomeCatalog.ROOM: profile.opening_progress = OpeningProgress.with_event(profile.opening_progress, &"explored")
 	if commit and not profile.save():
 		profile.exterior_progress = previous
 		profile.opening_progress = previous_opening
@@ -104,14 +107,16 @@ func enter_exterior(room: StringName, route: StringName = ExteriorRouteCatalog.M
 	if commit and world_building_enabled: profile.changed.emit()
 	return true
 
-func return_to_hub(commit: bool = true) -> bool:
-	if not _can_travel(): return false
+func return_to_hub(commit: bool = true, anchor: StringName = &"road") -> bool:
+	if not _can_travel() or not ExteriorRouteCatalog.valid_anchor(ExteriorRouteCatalog.HUB,ExteriorRouteCatalog.MAIN,anchor): return false
+	var station_id: StringName = HomeCatalog.HUB_DOOR if anchor == HomeCatalog.HUB_DOOR else &"exterior_road"
+	if not stations.has(station_id): return false
 	var previous: Dictionary = profile.exterior_progress.duplicate(true)
 	var next: Dictionary = previous.duplicate(true)
 	next["room_id"] = String(ExteriorRouteCatalog.HUB)
 	next["region_id"] = String(ExteriorRouteCatalog.HUB)
 	next["route_id"] = "main"
-	next["anchor_id"] = "road"
+	next["anchor_id"] = String(anchor)
 	profile.exterior_progress = next
 	if commit and not profile.save():
 		profile.exterior_progress = previous
@@ -129,7 +134,7 @@ func return_to_hub(commit: bool = true) -> bool:
 	yard.show()
 	house.hide()
 	if has_node("PrologueHubArt"): get_node("PrologueHubArt").process_mode = Node.PROCESS_MODE_INHERIT
-	PlayerTravel.relocate(player,stations[&"exterior_road"].global_position)
+	PlayerTravel.relocate(player,stations[station_id].global_position)
 	_set_camera_bounds(false)
 	presentation.atmosphere.show()
 	presentation.rebuild()
@@ -180,6 +185,9 @@ func interact_station(id: StringName) -> bool:
 		if id == &"exterior_road":
 			if id != nearest_station() or not _can_travel() or inside_house or not player.motor.is_grounded() or door_latched: return false
 			return enter_exterior(ExteriorRouteCatalog.ROOMS[0])
+		if id == HomeCatalog.HUB_DOOR and world_building_enabled:
+			if id != nearest_station() or not _can_travel() or inside_house or not player.motor.is_grounded() or door_latched: return false
+			return enter_exterior(HomeCatalog.ROOM)
 		return super.interact_station(id)
 	if not _can_travel() or id != nearest_station() or not player.motor.is_grounded(): return false
 	if id in [&"sect_register",&"sect_marker_west",&"sect_marker_east",&"sect_history"]: return sect_journey!=null and sect_journey.interact(id)
@@ -293,6 +301,7 @@ func _process(delta: float) -> void:
 	if not outside:
 		super._process(delta)
 		if nearest_station() == &"exterior_road": prompt.text = "E · Đi bộ ra Đường Hành Hương / Bến Trầm"
+		elif nearest_station() == HomeCatalog.HUB_DOOR: prompt.text = "E · Vào Tàn Đăng Môn · Sân đèn"
 		_update_entry_card()
 		return
 	var id: StringName = nearest_station()
@@ -304,6 +313,8 @@ func _process(delta: float) -> void:
 
 func _entry_destination(id: StringName) -> Dictionary:
 	if not outside:
+		if id == HomeCatalog.HUB_DOOR and world_building_enabled and not inside_house:
+			return ExteriorRouteCatalog.link(ExteriorRouteCatalog.HUB,ExteriorRouteCatalog.MAIN,id)
 		return {"room":ExteriorRouteCatalog.ROOMS[0],"route":ExteriorRouteCatalog.MAIN,"anchor":&"west"} if id == &"exterior_road" and not inside_house else {}
 	return ExteriorRouteCatalog.link(exterior.room_id,exterior.route_id,id) if is_instance_valid(exterior) and id in [&"door_west",&"door_east",&"tunnel",&"sect_branch"] else {}
 

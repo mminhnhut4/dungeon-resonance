@@ -1,5 +1,6 @@
 class_name QuestNavigationRoute
 extends RefCounted
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## Bounded next-door query over the existing authored graph. No discovery writes.
 static func next_door(room: StringName,route: StringName,target: StringName,known: Dictionary,shortcut: bool,right_of_gate: bool = false) -> StringName:
 	if not known.has(room) or not known.has(target) or not ExteriorRouteCatalog.valid_route(room,route): return &""
@@ -12,11 +13,14 @@ static func next_door(room: StringName,route: StringName,target: StringName,know
 		if visited.has(key): continue
 		visited[key] = true
 		if state["room"] == target: return state["first"]
-		for door: StringName in [&"door_west",&"door_east",&"tunnel",&"sect_branch"]:
+		for door: StringName in [&"door_west",&"door_east",&"tunnel",&"sect_branch",HomeCatalog.HUB_DOOR]:
 			var link: Dictionary
 			if state["room"] == ExteriorRouteCatalog.HUB:
-				if door != &"door_east": continue
-				link = {"room":ExteriorRouteCatalog.ROOMS[0],"route":ExteriorRouteCatalog.MAIN}
+				if door == &"door_east":
+					link = {"room":ExteriorRouteCatalog.ROOMS[0],"route":ExteriorRouteCatalog.MAIN}
+				elif door == HomeCatalog.HUB_DOOR:
+					link = ExteriorRouteCatalog.link(ExteriorRouteCatalog.HUB,ExteriorRouteCatalog.MAIN,door)
+				else: continue
 			else:
 				if door == &"tunnel" and (not shortcut or state["route"] != ExteriorRouteCatalog.MAIN or state["room"] not in [ExteriorRouteCatalog.ROOMS[0],ExteriorRouteCatalog.ROOMS[2]]): continue
 				if state["route"] == ExteriorRouteCatalog.TUNNEL:

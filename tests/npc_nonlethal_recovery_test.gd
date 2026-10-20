@@ -80,7 +80,7 @@ func _reader(path: String) -> CountedState:
 
 func _policy() -> void:
 	var state: CountedState = _fixture("policy")
-	_check(state.records.size() == 13 and NpcWorldState.valid(state.snapshot()),"Schema5 preserves six residents and four legacy cultivators, adding exactly three sect identities")
+	_check(state.records.size() == 15 and NpcWorldState.valid(state.snapshot()),"Schema9 preserves thirteen historical identities and adds two home officers")
 	var life: String = NpcWorldState.life_id(RESIDENT)
 	var debt: int = state.records[RESIDENT]["debt"]
 	state.receive_hit(RESIDENT,1.0,0.0)
@@ -173,7 +173,7 @@ func _migration(schema: int) -> void:
 	var canonical_bytes: PackedByteArray = FileAccess.get_file_as_bytes(canonical_path)
 	var state: CountedState = _reader(path)
 	_check(state.load_state() and not state.read_only and state.save_calls == 1,"Schema%d migrates with one durable owner transaction" % schema)
-	_check(state.snapshot()["npc_schema"] == NpcWorldState.SCHEMA and state.records.size() == 13 and NpcWorldState.valid(state.snapshot()),"Migration creates exact schema5 identities only after validation")
+	_check(state.snapshot()["npc_schema"] == NpcWorldState.SCHEMA and state.records.size() == 15 and NpcWorldState.valid(state.snapshot()),"Migration creates the exact current identities only after validation")
 	_check(FileAccess.get_file_as_bytes(path+".bak") == original,"Migration backup preserves the entire original sidecar byte for byte")
 	var immutable_path: String = path + ".pre_nonlethal_v%d.json" % schema
 	_check(FileAccess.get_file_as_bytes(immutable_path) == original,"Immutable premigration source is byte-identical to the validated legacy primary")
@@ -203,7 +203,7 @@ func _migration_faults() -> void:
 		_check(SanctuaryProfile.CommitWriter.canonical(state.snapshot()) == SanctuaryProfile.CommitWriter.canonical(legacy) and FileAccess.get_file_as_bytes(path) == bytes,stage + ": rollback preserves the complete parsed old view and exact primary bytes")
 		_check(not state.save() and not state.recover_after_expedition(),stage + ": quarantined instance cannot overwrite or recover old records")
 		var retry: CountedState = _reader(path)
-		_check(retry.load_state() and retry.records.size() == 13,stage + ": fresh load can retry the same valid migration")
+		_check(retry.load_state() and retry.records.size() == 15,stage + ": fresh load can retry the same valid migration")
 
 func _immutable_backup_guards() -> void:
 	var path: String = directory + "/immutable_conflict/profile.json.npc_v1.json"

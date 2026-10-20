@@ -1,5 +1,6 @@
 class_name MapRouteGraph
 extends Control
+const HomeCatalog = preload("res://scripts/world/tan_dang_home_catalog.gd")
 ## Diagram of authored links, not terrain or a fast-travel interface.
 signal room_selected(room: StringName)
 var buttons: Dictionary = {}
@@ -34,13 +35,14 @@ func set_state(discoveries: Dictionary, current: StringName, target: StringName,
 		button.disabled = not seen
 		button.tooltip_text = MapQuestProjection.room_name(room) if seen else ""
 		var code: String = "Căn cứ" if room == ExteriorRouteCatalog.HUB else String(room).split("_")[0].to_upper() if room in SectRouteCatalog.ROOMS else String(room).trim_prefix("o01_").trim_prefix("o02_").to_upper()
+		if room == HomeCatalog.ROOM: code = "TD01"
 		var marker: String = "Bạn · Đích" if room == current_room and room == objective_room else "Bạn" if room == current_room else "Đích" if room == objective_room else "Đã tới"
 		button.text = "?" if not seen else code+(" ●" if room==current_room else " ◆" if room==objective_room else "")
 		if seen: button.tooltip_text += " · "+marker
 	queue_redraw()
 
 func _layout() -> void:
-	var locations: Array[Vector2] = [Vector2(.125,.125),Vector2(.375,.125),Vector2(.625,.125),Vector2(.875,.125),Vector2(.875,.375),Vector2(.625,.375),Vector2(.375,.375),Vector2(.125,.375),Vector2(.125,.625),Vector2(.625,.625),Vector2(.875,.625),Vector2(.125,.875),Vector2(.375,.875)]
+	var locations: Array[Vector2] = [Vector2(.125,.125),Vector2(.375,.125),Vector2(.625,.125),Vector2(.875,.125),Vector2(.875,.375),Vector2(.625,.375),Vector2(.375,.375),Vector2(.125,.375),Vector2(.125,.625),Vector2(.625,.625),Vector2(.875,.625),Vector2(.125,.875),Vector2(.375,.875),Vector2(.375,.625)]
 	var box := Vector2(minf(100,size.x*.235),minf(52,size.y*.22))
 	for index: int in ids.size():
 		var button: Button = buttons[ids[index]]
@@ -52,6 +54,7 @@ func _draw() -> void:
 	if buttons.is_empty(): return
 	var ink: Color = get_theme_color("font_color","Label").darkened(.3)
 	if known.has(&"o01_p01"): _edge(ExteriorRouteCatalog.HUB,&"o01_p01",ink)
+	if known.has(HomeCatalog.ROOM): _edge(ExteriorRouteCatalog.HUB,HomeCatalog.ROOM,ink)
 	for room: StringName in ExteriorRouteCatalog.ROOMS:
 		var link: Dictionary = ExteriorRouteCatalog.link(room,ExteriorRouteCatalog.MAIN,&"door_east")
 		if not link.is_empty() and known.has(room) and known.has(link["room"]): _edge(room,link["room"],ink)

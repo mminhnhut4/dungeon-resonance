@@ -3,7 +3,8 @@ extends RefCounted
 ## View and explicit commands only. Session/common writer remain authoritative.
 ## Build once per Hub station refresh; the Hub owns any ui_changed connection.
 const Model = preload("res://scripts/cultivation/opening_cultivation_state.gd")
-const STAGES: Array[String] = ["Luyện Khí sơ", "Luyện Khí trung", "Luyện Khí hậu", "Trúc Cơ sơ"]
+const Labels = preload("res://scripts/cultivation/opening_cultivation_labels.gd")
+const STAGES: Array[String] = Labels.STAGES
 const NPC_ID: String = "pilot_gatherer"
 const NODE_LABELS: Dictionary = {"h00_courtyard_01": "Linh thảo ở sân căn cứ", "o01_p04_01": "Linh thảo ven đường"}
 
@@ -74,7 +75,7 @@ static func _breakthrough_button(hub: Node, session: Node, panel: Container, act
 	var stage: int = int(actor["stage"])
 	if stage >= 3: return
 	var cost: int = int(config["final_dust_cost"] if stage == 2 else config["interim_dust_cost"])
-	var text: String = "%s %s · %d Bột Phép" % ["Đột phá" if stage==2 else "Tiến tầng",STAGES[stage + 1], cost]
+	var text: String = "%s · %d Bột Phép" % [Labels.breakthrough_action(stage), cost]
 	if stage == 2 and int(config["final_soul_cost"]) > 0: text += " + %d Tàn Hồn · Có %d" % [config["final_soul_cost"], souls]
 	if stage == 2 and int(config["final_golem_proof"]) > 0: text += " · Cần chứng tích Golem"
 	var allowed: bool = eligible and bool(actor["enrolled"]) and int(actor["energy"]) >= int(config["energy_thresholds"][stage]) and int(actor["mastery"]) >= int(config["mastery_thresholds"][stage]) and actor["insight_ids"].size() >= int(config["insight_thresholds"][stage]) and int(materials.get("dust", 0)) >= cost

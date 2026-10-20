@@ -1,5 +1,5 @@
 extends "res://tests/tan_dang_living_state_test.gd"
-## Schema8 / historical7 / existing-writer fault fixtures. No gameplay timing claim.
+## Current owner / historical7..8 / existing-writer fault fixtures. No gameplay timing claim.
 class HorizonFault extends SanctuaryProfile:
 	var primary: String = ""
 	var kind: String = ""
@@ -23,15 +23,16 @@ func _run() -> void:
 	_migrate_seven()
 	_strict_shapes()
 	_clock_contract()
-	for schema: int in [5,6,7]: _pending_historical(schema)
+	for schema: int in [5,6,7,8]: _pending_historical(schema)
 	print("RESULT LivingHorizon checks=%d failures=%d"%[checks,failures]);quit(0 if failures==0 else 1)
 
 func _historical(value: Dictionary,schema: int = 7) -> Dictionary:
 	var source: Dictionary = value.duplicate(true)
 	source["npc_schema"] = schema
+	for id: String in NpcPilotCatalog.HOME_OFFICER_IDS: source["records"].erase(id)
 	for id: String in TanDangProgress.NPC_IDS:
 		if schema<7: source["records"][id].erase("living")
-		else: source["records"][id]["living"].erase("danger_elapsed")
+		elif schema==7: source["records"][id]["living"].erase("danger_elapsed")
 		if schema<6: source["records"][id].erase("causality")
 	return source
 
@@ -41,7 +42,7 @@ func _migration_case(source: Dictionary,label: String) -> void:
 	_write_json(path,source)
 	var original: PackedByteArray = _raw(path)
 	var life: NpcWorldState = _reader(path)
-	_check(life.load_state() and life.snapshot()["npc_schema"]==8,"Only committed migration publishes schema8: "+label)
+	_check(life.load_state() and life.snapshot()["npc_schema"]==NpcWorldState.SCHEMA,"Only committed migration publishes the current schema: "+label)
 	_check(_raw(path+".pre_horizon_v7.json")==original,"Immutable backup preserves exact source7 bytes: "+label)
 	_check(Writer.canonical(_historical(life.snapshot()))==Writer.canonical(source),"Migration preserves every prior field and terminal fact: "+label)
 	for id: String in TanDangProgress.NPC_IDS: _check(life.living_view(id)["danger_elapsed"]==0.0,"Unknown historical elapsed initializes zero: "+label+"/"+id)
@@ -82,7 +83,7 @@ func _migrate_seven() -> void:
 		_check(not life.load_state() and life.read_only and not life.last_save_ok and life.snapshot()["npc_schema"]==7 and Writer.canonical(life.snapshot())==Writer.canonical(source),"Failed migration retains original7 authority: "+kind)
 		_check(_raw(path)==original and not life.save(),"Failed migration never replaces original primary: "+kind)
 		var retry: NpcWorldState = _reader(path)
-		_check(retry.load_state() and retry.snapshot()["npc_schema"]==8 and _raw(path+".pre_horizon_v7.json")==original,"A fresh successful retry migrates once without overwriting backup: "+kind)
+		_check(retry.load_state() and retry.snapshot()["npc_schema"]==NpcWorldState.SCHEMA and _raw(path+".pre_horizon_v7.json")==original,"A fresh successful retry migrates once without overwriting backup: "+kind)
 	var conflict: String = directory+"/conflict/profile.json.npc_v1.json"
 	_write_json(conflict,source);_write_json(conflict+".pre_horizon_v7.json",_historical(NpcWorldState.new().snapshot()))
 	var bytes: PackedByteArray = _raw(conflict);var backup: PackedByteArray = _raw(conflict+".pre_horizon_v7.json")
@@ -96,8 +97,9 @@ func _strict_shapes() -> void:
 	var p: TanDangProgress = _danger("strict")
 	var good: Dictionary = p.life.snapshot()
 	var seven: Dictionary = _historical(good)
-	_check(NpcWorldState.valid(good) and NpcWorldState.valid(seven),"Current8 and historical7 dispatch independently")
-	var bad: Dictionary = good.duplicate(true);bad["npc_schema"]=7
+	var eight: Dictionary = _historical(good,8)
+	_check(NpcWorldState.valid(good) and NpcWorldState.valid(seven) and NpcWorldState.valid(eight),"Current9 and historical7/8 dispatch independently")
+	var bad: Dictionary = eight.duplicate(true);bad["npc_schema"]=7
 	_check(not NpcWorldState.valid(bad),"Schema7 rejects a schema8 living payload")
 	bad=seven.duplicate(true);bad["npc_schema"]=8
 	_check(not NpcWorldState.valid(bad),"Schema8 requires elapsed rather than guessing shape")
@@ -111,7 +113,7 @@ func _strict_shapes() -> void:
 	_check(not NpcWorldState.valid(bad),"Elapsed cannot precede danger")
 	bad=good.duplicate(true);bad["records"][LAM]["living"]["enemy_hp"]=30.0
 	_check(not NpcWorldState.valid(bad),"No undeclared enemy persistence sneaks into schema8")
-	bad=good.duplicate(true);bad["npc_schema"]=9
+	bad=good.duplicate(true);bad["npc_schema"]=NpcWorldState.SCHEMA+1
 	var path: String=directory+"/future/profile.json.npc_v1.json";_write_json(path,bad)
 	var bytes: PackedByteArray=_raw(path);var life: NpcWorldState=_reader(path)
 	_check(not life.load_state() and life.read_only and not life.save() and _raw(path)==bytes,"Future authority quarantines without migration/write")
@@ -152,7 +154,7 @@ func _clock_contract() -> void:
 	_check(life.snapshot()==before,"Read view is detached and cannot reset clock")
 	_check(life.save(),"Existing owner checkpoints elapsed")
 	var cold: NpcWorldState=_reader(life.save_path)
-	_check(cold.load_state() and is_equal_approx(cold.living_view(LAM)["danger_elapsed"],20.1),"Cold schema8 load resumes its latest successful checkpoint")
+	_check(cold.load_state() and is_equal_approx(cold.living_view(LAM)["danger_elapsed"],20.1),"Cold current load resumes its latest successful checkpoint")
 	cold.set_active_room(P01)
 	for _i: int in 200: cold.advance_living_danger(0.1)
 	_check(cold.living_view(LAM)["danger_elapsed"]==35.0,"Clock saturates at35 rather than overflowing or auto-granting an outcome")
@@ -192,7 +194,8 @@ func _pending_historical(schema: int) -> void:
 	decision.erase("seal");decision["seal"]=Writer.canonical(decision).sha256_text();_write_json(journal,decision)
 	var decided: PackedByteArray=_raw(path+".compound.tmp")
 	var blocked: NpcWorldState=_reader(path)
-	_check(not blocked.load_state() and blocked.read_only and not blocked.save() and not FileAccess.file_exists(path+".pre_horizon_v7.json"),"Standalone owner cannot migrate pending historical participant%d"%schema)
+	var suffix: String=NpcWorldState.HOME_BACKUP_SUFFIX if schema==8 else ".pre_horizon_v7.json" if schema==7 else ".pre_living_v6.json" if schema==6 else ".pre_causality_v5.json"
+	_check(not blocked.load_state() and blocked.read_only and not blocked.save() and not FileAccess.file_exists(path+suffix),"Standalone owner cannot migrate pending historical participant%d"%schema)
 	# Failure after profile replacement must preserve decided NPC bytes for retry.
 	var profile:=SanctuaryProfile.new();profile.save_path=p.profile.save_path;profile.register_extension_validator(SCOPE,TanDangProgress.valid)
 	profile._ensure_writer();profile._writer.fault_plan={"compound_recovery_npc_commit":true}
@@ -200,7 +203,6 @@ func _pending_historical(schema: int) -> void:
 	profile=SanctuaryProfile.new();profile.save_path=p.profile.save_path;profile.register_extension_validator(SCOPE,TanDangProgress.valid)
 	_check(profile.load_profile() and _raw(path)==decided and not FileAccess.file_exists(journal),"Existing writer finishes exact historical candidate before migration%d"%schema)
 	var life: NpcWorldState=_reader(path)
-	var suffix: String=".pre_horizon_v7.json" if schema==7 else ".pre_living_v6.json" if schema==6 else ".pre_causality_v5.json"
-	_check(life.load_state() and life.snapshot()["npc_schema"]==8 and life.records[DU]["mode"]=="dead" and _raw(path+suffix)==decided,"Only recovered authentic source bytes become immutable backup before migration%d"%schema)
+	_check(life.load_state() and life.snapshot()["npc_schema"]==NpcWorldState.SCHEMA and life.records[DU]["mode"]=="dead" and _raw(path+suffix)==decided,"Only recovered authentic source bytes become immutable backup before migration%d"%schema)
 	var bytes: PackedByteArray=_raw(path);life=_reader(path)
 	_check(life.load_state() and _raw(path)==bytes and profile.extension_state(SCOPE)["choice"]=="gate","Reopen repeats no receipt or historical branch%d"%schema)

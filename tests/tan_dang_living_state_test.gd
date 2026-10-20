@@ -44,6 +44,7 @@ func _write_json(path: String,value: Dictionary) -> void:
 func _six(value: Dictionary) -> Dictionary:
 	var source: Dictionary = value.duplicate(true)
 	source["npc_schema"] = 6
+	for id: String in NpcPilotCatalog.HOME_OFFICER_IDS: source["records"].erase(id)
 	for id: String in TanDangProgress.NPC_IDS: source["records"][id].erase("living")
 	return source
 
@@ -92,7 +93,7 @@ func _migration_six() -> void:
 	var life: NpcWorldState = _reader(path)
 	_check(life.load_state() and life.snapshot()["npc_schema"]==NpcWorldState.SCHEMA,"NPC6 migrates via existing life owner")
 	_check(_raw(path+".pre_living_v6.json")==original,"Immutable NPC6 backup preserves exact original bytes")
-	for id: String in NpcPilotCatalog.IDS:
+	for id: String in NpcPilotCatalog.SCHEMA_EIGHT_IDS:
 		var retained: Dictionary = life.records[id].duplicate(true)
 		retained.erase("living")
 		_check(retained==source["records"][id],"All prior fields survive schema6→7: "+id)
@@ -121,7 +122,7 @@ func _migration_six() -> void:
 	_write_json(missing+".pre_living_v6.json",source)
 	life = _reader(missing)
 	_check(not life.load_state() and life.read_only and not life.save(),"Missing primary with schema6 history cannot mint new residents")
-	var future: Dictionary = source.duplicate(true);future["npc_schema"]=8
+	var future: Dictionary = source.duplicate(true);future["npc_schema"]=NpcWorldState.SCHEMA+1
 	var future_path: String = directory+"/migration_future/profile.json.npc_v1.json";_write_json(future_path,future)
 	life = _reader(future_path)
 	_check(not life.load_state() and life.read_only and not life.save(),"Unknown future schema is read-only")
