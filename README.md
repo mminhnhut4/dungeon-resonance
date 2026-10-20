@@ -2,13 +2,13 @@
 
 | Mục | Giá trị |
 |---|---|
-| Nhánh review | `review/pc-source-sync-20261020` |
-| Commit nguồn dùng để đối chiếu | `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` |
+| Nhánh review | `review/sword-reentry-20261020` |
+| Commit nguồn dùng để đối chiếu | `ffde3c7ae2b9e39477f0cc5e16ec61ccb08f8277` |
 | Nền snapshot | `6d73a61d640fa7d564cce30a55afc2f8afef260f` |
-| Trạng thái | **Source PC đã tích hợp; chưa phải release mới** |
-| Số file nguồn trong phạm vi snapshot | 363 |
+| Trạng thái | **Scoped counter PASS; chưa chứng minh lợi ích buffer hoặc gameplay tổng thể** |
+| Số file nguồn trong phạm vi snapshot | 95 |
 
-Nguồn PC tại f36b4bc, gồm các thay đổi Mac đã ghép trước đó. Snapshot này giữ nguồn runtime/test được chọn; không mang các báo cáo và log riêng. Mac chưa được đồng bộ ngược khi offline.
+Giữ tap trong 80 ms cuối dash, đánh sau expiry với đủ windup 70 ms. Một cặp baseline/candidate dùng policy dash xuyên rồi bước về tầm và tap sau dash: mỗi bên 17 checks, 3/3 recovery hit cùng Guard. Policy này không tiêu thụ buffer nên không chứng minh lợi ích buffer. Ba DOT khác ngoài chuỗi phù hợp mạnh RNG bleeding nhưng thiếu telemetry để kết luận nguyên nhân duy nhất. Kế thừa formation stage-1 còn HOLD; không có production telegraph-poise. Test guard_telegraph_poise_test.gd kế thừa đòi poise lúc telegraph trong khi runtime chỉ cho lúc attack: mâu thuẫn tĩnh chưa chạy lại, không coi toàn bộ suite PASS. 94 đường dẫn giống counter-hold cộng một test reentry.
 
 Số file ở trên là số đường dẫn thay đổi được chọn, gồm cả UID/import sidecar, không phải tổng số file trong checkout. Nhánh PC được so với nền GitHub; các nhánh còn lại được so với nguồn PC `f36b4bc32b7fe902d0881fe50b690b5b93eb29b4` và kế thừa snapshot PC gồm 363 đường dẫn thay đổi.
 
