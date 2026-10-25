@@ -20,6 +20,7 @@ var detail_fields: Dictionary = {}
 var detail_headers: Dictionary = {}
 var detail_icons: Dictionary = {}
 var reward_ready_label: Label
+var reward_list: VBoxContainer
 var guide_label: Label
 var detail_title: Label
 var graph: MapRouteGraph
@@ -36,6 +37,16 @@ var legend_scroll: ScrollContainer
 var map_title: Label
 var quest_title: Label
 var _projection_dirty: bool = false
+var _rows_dirty: bool = true
+var power_button: Button
+var relations_button: Button
+var requirement_list: VBoxContainer
+var power_preview: HBoxContainer
+var power_overview: VBoxContainer
+var power_scroll: ScrollContainer
+var power_current: Label
+var power_steps: Label
+var _compact_layout: bool = false
 
 func _enter_tree() -> void:
 	if profile != null and not profile.changed.is_connected(_request_refresh): profile.changed.connect(_request_refresh)
@@ -53,6 +64,22 @@ func _ready() -> void:
 	heading.add_theme_constant_override("separation",8)
 	add_child(heading)
 	heading.add_child(_label("BẢN ĐỒ & NHIỆM VỤ",20))
+	power_button = Button.new()
+	power_button.text = "Mạnh hơn"
+	power_button.icon = ItemArtCatalog.icon(&"crystal")
+	power_button.expand_icon = true
+	power_button.add_theme_constant_override("icon_max_width",20)
+	power_button.tooltip_text = "Bước tiếp theo để mạnh hơn · đồ đang mang, số thiếu, nơi đến và lợi ích"
+	power_button.pressed.connect(_toggle_power)
+	heading.add_child(power_button)
+	relations_button=Button.new()
+	relations_button.text="Quan hệ"
+	relations_button.tooltip_text="Nhật ký quan hệ Tàn Đăng · ai biết việc gì và bước tiếp theo"
+	relations_button.icon=ItemArtCatalog.icon(&"blueprint");relations_button.expand_icon=true
+	relations_button.add_theme_constant_override("icon_max_width",20)
+	relations_button.pressed.connect(func() -> void:_choose_quest(&"tan_dang_relations"))
+	heading.add_child(relations_button)
+	relations_button.hide()
 	cancel_navigation = Button.new()
 	cancel_navigation.text = "Bỏ theo dõi nhiệm vụ"
 	cancel_navigation.custom_minimum_size.y = 30
@@ -64,6 +91,7 @@ func _ready() -> void:
 	columns = HBoxContainer.new()
 	columns.add_theme_constant_override("separation",14)
 	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(columns)
 	map_column = VBoxContainer.new()
 	map_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -72,6 +100,27 @@ func _ready() -> void:
 	columns.add_child(map_column)
 	map_title = _label("ĐƯỜNG BỘ · Sơ đồ tuyến",15)
 	map_column.add_child(map_title)
+	power_scroll=ScrollContainer.new()
+	power_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	power_scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL
+	power_scroll.custom_minimum_size.y=120
+	map_column.add_child(power_scroll)
+	power_overview = VBoxContainer.new()
+	power_overview.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	power_overview.add_theme_constant_override("separation",9)
+	power_scroll.add_child(power_overview)
+	var power_title: Label=_label("LỘ TRÌNH SỨC MẠNH",17)
+	power_title.add_theme_color_override("font_color",AntiqueSkin.WARM)
+	power_overview.add_child(power_title)
+	power_current=_label("",15);power_overview.add_child(power_current)
+	power_overview.add_child(AntiqueSkin.divider())
+	power_steps=_label("",14);power_steps.add_theme_color_override("font_color",AntiqueSkin.JADE);power_overview.add_child(power_steps)
+	power_overview.add_child(AntiqueSkin.divider())
+	var unlock_title: Label=_label("TRÚC CƠ · LIÊN ẤN",15);unlock_title.add_theme_color_override("font_color",AntiqueSkin.WARM);power_overview.add_child(unlock_title)
+	power_overview.add_child(_label(FoundationResonance.description(),14))
+	power_preview=HBoxContainer.new();power_preview.add_theme_constant_override("separation",6);power_overview.add_child(power_preview)
+	power_overview.add_child(_label("Trang bị quyết định bộ đòn; bùa là đòn tấn công chính. Kho chỉ cất/rút, dịch vụ dùng nguyên liệu đang mang.",13))
+	power_scroll.hide()
 	graph = MapRouteGraph.new()
 	map_column.add_child(graph)
 	graph.room_selected.connect(_room_selected)
@@ -108,6 +157,7 @@ func _ready() -> void:
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	detail_scroll.custom_minimum_size.y = 120
 	detail_scroll.follow_focus = true
+	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	quest_column.add_child(detail_scroll)
 	var detail_box := VBoxContainer.new()
 	detail_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -132,7 +182,7 @@ func _ready() -> void:
 	refresh()
 
 func _build_detail_sections() -> void:
-	for spec: Array in [[&"objective","MỤC TIÊU",&"blueprint"],[&"progress","TIẾN ĐỘ",&"crystal"],[&"reward","PHẦN THƯỞNG",&"coins"]]:
+	for spec: Array in [[&"objective","MỤC TIÊU",&"blueprint"],[&"progress","TIẾN ĐỘ",&"crystal"],[&"requirements","ĐIỀU KIỆN",&"enhancement_stone_1"],[&"reward","PHẦN THƯỞNG",&"coins"]]:
 		if not detail_fields.is_empty(): detail_sections.add_child(AntiqueSkin.divider())
 		var group := VBoxContainer.new()
 		group.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -158,10 +208,15 @@ func _build_detail_sections() -> void:
 			reward_ready_label = _label("✓ SẴN SÀNG NHẬN THƯỞNG",14)
 			reward_ready_label.add_theme_color_override("font_color",AntiqueSkin.JADE)
 			group.add_child(reward_ready_label)
+			reward_list=VBoxContainer.new();reward_list.add_theme_constant_override("separation",9);group.add_child(reward_list)
 		var body: Label = _label("",16 if spec[0] == &"progress" else 14)
 		body.add_theme_color_override("font_color",AntiqueSkin.JADE if spec[0] == &"progress" else AntiqueSkin.TEXT)
 		group.add_child(body)
 		detail_fields[spec[0]] = body
+		if spec[0] == &"requirements":
+			requirement_list = VBoxContainer.new()
+			requirement_list.add_theme_constant_override("separation",5)
+			group.add_child(requirement_list)
 	detail_sections.add_child(AntiqueSkin.divider())
 	guide_label = _label("",14)
 	guide_label.add_theme_color_override("font_color",AntiqueSkin.TEXT)
@@ -172,12 +227,60 @@ func _present_detail(card: Dictionary,guide: String) -> void:
 	# Visible card sections reuse its exact fields; they are not another quest owner.
 	objective_label.hide()
 	detail_sections.show()
-	detail_fields[&"objective"].text = "HÀNH ĐỘNG: %s\nĐỊA ĐIỂM: %s\nĐIỀU KIỆN: %s" % [card["action"],card["location"],card["prerequisite"]]
+	detail_fields[&"objective"].text = "HÀNH ĐỘNG: %s\nĐỊA ĐIỂM: %s" % [card["action"],card["location"]]
 	detail_fields[&"progress"].text = card["progress"]
+	detail_fields[&"requirements"].text = card["prerequisite"]
+	for child: Node in requirement_list.get_children():requirement_list.remove_child(child);child.queue_free()
+	for child: Node in power_preview.get_children():power_preview.remove_child(child);child.queue_free()
+	var power: Dictionary = {}
+	var rewards: Array[Dictionary]=[]
+	for row: Dictionary in rows:
+		if row["id"] == selected_id:power=row.get("power",{});rewards.assign(row.get("rewards",[]));break
+	if selected_id==&"golem_defeated":rewards=[OpeningRewardCatalog.bounty(inventory,profile!=null and profile.bounty_claimed)]
+	for child: Node in reward_list.get_children():reward_list.remove_child(child);child.queue_free()
+	for entry: Dictionary in rewards:
+		var line:=HBoxContainer.new();line.add_theme_constant_override("separation",8);reward_list.add_child(line)
+		var image:=TextureRect.new();image.texture=entry["icon"];image.custom_minimum_size=Vector2(32,32);image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;image.mouse_filter=Control.MOUSE_FILTER_IGNORE;line.add_child(image)
+		var wording: String="%s ×%d\n%s\n%s\n%s"%[entry["name"],entry["amount"],entry["destination"],entry["balance"],entry["use"]]
+		line.add_child(_label(wording,14))
+	_power_layout(not power.is_empty())
+	if not power.is_empty():
+		power_current.text=power["current"]
+		power_steps.text=card["progress"].replace(" · ","\n")
+		detail_fields[&"objective"].text="%s\nĐẾN: %s"%[card["action"],card["location"]]
+	(detail_fields[&"progress"] as Label).get_parent().visible=power.is_empty()
+	(detail_fields[&"requirements"] as Label).visible = power.is_empty() or power["requirements"].is_empty()
+	for need: Dictionary in power.get("requirements",[]):
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation",8)
+		requirement_list.add_child(line)
+		var icon := TextureRect.new()
+		icon.texture=need["icon"];icon.custom_minimum_size=Vector2(24,24)
+		icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;icon.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		line.add_child(icon)
+		var text: Label=_label("%s · %d/%d · %s"%[need["name"],need["have"],need["need"],"Đủ" if need["missing"]==0 else "thiếu %d"%need["missing"]],14)
+		text.add_theme_color_override("font_color",AntiqueSkin.JADE if need["missing"]==0 else AntiqueSkin.WARM)
+		line.add_child(text)
+	if not power.is_empty():
+		for id: StringName in [&"fire",&"wind"]:
+			var icon := TextureRect.new();icon.texture=ItemArtCatalog.RUNE_ICONS[id]
+			icon.custom_minimum_size=Vector2(26,26);icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;icon.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon.tooltip_text=RuneLearningService.NAMES[id];power_preview.add_child(icon)
+		power_preview.add_child(_label("Ví dụ Hỏa + Phong\nTrước 0 → Trúc Cơ 1 liên kết",13))
 	detail_fields[&"reward"].text = "PHẦN THƯỞNG: %s\nNHẬN THƯỞNG: %s\nTRẠNG THÁI: %s" % [card["reward"],card["reward_mode"],card["reward_status"]]
 	guide_label.text = guide
+	guide_label.visible=power.is_empty()
+	var history: bool=selected_id==OpeningRewardCatalog.ID
+	for section: StringName in [&"objective",&"requirements"]:(detail_fields[section] as Label).get_parent().visible=not history
+	(detail_fields[&"progress"] as Label).get_parent().visible=not history and power.is_empty()
+	detail_headers[&"reward"].text="THƯỞNG ĐÃ NHẬN" if history else "PHẦN THƯỞNG"
+	detail_fields[&"reward"].visible=not history
+	if history:guide_label.hide()
+	elif not rewards.is_empty():detail_fields[&"reward"].text="NHẬN THƯỞNG: %s\nTRẠNG THÁI: %s"%[card["reward_mode"],card["reward_status"]]
 	var reward_icon: Texture2D = ItemArtCatalog.GEAR_ICON_OVERRIDES[&"ancient_sword_bounty"] if selected_id == &"golem_defeated" else ItemArtCatalog.icon(&"coins")
+	if selected_id in [PowerProgressionGuide.ID,&"cultivation_breakthrough"]:reward_icon=ItemArtCatalog.icon(&"crystal")
 	(detail_icons[&"reward"] as TextureRect).texture = reward_icon
+	if not rewards.is_empty():(detail_icons[&"reward"] as TextureRect).texture=rewards[0]["icon"]
 	var ready: bool = card.get("command",&"") == &"bounty_claim" and not action_button.disabled
 	reward_ready_label.visible = ready
 	if ready:
@@ -201,11 +304,12 @@ func apply_visual_theme(shared_theme: Theme) -> void:
 	if is_instance_valid(graph): graph.queue_redraw()
 
 func set_compact_layout(compact: bool) -> void:
+	_compact_layout=compact
 	# Keep the target, navigation and action outside the scroll regions at 800x600.
 	# The complete legend remains readable in its own compact scroll; desktop
 	# retains its natural height. Both graph sizes reserve room for a wrapped
 	# navigation hint; the 60px route pins still fit at the compact 188px.
-	map_title.visible = not compact
+	map_title.visible = not compact and selected_id != PowerProgressionGuide.ID
 	quest_title.visible = not compact
 	add_theme_constant_override("separation",4 if compact else 6)
 	map_column.add_theme_constant_override("separation",3 if compact else 5)
@@ -226,12 +330,15 @@ func bind_progress(source: SanctuaryProfile, carried: GearInventory) -> void:
 		if inventory != null: inventory.changed.connect(_request_refresh)
 	refresh()
 
-func refresh() -> void:
-	if not is_inside_tree() or is_queued_for_deletion() or state_label == null: return
-	_projection_dirty=false
-	var focused: Control = get_viewport().gui_get_focus_owner()
-	var keep_focus: bool = focused != null and quest_list.is_ancestor_of(focused)
-	rows = OpeningQuestCards.decorate(MapQuestProjection.rows(profile, inventory),profile,inventory)
+func projection_rows() -> Array[Dictionary]:
+	# Navigation needs current data even while hidden UI rebuilds are deferred.
+	if not _rows_dirty: return rows
+	_rows_dirty = false
+	var canonical: Array[Dictionary] = MapQuestProjection.rows(profile, inventory)
+	if profile != null and not profile.opening_progress_quarantined and not profile.exterior_progress_quarantined:
+		canonical.append_array(TanDangProgress.rows(profile))
+	rows = OpeningQuestCards.decorate(canonical,profile,inventory)
+	if profile != null and inventory != null and not profile.read_only and not profile.hub_inventory_quarantined and not profile.opening_progress_quarantined and not profile.exterior_progress_quarantined:rows.push_front(PowerProgressionGuide.row(profile,inventory))
 	# Future rows read their existing canonical owner. No state/save is created.
 	if extension_rows_provider.is_valid():
 		var extras: Variant = extension_rows_provider.call()
@@ -245,6 +352,18 @@ func refresh() -> void:
 					if duplicate_id: continue
 					var target: Variant = raw.get("target","")
 					rows.append({"id":id,"title":String(raw["title"]).left(256),"body":String(raw["body"]).left(4096),"target":StringName(target) if target is String or target is StringName else &"","done":bool(raw.get("done",false)),"next":false})
+	var history: Dictionary=OpeningRewardCatalog.journal_row(profile,inventory)
+	if not history.is_empty():rows.insert(1 if not rows.is_empty() and rows[0]["id"]==PowerProgressionGuide.ID else 0,history)
+	return rows
+
+func refresh() -> void:
+	if not is_inside_tree() or is_queued_for_deletion() or state_label == null: return
+	_projection_dirty=false
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	var keep_focus: bool = focused != null and quest_list.is_ancestor_of(focused)
+	_rows_dirty = true
+	projection_rows()
+	relations_button.visible=rows.any(func(row: Dictionary) -> bool:return row["id"]==&"tan_dang_relations")
 	for child: Node in quest_list.get_children():
 		quest_list.remove_child(child)
 		child.queue_free()
@@ -266,6 +385,10 @@ func refresh() -> void:
 					button.add_theme_stylebox_override(state,AntiqueSkin.texture_style(AntiqueSkin.BUTTONS[&"focus"],18,10))
 				button.add_theme_color_override("font_color",AntiqueSkin.WARM)
 			elif card["complete"]: button.add_theme_color_override("font_color",AntiqueSkin.MUTED)
+		if row["id"]==OpeningRewardCatalog.ID:button.text="THƯỞNG ĐÃ NHẬN · %d mục"%row["rewards"].size()
+		if row["id"] == PowerProgressionGuide.ID:
+			button.text = "BƯỚC TIẾP THEO ĐỂ MẠNH HƠN\n"+card["progress"]
+			button.add_theme_color_override("font_color",AntiqueSkin.WARM)
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.tooltip_text = OpeningQuestCards.detail(card) if not card.is_empty() else row["title"]
 		button.add_theme_font_size_override("font_size",14)
@@ -282,6 +405,7 @@ func refresh() -> void:
 	if keep_focus: focus_first.call_deferred()
 
 func _request_refresh() -> void:
+	_rows_dirty = true
 	# Mastery publishes immediately, but a hidden map must not rebuild dozens
 	# of buttons on the hit's physics tick. Explicit refresh stays synchronous.
 	if is_visible_in_tree(): refresh()
@@ -297,7 +421,9 @@ func _context() -> Dictionary:
 	return {"room":room,"label":MapQuestProjection.room_name(room)}
 
 func select_quest(id: StringName) -> void:
+	if selected_id!=id:detail_scroll.scroll_vertical=0
 	selected_id = id
+	_power_layout(false)
 	var known: Dictionary = MapQuestProjection.known_rooms(profile)
 	var context: Dictionary = _context()
 	var target: StringName = &""
@@ -330,10 +456,25 @@ func select_quest(id: StringName) -> void:
 	graph.set_state(known,context["room"],target,MapQuestProjection.shortcut_known(profile,known))
 	map_info.text = "Mục tiêu đã biết: "+MapQuestProjection.room_name(target) if target != &"" else "Chưa có vị trí mục tiêu đã biết\ntrên sơ đồ đường bộ này."
 	if finished: map_info.text = "Dấu mốc đã hoàn tất.\nKhông còn mục tiêu đang chờ."
+	if id==OpeningRewardCatalog.ID:map_info.text="Thưởng đã nhận · không cấp lại\nSố đang giữ theo túi/kho hiện tại."
 
 func _choose_quest(id: StringName) -> void:
 	select_quest(id)
-	if navigation_provider.is_valid(): navigation_provider.call(id)
+	if id!=OpeningRewardCatalog.ID and navigation_provider.is_valid(): navigation_provider.call(id)
+
+func _toggle_power() -> void:
+	if selected_id==PowerProgressionGuide.ID:select_quest(recommended_id())
+	else:_choose_quest(PowerProgressionGuide.ID)
+
+func _power_layout(enabled: bool) -> void:
+	if not is_instance_valid(power_overview):return
+	power_overview.visible=enabled;power_scroll.visible=enabled
+	graph.visible=not enabled;legend_scroll.visible=not enabled;map_info.visible=not enabled
+	map_title.visible=not enabled and not _compact_layout
+	quest_scroll.visible=not enabled
+	quest_title.text="LÀM MỘT VIỆC TIẾP THEO" if enabled else "DẤU MỐC MỞ ĐẦU"
+	power_button.text="Nhiệm vụ" if enabled else "Mạnh hơn"
+	power_button.tooltip_text="Xem bản đồ và danh sách nhiệm vụ" if enabled else "Bước tiếp theo để mạnh hơn · số đang mang, còn thiếu, nơi đến và lợi ích"
 
 func present_navigation(id: StringName,hint: String) -> void:
 	if not is_instance_valid(navigation_label): return
@@ -349,6 +490,7 @@ func _room_selected(room: StringName) -> void:
 
 func focus_first() -> void:
 	if not is_inside_tree() or is_queued_for_deletion(): return
+	if selected_id==PowerProgressionGuide.ID and power_overview.visible:power_button.grab_focus();return
 	if quest_buttons.has(selected_id): (quest_buttons[selected_id] as Button).grab_focus()
 	elif not quest_buttons.is_empty(): (quest_buttons.values()[0] as Button).grab_focus()
 	else: (graph.buttons[ExteriorRouteCatalog.HUB] as Button).grab_focus()
@@ -360,7 +502,7 @@ func recommended_id() -> StringName:
 
 func focus_recommended() -> void:
 	if not is_inside_tree() or is_queued_for_deletion(): return
-	select_quest(recommended_id())
+	select_quest(selected_id if selected_id in [PowerProgressionGuide.ID,&"tan_dang_relations",OpeningRewardCatalog.ID] and quest_buttons.has(selected_id) else recommended_id())
 	focus_first()
 
 func _request_action() -> void:

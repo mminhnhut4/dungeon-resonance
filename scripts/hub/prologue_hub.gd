@@ -1,9 +1,12 @@
 class_name PrologueHub
 extends Node2D
+const Quantities = preload("res://scripts/runtime/bag_quantity_transactions.gd")
+var _service_quantities: Dictionary = {}
 ## Safe preparation world: existing combat, equipment and room-owned presentation.
 
 signal run_requested
 signal campaign_requested
+signal departure_failed(reason: StringName)
 signal interaction_requested(station_id: StringName, hub: PrologueHub)
 signal zone_changed(zone_id: StringName)
 signal smith_requested(hub: PrologueHub)
@@ -33,6 +36,7 @@ var economy: EconomySession
 var rune_learning: RuneLearningService
 var courier: CourierOpportunity
 var dummy: TrainingDummy
+var link_dummy: TrainingDummy
 var training_slime: HubTrainingSlime
 var damage_numbers: DamageNumberSpawner
 var training_aggression: bool = false
@@ -51,6 +55,7 @@ var station_close: Button
 var station_open: bool = false
 var current_station: StringName = &""
 var prompt: Label
+var portal_feedback: Node
 var summary: Label
 var _previous_controls: bool = true
 var _slime_respawn_remaining: float = -1.0
@@ -61,8 +66,14 @@ var current_npc: StringName = &""
 var _dialogue_previous_controls: bool = true
 var station_notice: String = ""
 var _pending_sale_uid: int = 0
+var _pending_bulk_sale: Dictionary = {}
+var _sale_serial: int = 0
 var _pending_purchase: Dictionary = {}
 var _purchase_serial: int = 0
+var _station_list_scroll: int = 0
+var _station_display_list: bool = false
+var _station_layout_pending: bool = false
+var _station_refresh_serial: int = 0
 var _upgrade_offers: Dictionary = {}
 var forge_rng := RandomNumberGenerator.new()
 
@@ -122,7 +133,7 @@ func _ready() -> void:
 	rune_learning.initialize(economy)
 	if world_building_enabled:
 		courier = OpeningCourierRuntime.new()
-		courier.initialize(profile, profile)
+		courier.initialize(profile, economy)
 	economy.changed.connect(refresh_summary)
 	profile.changed.connect(refresh_summary)
 	damage_numbers = DamageNumberSpawner.new()
@@ -134,6 +145,15 @@ func _ready() -> void:
 	dummy.damage_number_spawner = damage_numbers
 	yard.add_child(dummy)
 	dummy.hurtbox.damage_resolver.status_controller.combat_feedback = feedback
+	if world_building_enabled:
+		# Same passive, self-refilling target scene in the existing safe yard.
+		# Behind the firing position: primary/AOE cannot masquerade as a link.
+		link_dummy=preload("res://scenes/training_dummy.tscn").instantiate() as TrainingDummy
+		link_dummy.name="LinkTrainingDummy";link_dummy.display_name="BIA LIÊN KẾT"
+		link_dummy.position=Vector2(480,640)
+		link_dummy.combat_feedback=feedback;link_dummy.damage_number_spawner=damage_numbers
+		yard.add_child(link_dummy)
+		link_dummy.hurtbox.damage_resolver.status_controller.combat_feedback=feedback
 	_spawn_slime()
 	if qa_tools_enabled:
 		test_chest = TreasureChest.new()
@@ -160,6 +180,10 @@ func _ready() -> void:
 	router.set_script(preload("res://scripts/hub/prologue_input_router.gd"))
 	router.set("hub", self)
 	add_child(router)
+	portal_feedback = preload("res://scripts/ui/hub_portal_feedback.gd").new()
+	portal_feedback.name = "HubPortalFeedback"
+	add_child(portal_feedback)
+	portal_feedback.initialize(self)
 
 func _build_npcs() -> void:
 	var placements: Dictionary[StringName, Vector2] = {
@@ -225,7 +249,7 @@ func _npc_choices(id: StringName, courier_detail: bool = false) -> Array[Diction
 		return choices
 	match id:
 		NpcCatalog.SMITH:
-			choices.append({"id": &"smith_repair", "text": "Sửa trang bị bằng vật liệu trong kho"})
+			choices.append({"id": &"smith_repair", "text": "Sửa trang bị bằng vật liệu đang mang"})
 			choices.append({"id": &"smith_forge", "text": "Tra cứu bản chế tạo và đúc trang bị"})
 			choices.append({"id": &"smith_enhance", "text": "Cường hóa trang bị · +0 đến +12 · Thành công 100%"})
 			choices.append({"id": &"smith_stones", "text": "Ghép Đá Cường Hóa · 5 viên cùng cấp thành 1 viên cấp sau"})
@@ -515,8 +539,11 @@ func open_station(id: StringName) -> void:
 		return
 	station_open = true
 	current_station = id
+	_station_list_scroll = 0
+	_station_display_list = false
 	station_notice = ""
 	_pending_sale_uid = 0
+	_pending_bulk_sale.clear()
 	_pending_purchase.clear()
 	_previous_controls = player.controls_enabled
 	player.suspend_controls(true)
@@ -530,7 +557,9 @@ func close_station() -> void:
 	if not station_open:
 		return
 	station_open = false
+	_station_refresh_serial += 1
 	_pending_sale_uid = 0
+	_pending_bulk_sale.clear()
 	_pending_purchase.clear()
 	current_station = &""
 	TimeScaleClaims.release(self)
@@ -539,15 +568,26 @@ func close_station() -> void:
 	(gear.modal as InventoryScreen).open_button.show()
 
 func _refresh_station() -> void:
+	if _station_display_list and not _station_layout_pending:
+		_station_list_scroll = station_scroll.scroll_vertical
+	_station_refresh_serial += 1
+	_station_layout_pending = true
+	_station_display_list = _pending_purchase.is_empty() and _pending_bulk_sale.is_empty()
 	_station_heading_set = false
 	station_content.columns = 2 if current_station in [&"stash", &"merchant"] else 1
 	for node: Node in station_content.get_children():
 		station_content.remove_child(node)
 		node.queue_free()
-	if not _pending_purchase.is_empty():
-		_build_purchase_confirmation()
+	if not _pending_bulk_sale.is_empty():
+		_build_bulk_sale_confirmation()
 		station_scroll.scroll_vertical = 0
 		_resize_station_panel.call_deferred()
+		_restore_station_scroll.call_deferred(_station_refresh_serial, 0)
+		return
+	if not _pending_purchase.is_empty():
+		_build_purchase_confirmation()
+		_resize_station_panel.call_deferred()
+		_restore_station_scroll.call_deferred(_station_refresh_serial, 0)
 		return
 	match current_station:
 		&"training":
@@ -564,7 +604,7 @@ func _refresh_station() -> void:
 			_build_sale_menu()
 			if world_building_enabled: _build_trader_stock()
 		&"blacksmith":
-			_label(station_content, Vector2.ZERO, "THỢ RÈN · SỬA TRANG BỊ\nDùng vật liệu trong kho; giữ nguyên UID và thuộc tính đã rơi.")
+			_label(station_content, Vector2.ZERO, "THỢ RÈN · SỬA TRANG BỊ\nDùng vật liệu trong túi; giữ nguyên UID và thuộc tính đã rơi.")
 			var found: bool = false
 			for item: GearItem in gear.inventory.items.values():
 				if not item.broken:
@@ -576,7 +616,8 @@ func _refresh_station() -> void:
 					var blank: Button = _item_card(ItemArtCatalog.gear_icon(item), name_text, "Phôi cần công thức và rèn; chưa thể sửa để dùng.", GearItem.NAMES[item.quality], "Cần đúc", Callable())
 					blank.disabled = true
 				else:
-					var repair: Button = _item_card(ItemArtCatalog.gear_icon(item), name_text, "%d Kim Loại + %d Bột Phép" % [quote["metal"], quote["dust"]], "%s · Hỏng" % GearItem.NAMES[item.quality], "Sửa", _repair_item.bind(item.uid))
+					var repair: Button = _item_card(ItemArtCatalog.gear_icon(item), name_text, _materials_text({&"metal":quote["metal"], &"dust":quote["dust"]}), "%s · Hỏng" % GearItem.NAMES[item.quality], "Sửa", _repair_item.bind(item.uid))
+					repair.name="RepairEquipment_%d"%item.uid
 					repair.disabled = not quote["can_repair"]
 			if not found:
 				_label(station_content, Vector2.ZERO, "Chưa có trang bị hỏng cần sửa.")
@@ -591,11 +632,22 @@ func _refresh_station() -> void:
 		&"rune_learning":
 			_build_rune_learning_menu()
 	if station_notice != "": _label(station_content, Vector2.ZERO, station_notice)
-	station_scroll.scroll_vertical = 0
 	_resize_station_panel.call_deferred()
+	_restore_station_scroll.call_deferred(_station_refresh_serial, _station_list_scroll)
+
+func _restore_station_scroll(serial: int, offset: int) -> void:
+	if not is_inside_tree() or is_queued_for_deletion(): return
+	var tree: SceneTree = get_tree()
+	await tree.process_frame
+	if not is_inside_tree() or is_queued_for_deletion() or serial != _station_refresh_serial: return
+	await tree.process_frame
+	if not is_inside_tree() or is_queued_for_deletion(): return
+	if serial != _station_refresh_serial or not station_open: return
+	station_scroll.scroll_vertical = offset
+	_station_layout_pending = false
 
 func _build_stash_menu() -> void:
-	_label(station_content, Vector2.ZERO, "KHO CĂN CỨ · Đồ gửi kho được giữ khi chết")
+	_label(station_content, Vector2.ZERO, "KHO CĂN CỨ · Chỉ cất / rút\nĐồ gửi kho được giữ khi chết. Rút nguyên liệu về túi trước khi rèn, sửa, cường hóa, chế hoặc tu luyện.")
 	var stored: bool = false
 	for id: StringName in MaterialCatalog.IDS:
 		var count: int = profile.material_stash.get(id, 0)
@@ -607,6 +659,7 @@ func _build_stash_menu() -> void:
 		var withdraw: Button = _item_card(ItemArtCatalog.icon(id), MaterialCatalog.DISPLAY_NAMES[id], description, "Trong kho %d" % count, "Rút 1" if transferable else "Chỉ hiển thị", _withdraw.bind(id) if transferable else Callable())
 		withdraw.disabled = not capability.get("can_withdraw", false)
 		withdraw.name = "WithdrawMaterial_" + String(id)
+		if transferable: _withdraw_quantity_controls(id, count, withdraw)
 	if not stored:
 		var empty: Label = _label(station_content, Vector2.ZERO, "Kho rỗng")
 		empty.name = "StashEmpty"
@@ -630,12 +683,13 @@ func _build_stash_menu() -> void:
 
 func _build_sale_menu() -> void:
 	_label(station_content, Vector2.ZERO, "BÁN TỪ HÀNH TRANG · Giá và số lượng được kiểm tra khi xác nhận")
+	_quantity_input("SaleQuantity", "Số lượng vật liệu muốn bán", _service_amount(&"sale"), MaterialCatalog.MAX_COUNT, _set_service_amount.bind(&"sale"))
 	var found: bool = false
 	for id: StringName in MaterialCatalog.SELL_PRICES:
-		var quote: Dictionary = economy.quote_bag_material_sale(id)
+		var quote: Dictionary = economy.quote_bag_material_sale(id, _service_amount(&"sale"))
 		if quote["owned"] <= 0: continue
 		found = true
-		var sell: Button = _item_card(ItemArtCatalog.icon(id), MaterialCatalog.DISPLAY_NAMES[id], "Giá %d Linh Thạch / món" % quote["unit_price"], "Trong túi %d · Bán 1 nhận %d Linh Thạch" % [quote["owned"], quote["total"]], "Bán 1", _sell_bag_material.bind(id))
+		var sell: Button = _item_card(ItemArtCatalog.icon(id), MaterialCatalog.DISPLAY_NAMES[id], "Giá %d Linh Thạch / món" % quote["unit_price"], "Trong túi %d · Bán %d nhận %d Linh Thạch" % [quote["owned"], _service_amount(&"sale"), quote["total"]], "Bán %d" % _service_amount(&"sale"), _sell_bag_material.bind(id))
 		sell.name = "SellBagMaterial_" + String(id)
 		sell.disabled = not quote["can_sell"]
 	for uid: int in gear.inventory.equipment_bag_uids():
@@ -657,15 +711,53 @@ func _build_sale_menu() -> void:
 			_button("Giữ món đồ · Hủy bán", _request_gear_sale.bind(0))
 		else: _pending_sale_uid = 0
 	_label(station_content, Vector2.ZERO, "Đồ đang trang bị, bùa, vật phẩm nhiệm vụ và đồ có nguồn đặc biệt được giữ lại. Bán trang bị cơ bản Thường/Hiếm; món cao hơn giữ để rèn.")
-	var stored: bool = false
-	for id: StringName in MaterialCatalog.SELL_PRICES:
-		var quote: Dictionary = economy.quote_material_sale(id)
-		if quote["quantity"] <= 0: continue
-		if not stored: _label(station_content, Vector2.ZERO, "BÁN VẬT LIỆU ĐÃ CẤT · Lấy trực tiếp từ kho căn cứ")
-		stored = true
-		var sell: Button = _item_card(ItemArtCatalog.icon(id), MaterialCatalog.DISPLAY_NAMES[id], "%d Linh Thạch / món" % quote["unit_price"], "Trong kho %d · Tổng %d Linh Thạch" % [quote["quantity"], quote["total"]], "Bán cả số trong kho", _sell_material.bind(id))
-		sell.name = "SellMaterial_" + String(id)
-		sell.disabled = not quote["can_sell"] or profile.read_only
+	if economy.has_method("quote_sell_all_bag"):
+		var quote: Dictionary = economy.call("quote_sell_all_bag")
+		var sell_all: Button = _button("Bán tất cả đồ đủ điều kiện · %d món · %d Linh Thạch…" % [quote.get("item_count", 0), quote.get("total", 0)], _request_bulk_sale)
+		sell_all.name = "SellAllBag"
+		sell_all.disabled = not quote.get("can_sell", false)
+	_label(station_content, Vector2.ZERO, "Kho chỉ cất/rút. Muốn bán vật liệu đã cất, rút về túi trước rồi xem báo giá tại đây.")
+
+func _request_bulk_sale() -> void:
+	if not station_open or current_station != &"merchant" or not _pending_purchase.is_empty() or not _pending_bulk_sale.is_empty() or not economy.has_method("quote_sell_all_bag"): return
+	var quote: Dictionary = economy.call("quote_sell_all_bag")
+	if not quote.get("can_sell", false): return
+	_sale_serial += 1
+	_pending_bulk_sale = quote.duplicate(true)
+	_pending_bulk_sale["token"] = _sale_serial
+	_pending_sale_uid = 0
+	station_notice = ""
+	_refresh_station()
+
+func _build_bulk_sale_confirmation() -> void:
+	station_content.columns = 1
+	_label(station_content, Vector2.ZERO, "XÁC NHẬN BÁN TỪ TÚI\nXem danh sách và tổng tiền trước khi bán.")
+	var details: Label = _label(station_content, Vector2.ZERO, InventoryScreen.bulk_sale_summary(_pending_bulk_sale, gear.inventory))
+	details.name = "BulkSalePreview"
+	var token: int = int(_pending_bulk_sale["token"])
+	var confirm: Button = _button("Xác nhận bán %d món · +%d Linh Thạch" % [_pending_bulk_sale["item_count"], _pending_bulk_sale["total"]], _confirm_bulk_sale.bind(token))
+	confirm.name = "ConfirmBulkSale"
+	var cancel: Button = _button("Hủy · Giữ hành trang", _cancel_bulk_sale.bind(token))
+	cancel.name = "CancelBulkSale"
+	_focus_sale_cancel.call_deferred(token)
+
+func _focus_sale_cancel(token: int) -> void:
+	if not station_open or _pending_bulk_sale.is_empty() or int(_pending_bulk_sale.get("token", -1)) != token: return
+	var cancel: Control = station_content.get_node_or_null("CancelBulkSale") as Control
+	if is_instance_valid(cancel) and cancel.is_inside_tree(): cancel.grab_focus()
+
+func _cancel_bulk_sale(token: int) -> void:
+	if _pending_bulk_sale.is_empty() or int(_pending_bulk_sale["token"]) != token: return
+	_pending_bulk_sale.clear()
+	if station_open: _refresh_station()
+
+func _confirm_bulk_sale(token: int) -> void:
+	if not station_open or current_station != &"merchant" or _pending_bulk_sale.is_empty() or int(_pending_bulk_sale["token"]) != token: return
+	var signature: String = String(_pending_bulk_sale["signature"])
+	_pending_bulk_sale.clear()
+	var success: bool = economy.has_method("sell_all_bag") and bool(economy.call("sell_all_bag", signature))
+	station_notice = "Đã bán danh sách xác nhận. Linh Thạch đã được lưu; đồ được bảo vệ vẫn ở lại." if success else "Chưa bán: túi hoặc báo giá đã đổi, hoặc chưa lưu được. Hãy xem lại danh sách rồi xác nhận."
+	_refresh_station()
 
 func _request_gear_sale(uid: int) -> void:
 	_pending_sale_uid = uid
@@ -678,8 +770,8 @@ func _sell_bag_equipment(uid: int) -> void:
 	_refresh_station()
 
 func _sell_bag_material(id: StringName) -> void:
-	var success: bool = economy.sell_bag_material(id)
-	station_notice = "Đã bán 1 món từ hành trang. Linh Thạch đã được lưu." if success else "Chưa bán được; kiểm tra số lượng, giới hạn Linh Thạch và lưu dữ liệu."
+	var success: bool = economy.sell_bag_material(id, _service_amount(&"sale"))
+	station_notice = "Đã bán số lượng đã chọn từ hành trang. Linh Thạch đã được lưu." if success else "Chưa bán được; kiểm tra số lượng, giới hạn Linh Thạch và lưu dữ liệu."
 	_refresh_station()
 
 func _set_station_heading(text: String) -> void:
@@ -703,33 +795,56 @@ func _equipment_icon(data: EquipmentData) -> Texture2D:
 func _materials_text(costs: Dictionary) -> String:
 	var fragments: Array[String] = []
 	for id: StringName in costs:
-		fragments.append("%d %s" % [costs[id], MaterialCatalog.DISPLAY_NAMES.get(id, String(id))])
-	return ", ".join(fragments)
+		var owned: int = int(gear.inventory.materials.get(id, 0))
+		var required: int = int(costs[id])
+		fragments.append("%s: túi %d/%d · thiếu %d" % [MaterialCatalog.DISPLAY_NAMES.get(id, String(id)), owned, required, maxi(0, required - owned)])
+	return "\n".join(fragments)
+
+func _shop_item(data: EquipmentData, quality: int) -> GearItem:
+	# Detached preview: never allocate an inventory UID or mutate shared data.
+	var item := GearItem.new()
+	item.kind = EquipmentData.SLOT_KINDS[data.slot_type]
+	item.definition_id = data.id
+	item.equipment_definition = data
+	item.quality = quality
+	return item
+
+func _shop_details(data: EquipmentData, quality: int) -> String:
+	var item: GearItem = _shop_item(data, quality)
+	return "%s\n%s\n\n%s" % [GearItem.NAMES[quality], InventoryScreen.item_details(item, gear.inventory), InventoryScreen.comparison_text(item, gear.inventory, player, false)]
 
 func _build_forge_menu() -> void:
-	_label(station_content, Vector2.ZERO, "THIẾT LÃO · ĐÚC TRANG BỊ\nTừ Cực hiếm cần bản chế tạo đã học và vật liệu trong kho. Thần thánh có xác suất 50%; thất bại mất vật liệu lần thử, công thức được giữ.")
+	_label(station_content, Vector2.ZERO, "THIẾT LÃO · ĐÚC TRANG BỊ\nTừ Cực hiếm cần bản chế tạo đã học và vật liệu đang mang. Thần thánh có xác suất 50%; thất bại mất vật liệu lần thử, công thức được giữ.")
+	_quantity_input("ForgeQuantity", "Số lần muốn đúc", _service_amount(&"forge"), GearInventory.EQUIPMENT_BAG_CAPACITY, _set_service_amount.bind(&"forge"))
 	if not economy.has_method(&"quote_forge"): return
 	var recipes: Dictionary = economy.get("forge_recipes")
 	var ids: Array = recipes.keys()
 	ids.sort()
 	for id: StringName in ids:
 		var recipe: ForgeRecipe = recipes[id]
-		var quote: Dictionary = _economy_quote(&"quote_forge", id)
+		var quote: Dictionary = Quantities.quote(economy,&"forge",id,_service_amount(&"forge"))
 		var quality: int = int(quote.get("quality", recipe.quality))
 		var chance: int = roundi(float(quote.get("chance", recipe.success_chance)) * 100.0)
 		var learned: bool = profile.learned_blueprints.has(StringName(quote.get("blueprint_id", recipe.equipment.id)))
-		var button: Button = _item_card(_equipment_icon(recipe.equipment), recipe.display_name, "%d Linh Thạch · Thành công %d%%\n%s" % [quote.get("coin_cost", 0), chance, _materials_text(quote.get("materials", {}))], GearItem.NAMES[clampi(quality, 0, 5)] if learned else "Chưa học bản chế tạo", "Đúc", _forge_item.bind(id))
+		var button: Button = _item_card(_equipment_icon(recipe.equipment), recipe.display_name, "%d lần · Tổng %d Linh Thạch · Mỗi lần thành công %d%%" % [_service_amount(&"forge"),quote.get("coin_cost", 0), chance], GearItem.NAMES[clampi(quality, 0, 5)] if learned else "Chưa học bản chế tạo", "Đúc", _forge_item.bind(id))
 		button.name = "ForgeButton_" + String(id)
-		button.disabled = not bool(quote.get("can_forge", false))
+		button.disabled = not bool(quote.get("can_commit", false))
+		var costs: String = _materials_text(quote.get("materials", {}))
+		button.tooltip_text += "\n" + costs
+		# Keep the action itself reachable even for six-ingredient recipes at 800.
+		var requirements: Label = _label(station_content, Vector2.ZERO, "Nguyên liệu · " + recipe.display_name + "\n" + costs)
+		requirements.name = "ForgeMaterials_" + String(id)
+
 	if ids.is_empty(): _label(station_content, Vector2.ZERO, "Chưa có công thức phù hợp để tra cứu.")
 
 func _forge_item(id: StringName) -> void:
-	var result: Dictionary = economy.call(&"forge", id, forge_rng)
-	station_notice = "Đúc thành công. Vật phẩm đã vào hành trang." if result.get("committed", false) and result.get("success", false) else "Lần đúc chưa thành. Vật liệu lần thử đã tiêu hao; bản chế tạo vẫn được giữ." if result.get("committed", false) else "Chưa thể đúc: kiểm tra bản chế tạo, vật liệu, Linh Thạch, chỗ trống và trạng thái lưu dữ liệu."
+	var offer: Dictionary = Quantities.quote(economy,&"forge",id,_service_amount(&"forge"))
+	var result: Dictionary = Quantities.commit(economy,offer,rune_learning,forge_rng)
+	station_notice = "Đã đúc %d lần: %d thành công, %d thất bại. Chi phí của mỗi lần thử đã tiêu; công thức giữ nguyên." % [result["quantity"],result["successes"],int(result["quantity"])-int(result["successes"])] if result["committed"] else "Chưa thể đúc: kiểm tra nguyên liệu, Linh Thạch, chỗ trống và lưu dữ liệu."
 	_refresh_station()
 
 func _build_enhancement_menu() -> void:
-	_label(station_content, Vector2.ZERO, "THIẾT LÃO · CƯỜNG HÓA\nTối đa +12 · Thành công 100% · Mỗi cấp cộng 3% sát thương gốc. Cường hóa không đổi phẩm cấp; Thường vẫn giữ hiệu ứng đơn giản.")
+	_label(station_content, Vector2.ZERO, "THIẾT LÃO · CƯỜNG HÓA\nDùng đá đang mang trong túi. Tối đa +12 · Thành công 100% · Mỗi cấp cộng 3% sát thương gốc. Cường hóa không đổi phẩm cấp; Thường vẫn giữ hiệu ứng đơn giản.")
 	if not economy.has_method(&"quote_enhance"): return
 	var found: bool = false
 	for item: GearItem in gear.inventory.items.values():
@@ -740,11 +855,19 @@ func _build_enhancement_menu() -> void:
 		var level: int = int(quote.get("level", 0))
 		var stone_id := StringName(quote.get("stone_id", ""))
 		var text: String = "%s · +%d → +%d · %d Linh Thạch +1 %s" % [name_text, level, quote.get("next_level", level), quote.get("coin_cost", 0), MaterialCatalog.DISPLAY_NAMES.get(stone_id, "Đá Cường Hóa")]
+		if level < 12: text += "\n" + _materials_text({stone_id: 1})
 		if level >= 12: text = "%s · +12 · Đã đạt giới hạn cường hóa" % name_text
-		var button: Button = _item_card(ItemArtCatalog.gear_icon(item), name_text, text.trim_prefix(name_text + " · "), GearItem.NAMES[item.quality], "Cường hóa", _enhance_item.bind(item.uid))
+		var button: Button = _item_card(ItemArtCatalog.gear_icon(item), name_text, text.trim_prefix(name_text + " · "), GearItem.NAMES[item.quality], "Cường hóa", _quoted_enhance.bind(item.uid,level,_station_refresh_serial))
 		button.name = "EnhanceWeapon_%d" % item.uid
 		button.disabled = not bool(quote.get("can_enhance", false))
 	if not found: _label(station_content, Vector2.ZERO, "Chưa có vũ khí để cường hóa.")
+
+func _quoted_enhance(uid: int, level: int, serial: int) -> void:
+	# One rendered offer is valid only in its original station generation.
+	# Success, rollback/rebuild and close already advance this shared UI serial.
+	if not station_open or current_station != &"smith_enhance" or serial != _station_refresh_serial: return
+	if int(economy.quote_enhance(uid)["level"]) != level: return
+	_enhance_item(uid)
 
 func _enhance_item(uid: int) -> void:
 	var success: bool = bool(economy.call(&"enhance_item", uid))
@@ -752,19 +875,20 @@ func _enhance_item(uid: int) -> void:
 	_refresh_station()
 
 func _build_stone_menu() -> void:
-	_label(station_content, Vector2.ZERO, "THIẾT LÃO · GHÉP ĐÁ\n5 viên cùng cấp thành 1 viên cấp tiếp theo · 6 cấp đá. Mỗi cấp đá phục vụ hai mốc cường hóa; đá cấp 6 dùng cho +11 và +12.")
+	_label(station_content, Vector2.ZERO, "THIẾT LÃO · GHÉP ĐÁ\nDùng đá trong túi. 5 viên cùng cấp thành 1 viên cấp tiếp theo · 6 cấp đá. Mỗi cấp đá phục vụ hai mốc cường hóa; đá cấp 6 dùng cho +11 và +12.")
+	_quantity_input("StoneQuantity", "Số lần muốn ghép đá", _service_amount(&"stones"), int(MaterialCatalog.MAX_COUNT/5), _set_service_amount.bind(&"stones"))
 	if not economy.has_method(&"quote_combine_stones"): return
 	for grade: int in range(1, 6):
-		var quote: Dictionary = economy.call(&"quote_combine_stones", grade, 1)
+		var quote: Dictionary = economy.call(&"quote_combine_stones", grade, _service_amount(&"stones"))
 		var source_id := StringName(quote.get("source_id", ""))
 		var target_id := StringName(quote.get("target_id", ""))
-		var button: Button = _item_card(ItemArtCatalog.icon(source_id), MaterialCatalog.DISPLAY_NAMES.get(source_id, "Đá"), "Ghép %d đá cấp %d → %d đá cấp %d" % [quote.get("input_count", 5), grade, quote.get("output_count", 1), grade + 1], "%d trong kho · Đá cấp %d: %d" % [profile.material_stash.get(source_id, 0), grade + 1, profile.material_stash.get(target_id, 0)], "Ghép", _combine_stones.bind(grade))
+		var button: Button = _item_card(ItemArtCatalog.icon(source_id), MaterialCatalog.DISPLAY_NAMES.get(source_id, "Đá"), "Ghép %d đá cấp %d → %d đá cấp %d" % [quote.get("input_count", 5), grade, quote.get("output_count", 1), grade + 1], "Trong túi %d · Đá cấp %d: %d" % [gear.inventory.materials.get(source_id, 0), grade + 1, gear.inventory.materials.get(target_id, 0)], "Ghép", _combine_stones.bind(grade))
 		button.name = "CombineStone_%d" % grade
 		button.disabled = not bool(quote.get("can_combine", false))
 
 func _combine_stones(grade: int) -> void:
-	var success: bool = bool(economy.call(&"combine_stones", grade, 1))
-	station_notice = "Ghép đá hoàn tất. Đá cấp mới được giữ trong kho căn cứ." if success else "Chưa thể ghép: cần đủ 5 viên cùng cấp và lưu dữ liệu thành công."
+	var success: bool = bool(economy.call(&"combine_stones", grade, _service_amount(&"stones")))
+	station_notice = "Ghép đá hoàn tất. Đá cấp mới đã vào túi." if success else "Chưa thể ghép: cần đủ 5 viên cùng cấp và lưu dữ liệu thành công."
 	_refresh_station()
 
 func _build_trader_stock() -> void:
@@ -787,37 +911,46 @@ func _build_trader_stock() -> void:
 		for quality: int in [GearItem.Quality.COMMON, GearItem.Quality.RARE]:
 			var quote: Dictionary = economy.call(&"quote_buy", shop_id, quality)
 			var button: Button = _item_card(_equipment_icon(data), data.item_name, "%d Linh Thạch · %s" % [quote.get("coin_cost", 0), data.description], "%s · %d Linh Thạch" % [GearItem.NAMES[quality], quote.get("coin_cost", 0)], "Mua", _buy_weapon.bind(shop_id, quality))
+			var preview: GearItem = _shop_item(data, quality)
+			var values: Dictionary = (gear.modal as InventoryScreen)._comparison_values(preview)
+			var summary_stats: Array[String] = []
+			for key: String in values:
+				if not is_zero_approx(float(values[key])): summary_stats.append("%s %s" % [key, String.num(values[key], 2)])
+			(button as ServiceItemCard).detail_label.text = " · ".join(summary_stats) + "\n" + data.description
+			button.tooltip_text = "%s · %s\n%s\n%s" % [data.item_name, GearItem.NAMES[quality], (button as ServiceItemCard).detail_label.text, _shop_details(data, quality)]
 			button.name = "BuyWeapon_%s_%d" % [shop_id, quality]
-			button.disabled = not bool(quote.get("can_buy", false))
+			button.disabled = profile.read_only or profile.hub_inventory_quarantined
+			button.tooltip_text += "\nChọn món để xem đầy đủ chỉ số và so sánh trước khi xác nhận mua."
 			if String(shop_id).begins_with("world_") and not profile.learned_blueprints.has(shop_id): button.tooltip_text += "\nChưa học dòng vũ khí này. Khám phá hầm ngục để tìm bản chế tạo."
 
 func _buy_weapon(id: StringName, quality: int) -> void:
 	_request_purchase(&"equipment",id,quality)
 
 func _build_consumable_menu() -> void:
-	_label(station_content, Vector2.ZERO, "THANH VY · THUỐC VÀ BĂNG GẠC\nMua bằng Linh Thạch hoặc dùng nguyên liệu trong kho căn cứ. Thuốc được cất vào túi, không tự uống khi mua/chế.")
+	_label(station_content, Vector2.ZERO, "THANH VY · THUỐC VÀ BĂNG GẠC\nMua bằng Linh Thạch hoặc dùng nguyên liệu đang mang. Thuốc được cất vào túi, không tự uống khi mua/chế.")
 	var names: Dictionary[StringName, String] = {&"potion": "Thuốc Hồi Máu", &"bandage": "Băng Gạc", &"antidote": "Thuốc Giải Độc"}
 	if economy.has_method(&"quote_buy_consumable"):
 		var purchase: Dictionary = _economy_quote(&"quote_buy_consumable", &"potion")
 		var buy: Button = _item_card(ItemArtCatalog.icon(&"potion"), names[&"potion"], "Mua · %d Linh Thạch" % purchase.get("coin_cost", 0), "%d trong túi" % gear.inventory.consumables.get(&"potion", 0), "Mua", _buy_consumable.bind(&"potion"))
 		buy.name = "BuyConsumable_potion"
 		buy.disabled = not bool(purchase.get("can_buy", false))
+	_quantity_input("CraftQuantity", "Số lượng muốn chế", _service_amount(&"craft"), MaterialCatalog.MAX_COUNT, _set_service_amount.bind(&"craft"))
 	for id: StringName in names:
-		var quote: Dictionary = _economy_quote(&"quote_consumable", id)
-		var craft: Button = _item_card(ItemArtCatalog.icon(id), names[id], "%s\n%s" % [AntiqueSkin.item_description(id), _materials_text(quote.get("materials", {}))], "%d trong túi" % gear.inventory.consumables.get(id, 0), "Chế", _craft_consumable.bind(id))
+		var quote: Dictionary = Quantities.quote(economy,&"consumable_craft",id,_service_amount(&"craft"))
+		var craft: Button = _item_card(ItemArtCatalog.icon(id), names[id], "%s\n%s" % [AntiqueSkin.item_description(id), _materials_text(quote.get("materials", {}))], "%d trong túi" % gear.inventory.consumables.get(id, 0), "Chế %d" % _service_amount(&"craft"), _craft_consumable.bind(id))
 		craft.name = "CraftConsumable_" + String(id)
-		craft.disabled = not bool(quote.get("can_craft", false))
+		craft.disabled = not bool(quote.get("can_commit", false))
 
 func _buy_consumable(id: StringName) -> void:
 	_request_purchase(&"consumable",id)
 
 func _build_rune_learning_menu() -> void:
-	_label(station_content,Vector2.ZERO,"THANH VY · HỌC & CHẾ BÙA\nHọc một lần để nhớ vĩnh viễn và nhận 1 bùa Thường. Bùa nhặt được vẫn ghép được ngay.\nSau khi học, chế thêm bằng nguyên liệu trong kho. Mở Hành trang → chọn trang bị → ghép vào ô bùa.")
+	_label(station_content,Vector2.ZERO,"THANH VY · HỌC & CHẾ BÙA\nHọc một lần để nhớ vĩnh viễn và nhận 1 bùa Thường. Bùa nhặt được vẫn ghép được ngay.\nSau khi học, chế thêm bằng nguyên liệu đang mang. Mở Hành trang → chọn trang bị → ghép vào ô bùa.")
 	for id: StringName in RuneLearningService.IDS:
 		var quote: Dictionary = rune_learning.quote(id)
 		var learned: bool = bool(quote.get("learned",false))
 		var action: StringName = &"rune_craft" if learned else &"rune_learn"
-		var cost: String = "Chế 1 bùa Thường · %s trong kho\n%s" % [_materials_text(quote["craft_materials"]),_rune_material_snapshot(quote["craft_materials"])] if learned else "Học · %d Tàn Hồn · Đang có %d\nTặng 1 bùa Thường; sau đó có thể chế thêm." % [int(quote["cost"]),profile.souls]
+		var cost: String = "Chế 1 bùa Thường\n%s" % _rune_material_snapshot(quote["craft_materials"]) if learned else "Học · %d Tàn Hồn · Đang có %d\nTặng 1 bùa Thường; sau đó có thể chế thêm." % [int(quote["cost"]),profile.souls]
 		var hint: String = str(quote.get("lock_hint",""))
 		var button: Button = _item_card(ItemArtCatalog.RUNE_ICONS.get(id) as Texture2D,"Bùa %s · %s" % [quote["name"],"Đã học" if learned else "Chưa học"],hint if not hint.is_empty() else "Cách học được giữ sau khi chết. Bùa là vật phẩm riêng để ghép vào trang bị.",cost,"Chế 1" if learned else "Học",_request_rune_purchase.bind(action,id))
 		button.name = "RuneService_"+String(id)
@@ -826,8 +959,8 @@ func _build_rune_learning_menu() -> void:
 func _rune_material_snapshot(costs: Dictionary) -> String:
 	var fragments: Array[String] = []
 	for id: StringName in costs:
-		fragments.append("%s %d/%d" % [MaterialCatalog.DISPLAY_NAMES.get(id,String(id)),int(profile.material_stash.get(id,0)),int(costs[id])])
-	return "Trong kho: "+", ".join(fragments)
+		fragments.append("%s %d/%d (thiếu %d)" % [MaterialCatalog.DISPLAY_NAMES.get(id,String(id)),int(gear.inventory.materials.get(id,0)),int(costs[id]),maxi(0,int(costs[id])-int(gear.inventory.materials.get(id,0)))])
+	return "Trong túi: "+", ".join(fragments)
 
 func _request_rune_purchase(kind: StringName, id: StringName) -> void:
 	if not station_open or current_station != &"rune_learning" or not _pending_purchase.is_empty() or kind not in [&"rune_learn",&"rune_craft"]: return
@@ -843,9 +976,10 @@ func _purchase_quote(kind: StringName, id: StringName, quality: int) -> Dictiona
 
 func _request_purchase(kind: StringName, id: StringName, quality: int = 0) -> void:
 	var required_station: StringName = &"merchant" if kind == &"equipment" else &"healer_consumables"
-	if not station_open or current_station != required_station or not _pending_purchase.is_empty() or profile.read_only or profile.hub_inventory_quarantined: return
+	if not station_open or current_station != required_station or not _pending_purchase.is_empty() or not _pending_bulk_sale.is_empty() or profile.read_only or profile.hub_inventory_quarantined: return
 	var quote: Dictionary = _purchase_quote(kind,id,quality)
-	if not quote.get("can_buy",false): return
+	if kind != &"equipment" and not quote.get("can_buy",false): return
+	if kind == &"equipment" and not ResourceLoader.exists("res://data/equipment/%s.tres" % id): return
 	_purchase_serial += 1
 	_pending_purchase = {"token":_purchase_serial,"kind":kind,"id":id,"quality":quality,"station":current_station,"cost":int(quote["coin_cost"])}
 	station_notice = ""
@@ -868,7 +1002,7 @@ func _build_purchase_confirmation() -> void:
 		var data: EquipmentData = load("res://data/equipment/%s.tres" % id) as EquipmentData
 		item_name = data.item_name
 		icon = _equipment_icon(data)
-		detail = "%s · %s" % [GearItem.NAMES[quality],data.description]
+		detail = "%s · %s" % [GearItem.NAMES[quality], data.description]
 	elif kind in [&"rune_learn",&"rune_craft"]:
 		icon = ItemArtCatalog.RUNE_ICONS.get(id) as Texture2D
 		item_name = "Bùa "+str(RuneLearningService.NAMES[id])
@@ -878,17 +1012,36 @@ func _build_purchase_confirmation() -> void:
 			confirm_text = "Xác nhận học · %d Tàn Hồn" % cost
 		else:
 			detail = "Chế 1 bùa Thường để ghép vào trang bị. Cách học đã được lưu vĩnh viễn."
-			price_text = "Giá chế: %s\n%s" % [_materials_text(_pending_purchase["materials"]),_rune_material_snapshot(_pending_purchase["materials"])]
+			price_text = "Chế 1 bùa Thường\n%s" % _rune_material_snapshot(_pending_purchase["materials"])
 			confirm_text = "Xác nhận chế · 1 bùa Thường"
 	var preview: ServiceItemCard = _item_card(icon,item_name,detail,price_text,"Đang chọn",Callable()) as ServiceItemCard
 	preview.name = "PurchaseItemPreview"
 	preview.set_display_only()
+	if kind == &"equipment":
+		var data: EquipmentData = load("res://data/equipment/%s.tres" % id) as EquipmentData
+		var stats: Label = _label(station_content, Vector2.ZERO, _shop_details(data, quality))
+		stats.name = "ShopEquipmentStats"
+		var quote: Dictionary = _purchase_quote(kind, id, quality)
+		if not quote.get("can_buy", false):
+			_label(station_content, Vector2.ZERO, "Chưa thể mua · Thiếu %d Linh Thạch. Cần một ô túi trống và học dòng vũ khí nếu món yêu cầu; kiểm tra trạng thái lưu." % maxi(0, cost - profile.coins))
 	var confirm: Button = _button(confirm_text,_confirm_purchase.bind(token))
 	confirm.name = "ConfirmPurchase"
+	if kind == &"equipment": confirm.disabled = not _purchase_quote(kind, id, quality).get("can_buy", false)
 	var cancel: Button = _button("Hủy · Quay lại",_cancel_purchase.bind(token))
 	cancel.name = "CancelPurchase"
+	if kind != &"rune_learn":
+		var amount: int = int(_pending_purchase.get("quantity",1))
+		var batch: Dictionary = Quantities.quote(economy,kind,id,amount,quality,rune_learning)
+		_quantity_input("PurchaseQuantity", "Số lượng muốn chế" if kind == &"rune_craft" else "Số lượng muốn mua", amount, maxi(1,int(batch["maximum"])), _set_purchase_amount.bind(token))
+		station_content.move_child(station_content.get_node("PurchaseQuantity"),1)
+		_set_purchase_amount(amount,token)
 	# A second Enter from selecting the item cannot also pay for it.
-	cancel.grab_focus.call_deferred()
+	_focus_purchase_cancel.call_deferred(token)
+
+func _focus_purchase_cancel(token: int) -> void:
+	if not station_open or _pending_purchase.is_empty() or int(_pending_purchase.get("token", -1)) != token: return
+	var cancel: Control = station_content.get_node_or_null("CancelPurchase") as Control
+	if is_instance_valid(cancel) and cancel.is_inside_tree(): cancel.grab_focus()
 
 func _cancel_purchase(token: int) -> void:
 	if _pending_purchase.is_empty() or int(_pending_purchase["token"]) != token: return
@@ -900,6 +1053,11 @@ func _confirm_purchase(token: int) -> void:
 	var offer: Dictionary = _pending_purchase.duplicate()
 	# Consume before calling the owner: reentrant signals/stale buttons cannot pay twice.
 	_pending_purchase.clear()
+	if offer.has("batch_offer"):
+		var success: bool = current_station == offer["station"] and bool(Quantities.commit(economy,offer["batch_offer"],rune_learning)["committed"])
+		station_notice = "Đã hoàn tất %d món; vật phẩm và tổng chi phí đã được lưu." % int(offer.get("quantity",1)) if success else "Chưa mua / chế được: số lượng, chi phí hoặc hành trang đã thay đổi. Hãy chọn lại."
+		_refresh_station()
+		return
 	if offer["kind"] in [&"rune_learn",&"rune_craft"]:
 		_confirm_rune_purchase(offer)
 		return
@@ -921,8 +1079,9 @@ func _confirm_rune_purchase(offer: Dictionary) -> void:
 	_refresh_station()
 
 func _craft_consumable(id: StringName) -> void:
-	var success: bool = bool(economy.call(&"craft_consumable", id))
-	station_notice = "Chế tạo hoàn tất. Vật phẩm đã vào túi tiêu hao." if success else "Chưa thể chế: kiểm tra nguyên liệu trong kho, giới hạn túi và trạng thái lưu dữ liệu."
+	var offer: Dictionary = Quantities.quote(economy,&"consumable_craft",id,_service_amount(&"craft"))
+	var success: bool = bool(Quantities.commit(economy,offer)["committed"])
+	station_notice = "Chế tạo hoàn tất. Vật phẩm đã vào túi tiêu hao." if success else "Chưa thể chế: kiểm tra nguyên liệu đang mang, giới hạn túi và trạng thái lưu dữ liệu."
 	_refresh_station()
 
 func _resize_station_panel() -> void:
@@ -960,9 +1119,53 @@ func _deposit(id: StringName) -> void:
 	station_notice = "Đã cất 1 món vào kho." if success else "Chưa cất được; đồ đang mang được giữ nếu lưu thất bại."
 	_refresh_station()
 
+func _withdraw_quantity_controls(id: StringName, count: int, one_button: Button) -> void:
+	var card: ServiceItemCard = one_button as ServiceItemCard
+	var row := HBoxContainer.new()
+	row.name = "WithdrawControls_" + String(id)
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	row.add_theme_constant_override("separation", 8)
+	card.set_extra_controls(row)
+	var label: Label = DungeonUI.label("Số lượng", 14, DungeonUI.WARM)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(label)
+	var spin := SpinBox.new()
+	spin.name = "WithdrawAmount_" + String(id)
+	spin.min_value = 1
+	spin.max_value = maxi(1, mini(count, MaterialCatalog.MAX_COUNT - gear.inventory.materials.get(id, 0)))
+	spin.step = 1; spin.rounded = true
+	spin.value = clampi(_service_amount(StringName("withdraw_" + String(id))), 1, int(spin.max_value))
+	spin.custom_minimum_size = Vector2(104, 44)
+	spin.tooltip_text = "Số lượng %s muốn rút từ kho vào túi" % MaterialCatalog.DISPLAY_NAMES[id]
+	row.add_child(spin)
+	var button := Button.new()
+	button.name = "WithdrawQuantity_" + String(id)
+	button.custom_minimum_size = Vector2(84, 44)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(button)
+	card.extra_focus.assign([spin.get_line_edit(), button])
+	var update := func(value: float) -> void:
+		_service_quantities[StringName("withdraw_" + String(id))] = int(value)
+		button.text = "Rút %d" % int(value)
+		button.tooltip_text = "Rút %d %s vào túi" % [int(value), MaterialCatalog.DISPLAY_NAMES[id]]
+		button.disabled = not economy.material_capability(id, int(value)).get("can_withdraw", false)
+	spin.value_changed.connect(update)
+	update.call(spin.value)
+	button.pressed.connect(_withdraw_selected.bind(id, spin, _station_refresh_serial))
+
+func _withdraw_selected(id: StringName, spin: SpinBox, serial: int) -> void:
+	if serial != _station_refresh_serial or not is_instance_valid(spin) or spin.is_queued_for_deletion(): return
+	spin.apply()
+	_withdraw_amount(id, int(spin.value))
+
 func _withdraw(id: StringName) -> void:
-	var success: bool = economy.withdraw(id, 1)
-	station_notice = "Đã rút 1 món vào hành trang." if success else "Chưa rút được; kiểm tra chỗ trống, giới hạn và lưu dữ liệu."
+	_withdraw_amount(id, 1)
+
+func _withdraw_amount(id: StringName, amount: int) -> void:
+	if not station_open or current_station != &"stash": return
+	# The transaction owner revalidates live counts/capacity and rolls back IO failure.
+	var success: bool = economy.withdraw(id, amount)
+	station_notice = "Đã rút %d món vào hành trang." % amount if success else "Chưa rút được; kiểm tra số lượng trong kho, giới hạn túi và lưu dữ liệu."
 	_refresh_station()
 
 func _deposit_all() -> void:
@@ -1021,6 +1224,10 @@ func route_world_input(event: InputEvent) -> void:
 	if dialogue.is_open:
 		if dialogue.handle_input(event): get_viewport().set_input_as_handled()
 		return
+	if station_open and not _pending_bulk_sale.is_empty() and (event.is_action_pressed(&"ui_cancel") or event.is_action_pressed(&"inventory") or event.is_action_pressed(&"interact")):
+		_cancel_bulk_sale(int(_pending_bulk_sale["token"]))
+		get_viewport().set_input_as_handled()
+		return
 	if station_open and (event.is_action_pressed(&"inventory") or event.is_action_pressed(&"interact") or event.is_action_pressed(&"ui_cancel")):
 		if event.is_action_pressed(&"ui_cancel") and not _pending_purchase.is_empty(): _cancel_purchase(int(_pending_purchase["token"]))
 		else: close_station()
@@ -1051,3 +1258,40 @@ func _exit_tree() -> void:
 
 func _cultivation_ui_changed() -> void:
 	if station_open and current_station==&"training": call_deferred("_refresh_station")
+
+func _service_amount(kind: StringName) -> int:
+	return int(_service_quantities.get(kind,1))
+
+func _set_service_amount(value: float, kind: StringName) -> void:
+	_service_quantities[kind] = maxi(1,int(value))
+	if station_open: _refresh_station.call_deferred()
+
+func _quantity_input(node_name: String, caption: String, amount: int, maximum: int, callback: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.name = node_name
+	station_content.add_child(row)
+	var label: Label = DungeonUI.label(caption,16,DungeonUI.WARM)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = 110
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var spin := SpinBox.new()
+	spin.name = "Amount"
+	spin.min_value = 1; spin.max_value = maximum; spin.step = 1
+	spin.rounded = true; spin.value = amount
+	spin.custom_minimum_size = Vector2(130,44)
+	row.add_child(spin)
+	spin.value_changed.connect(callback)
+
+func _set_purchase_amount(value: float, token: int) -> void:
+	if _pending_purchase.is_empty() or int(_pending_purchase["token"]) != token: return
+	var amount: int = maxi(1,int(value))
+	var kind: StringName = _pending_purchase["kind"]
+	var batch: Dictionary = Quantities.quote(economy,kind,_pending_purchase["id"],amount,int(_pending_purchase["quality"]),rune_learning)
+	_pending_purchase["quantity"] = amount
+	_pending_purchase["batch_offer"] = batch
+	var preview: ServiceItemCard = station_content.get_node("PurchaseItemPreview") as ServiceItemCard
+	var confirm: Button = station_content.get_node("ConfirmPurchase") as Button
+	preview.quantity_label.text = "Chế %d bùa Thường\n%s" % [amount,_rune_material_snapshot(batch["materials"])] if kind == &"rune_craft" else "Số lượng %d · Tổng %d Linh Thạch\nĐang có %d · Sau khi mua còn %d Linh Thạch" % [amount,batch["coin_cost"],profile.coins,maxi(0,profile.coins-int(batch["coin_cost"]))]
+	confirm.text = "Xác nhận chế · %d bùa Thường" % amount if kind == &"rune_craft" else "Xác nhận mua %d món · %d Linh Thạch" % [amount,batch["coin_cost"]]
+	confirm.disabled = not batch["can_commit"]

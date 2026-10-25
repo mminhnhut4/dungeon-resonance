@@ -260,6 +260,7 @@ func _valid(data: Variant) -> bool:
 	return io_ref.get_ref()._validate_payload(data,true)
 
 func _decision_valid(data: Variant) -> bool:
+	if data is Dictionary and data.get("commit_schema")==2: return _compound_decision_valid(data)
 	if not data is Dictionary or data.size()!=7 or data.get("commit_schema")!=1 or not _hash(data.get("before_sha256")) or not _hash(data.get("after_sha256")) or not data.get("fence") is Dictionary or not _hash(data.get("seal")) or data.get("profile_version")!=2 or data.get("profile_path")!=path: return false
 	var copy: Dictionary = data.duplicate(true); copy.erase("seal")
 	return canonical(copy).sha256_text()==data["seal"]
@@ -275,11 +276,14 @@ func _durable_fence(fence: Dictionary) -> Dictionary:
 func recover() -> Dictionary:
 	if not marker_valid(): return _bad("invalid_future_migration_marker")
 	if not FileAccess.file_exists(path+".decision"):
+		if FileAccess.file_exists(path+".npc_v1.json.compound.previous"): return _bad("orphan_compound_previous")
+		if not _remove(path+".npc_v1.json.compound.tmp","remove_npc_uncommitted"): return _bad("npc_uncommitted_cleanup_failed")
 		if FileAccess.file_exists(path+".tmp") and not _remove(path+".tmp","remove_tmp"): return _bad("uncommitted_cleanup_failed")
 		if FileAccess.file_exists(path+".decision.tmp") and not _remove(path+".decision.tmp","remove_decision_tmp"): return _bad("decision_temp_cleanup_failed")
 		return {"ok":true,"status":"ready"}
 	var decision: Variant = read_json(path+".decision")
 	if not _decision_valid(decision): return _bad("invalid_future_decision")
+	if decision["commit_schema"]==2: return _recover_compound(decision)
 	var current: Variant = read_json(path)
 	if _digest(path)==decision["after_sha256"] and _valid(current):
 		return {"ok":true,"status":"recovered_committed"} if _cleanup() else _bad("committed_cleanup_unresolved")
@@ -303,6 +307,125 @@ func commit(payload: Dictionary, fence: Dictionary = {}, live_guard: Callable = 
 	var result: Dictionary = _commit_owned(payload,fence,live_guard)
 	busy=false
 	return result
+
+## Exactly one reviewed sidecar participant. Profile format/seal remain intact;
+## journal2 is a recovery protocol version, not a parallel save/life owner.
+func commit_npc(payload: Dictionary, proposal: Dictionary, live_guard: Callable) -> Dictionary:
+	if busy: return _bad("writer_busy",false)
+	busy = true
+	var result: Dictionary = _commit_npc_owned(payload,proposal,live_guard)
+	busy = false
+	return result
+
+func _npc_valid(file_path: String) -> bool:
+	var state_script = load("res://scripts/npc/npc_world_state.gd")
+	var file: FileAccess = FileAccess.open(file_path,FileAccess.READ)
+	if file==null or file.get_length()>32768: return false
+	var raw: String = file.get_as_text(); file.close()
+	if not JsonSpans.unique_value(raw): return false
+	var value: Variant = JSON.parse_string(raw)
+	# Old decided compound commits finish on their original NPC5 bytes before
+	# the life owner migrates to NPC6. Never rewrite a sealed participant here.
+	return state_script.valid(value) and value.get("npc_schema")>=5
+
+func _compound_decision_valid(data: Variant) -> bool:
+	if not data is Dictionary or data.size()!=8 or data.get("commit_schema")!=2 or data.get("profile_version")!=2 or data.get("profile_path")!=path or not _hash(data.get("before_sha256")) or not _hash(data.get("after_sha256")) or not _hash(data.get("seal")) or data.get("scope")!="tan_dang_mon_v1" or not data.get("npc") is Dictionary: return false
+	var npc: Dictionary = data["npc"]
+	if npc.size()!=3 or npc.get("path")!=path+".npc_v1.json" or not _hash(npc.get("before_sha256")) or not _hash(npc.get("after_sha256")): return false
+	var copy: Dictionary = data.duplicate(true); copy.erase("seal")
+	return canonical(copy).sha256_text()==data["seal"]
+
+func _compound_cleanup() -> bool:
+	# The decision is removed last, after both authorities have been verified.
+	if _fault("compound_cleanup"): return false
+	for suffix: String in [".compound.tmp",".compound.previous"]:
+		if not _remove(path+".npc_v1.json"+suffix,"remove_npc"+suffix.replace(".","_")): return false
+	return _cleanup()
+
+func _compound_abort(error: String) -> Dictionary:
+	# Only valid before a durable decision. No primary has been renamed yet.
+	return _bad(error,false) if _compound_cleanup() else _bad(error+"_cleanup_unresolved")
+
+func _participant_status(primary: String, candidate: String, previous: String, before_hash: String, after_hash: String, npc: bool) -> String:
+	var current_hash: String = _digest(primary)
+	var primary_valid: bool = _npc_valid(primary) if npc else _valid(read_json(primary))
+	if current_hash==after_hash and primary_valid: return "after"
+	var candidate_valid: bool = _npc_valid(candidate) if npc else _valid(read_json(candidate))
+	if _digest(candidate)!=after_hash or not candidate_valid: return "invalid"
+	if current_hash==before_hash and primary_valid: return "before"
+	var previous_valid: bool = _npc_valid(previous) if npc else _valid(read_json(previous))
+	if not FileAccess.file_exists(primary) and _digest(previous)==before_hash and previous_valid: return "moved"
+	return "invalid"
+
+func _recover_compound(decision: Dictionary) -> Dictionary:
+	var npc_path: String = path+".npc_v1.json"
+	var npc: Dictionary = decision["npc"]
+	var profile_status: String = _participant_status(path,path+".tmp",path+".previous",decision["before_sha256"],decision["after_sha256"],false)
+	var npc_status: String = _participant_status(npc_path,npc_path+".compound.tmp",npc_path+".compound.previous",npc["before_sha256"],npc["after_sha256"],true)
+	# Validate both halves before touching either. An unfamiliar image is never
+	# permission to overwrite it, resurrect a life or restore an older backup.
+	if profile_status=="invalid" or npc_status=="invalid": return _bad("compound_authority_unavailable")
+	if profile_status!="after":
+		if profile_status=="before" and not _rename(path,path+".previous","compound_recovery_profile_move"): return _bad("compound_recovery_profile_move_failed")
+		if not _rename(path+".tmp",path,"compound_recovery_profile_commit"): return _bad("compound_recovery_profile_commit_failed")
+	if npc_status!="after":
+		if npc_status=="before" and not _rename(npc_path,npc_path+".compound.previous","compound_recovery_npc_move"): return _bad("compound_recovery_npc_move_failed")
+		if not _rename(npc_path+".compound.tmp",npc_path,"compound_recovery_npc_commit"): return _bad("compound_recovery_npc_commit_failed")
+	if _digest(path)!=decision["after_sha256"] or not _valid(read_json(path)) or _digest(npc_path)!=npc["after_sha256"] or not _npc_valid(npc_path): return _bad("compound_recovery_verify_failed")
+	return {"ok":true,"status":"recovered_committed"} if _compound_cleanup() else _bad("compound_recovery_cleanup_unresolved")
+
+func _commit_npc_owned(payload: Dictionary, proposal: Dictionary, live_guard: Callable) -> Dictionary:
+	if not live_guard.is_valid(): return _bad("npc_live_guard_required",false)
+	var ready: Dictionary = recover()
+	if not ready["ok"]: return ready
+	var npc_path: String = path+".npc_v1.json"
+	var state_script = load("res://scripts/npc/npc_world_state.gd")
+	if not state_script.valid_sect_proposal(proposal) or proposal.get("npc_path")!=npc_path or not live_guard.call(): return _bad("invalid_or_stale_npc_proposal",false)
+	var before_hash: String = _digest(path)
+	var npc_before: String = _digest(npc_path)
+	if before_hash!=expected_hash or npc_before!=proposal["durable_sha256"]: return _bad("compound_changed_reload_required")
+	var current_document: Dictionary = _read_document(path)
+	var current: Variant = current_document.get("data")
+	if not _valid(current) or current.get("version")!=2 or payload.get("version")!=2 or not io_ref.get_ref()._validate_payload(payload,false) or not _npc_valid(npc_path): return _bad("invalid_compound_before_or_candidate")
+	if _npc_changes_require_fence(payload,current): return _bad("compound_cannot_mutate_cultivation_actor",false)
+	var revision: int = int(current["profile_commit"]["revision"])+1
+	if revision>1000000000: return _bad("revision_capacity",false)
+	if not FileAccess.file_exists(path+".format_v2"):
+		if not _write(path+".format_v2",{"marker_version":1,"profile_format":2},"write_marker") or not marker_valid(): return _bad("migration_marker_failed")
+	_verified_document=current_document.duplicate(true); _verified_hash=before_hash
+	_candidate_spans=_preserved_spans(payload)
+	var opaque_hashes: Dictionary = {}
+	for key: String in _candidate_spans: opaque_hashes[key]=_candidate_spans[key].sha256_text()
+	var candidate: Dictionary = sealed(payload,revision,opaque_hashes)
+	if not _write(path+".tmp",candidate,"write_candidate") or not _valid(read_json(path+".tmp")): return _compound_abort("compound_profile_candidate_failed")
+	if _fault("compound_after_profile_candidate"): return _bad("simulated_compound_after_profile_candidate")
+	if not _write(npc_path+".compound.tmp",proposal["after"],"write_npc_candidate") or not _npc_valid(npc_path+".compound.tmp"): return _compound_abort("compound_npc_candidate_failed")
+	if _fault("compound_after_npc_candidate"): return _bad("simulated_compound_after_npc_candidate")
+	if before_commit.is_valid():
+		var callback: Callable = before_commit; before_commit=Callable(); callback.call()
+	if _digest(path)!=before_hash or _digest(npc_path)!=npc_before or not live_guard.call(): return _compound_abort("compound_live_or_disk_changed")
+	var decision: Dictionary = {"commit_schema":2,"profile_version":2,"profile_path":path,"before_sha256":before_hash,"after_sha256":_digest(path+".tmp"),"scope":"tan_dang_mon_v1","npc":{"path":npc_path,"before_sha256":npc_before,"after_sha256":_digest(npc_path+".compound.tmp")}}
+	decision["seal"]=canonical(decision).sha256_text()
+	if not _write(path+".decision.tmp",decision,"write_decision") or not _compound_decision_valid(read_json(path+".decision.tmp")) or not _rename(path+".decision.tmp",path+".decision","rename_decision"): return _compound_abort("compound_decision_write_failed")
+	# The decision commits intent. From here failure means recovery required;
+	# rolling one primary back could undo a death already made durable in the other.
+	if _fault("compound_after_decision"): return _bad("simulated_compound_after_decision")
+	if not _rename(path,path+".previous","compound_profile_move"): return _bad("compound_profile_move_failed")
+	if _fault("compound_after_profile_move"): return _bad("simulated_compound_after_profile_move")
+	if not _rename(path+".tmp",path,"compound_profile_commit"): return _bad("compound_profile_commit_failed")
+	if _fault("compound_after_profile_commit"): return _bad("simulated_compound_after_profile_commit")
+	if not _rename(npc_path,npc_path+".compound.previous","compound_npc_move"): return _bad("compound_npc_move_failed")
+	if _fault("compound_after_npc_move"): return _bad("simulated_compound_after_npc_move")
+	if not _rename(npc_path+".compound.tmp",npc_path,"compound_npc_commit"): return _bad("compound_npc_commit_failed")
+	if _fault("compound_after_npc_commit"): return _bad("simulated_compound_after_npc_commit")
+	if _digest(path)!=decision["after_sha256"] or not _valid(read_json(path)) or _digest(npc_path)!=decision["npc"]["after_sha256"] or not _npc_valid(npc_path): return _bad("compound_commit_verify_failed")
+	var cleanup_ok: bool = _compound_cleanup()
+	# Leave both owners locked if cleanup is uncertain; cold recovery recognizes
+	# after/after without applying the receipt or the death a second time.
+	if not cleanup_ok: return _bad("compound_cleanup_unresolved")
+	note_current()
+	_verified_document=_read_document(path); _verified_hash=expected_hash
+	return {"ok":true,"status":"committed","payload":candidate}
 
 func _npc_changes_require_fence(payload: Dictionary, current: Dictionary) -> bool:
 	var previous: Dictionary = current.get("cultivation_progress",{}).get("actors",{}).get("pilot_gatherer",{})
@@ -340,6 +463,7 @@ func _commit_owned(payload: Dictionary, fence: Dictionary, live_guard: Callable)
 		return {"ok":true,"status":"committed"}
 	if not io_ref.get_ref()._validate_payload(payload,false): return _bad("invalid_candidate",false)
 	if not before_valid and not io_ref.get_ref()._validate_payload(current,true): return _bad("invalid_before")
+	if canonical(payload.get("event_extensions",{}).get("namespaces",{}).get("tan_dang_mon_v1",{})) != canonical(current.get("event_extensions",{}).get("namespaces",{}).get("tan_dang_mon_v1",{})): return _bad("sect_changes_require_compound_commit",false)
 	_verified_document=current_document.duplicate(true); _verified_hash=current_hash
 	if _npc_changes_require_fence(payload,current) and (fence.get("kind")!="npc" or fence.get("actor_id")!="pilot_gatherer" or not live_guard.is_valid()): return _bad("npc_progress_requires_life_fence",false)
 	if not FileAccess.file_exists(path+".format_v2"):

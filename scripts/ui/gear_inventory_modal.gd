@@ -11,6 +11,7 @@ var slots: Array[Button] = []
 var rune_buttons: Array[Button] = []
 var preview: Label
 var acquisition_hint: Label
+var foundation_hint: Label
 var previous_scale: float = 1.0
 var previous_controls: bool = true
 var secondary_panel: SurvivalPanel
@@ -64,7 +65,13 @@ func _ready() -> void:
 	remove.pressed.connect(equip_selected.bind(&""))
 	column.add_child(remove)
 	preview = Label.new()
+	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(preview)
+	foundation_hint = Label.new()
+	foundation_hint.name = "FoundationLesson"
+	foundation_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	foundation_hint.add_theme_font_size_override("font_size",15)
+	column.add_child(foundation_hint)
 	acquisition_hint = Label.new()
 	acquisition_hint.name = "RuneAcquisitionHint"
 	acquisition_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -184,5 +191,6 @@ func refresh() -> void:
 		rune_buttons[index].tooltip_text = "Chọn một ô phía trên, rồi chọn bùa để lắp." if inventory.bag[rune.id] > 0 else "Không còn bản bùa này trong túi. Nhặt từ rương hầm ngục hoặc gặp Thanh Vy tại căn cứ → Học & chế bùa."
 	var recipe: ResonanceDefinition = player.resonance_controller.get_recipe()
 	preview.text = "Cộng hưởng: %s\nĐổi bùa giữ hồi chiêu và phép đã phóng." % [recipe.display_name if recipe != null else "Tổ hợp chưa hợp lệ — không thể niệm"]
-	acquisition_hint.text = ("Bạn chưa có bùa. " if inventory.total_shards() == 0 else "") + "Kiếm bùa: mở rương hầm ngục bằng E rồi nhặt phần rơi.\nHọc bùa: về căn cứ, gặp Thanh Vy → Học & chế bùa. Học một lần nhận 1 bản; chế thêm dùng vật liệu trong kho.\nLắp bùa vào các ô Catalyst để đổi phép; ghép hai nguyên tố để tạo cộng hưởng."
+	foundation_hint.text=FoundationLesson.view(player.resonance_controller)["text"]
+	acquisition_hint.text = ("Bạn chưa có bùa. " if inventory.total_shards() == 0 else "") + "Kiếm bùa: mở rương hầm ngục bằng E rồi nhặt phần rơi.\nHọc bùa: về căn cứ, gặp Thanh Vy → Học & chế bùa. Học một lần nhận 1 bản; chế thêm dùng vật liệu trong túi.\nLắp bùa vào các ô Catalyst để đổi phép; ghép hai nguyên tố để tạo cộng hưởng."
 	AntiqueSkin.update_rune_art(slots, rune_buttons, inventory)

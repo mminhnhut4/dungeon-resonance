@@ -29,6 +29,10 @@ func _save_safe() -> bool:
 	return false
 
 
+func _bag_transactions_available() -> bool:
+	return persist_safe_inventory and not _busy and hub_access and profile != null and not profile.read_only and not profile.hub_inventory_quarantined and inventory != null
+
+
 func quote_upgrade(id: StringName) -> Dictionary:
 	var known: bool = id in WorldProgressionCatalog.UPGRADES
 	var level: int = profile.permanent_upgrades.get(id, 0) if profile != null else 0
@@ -59,7 +63,7 @@ func quote_bounty(id: StringName) -> Dictionary:
 	var accepted: bool = profile != null and profile.bounty_accepted
 	var claimed: bool = profile != null and profile.bounty_claimed
 	var progress: int = maxi(0, profile.boss_proofs[&"golem"] - profile.bounty_start_proofs) if accepted else 0
-	var allowed: bool = id == WorldProgressionCatalog.BOUNTY_ID and profile != null and hub_access and not _busy
+	var allowed: bool = id == WorldProgressionCatalog.BOUNTY_ID and profile != null and not profile.read_only and not profile.hub_inventory_quarantined and hub_access and not _busy
 	return {"id": id, "accepted": accepted, "completed": progress >= 1, "claimed": claimed, "required": 1, "progress": mini(progress, 1), "reward_combo_id": WorldProgressionCatalog.BOUNTY_REWARD, "can_accept": allowed and not accepted, "can_claim": allowed and accepted and not claimed and progress >= 1 and inventory != null and inventory.equipment_bag_uids().size() < GearInventory.EQUIPMENT_BAG_CAPACITY, "can_reclaim": allowed and claimed and profile.unlocked_weapons.has(WorldProgressionCatalog.BOUNTY_REWARD) and _reclaimable_starter() != null}
 
 
@@ -116,7 +120,7 @@ func claim_bounty(id: StringName) -> bool:
 	profile.bounty_claimed = true
 	var had_reward: bool = profile.unlocked_weapons.has(WorldProgressionCatalog.BOUNTY_REWARD)
 	if not had_reward: profile.unlocked_weapons.append(WorldProgressionCatalog.BOUNTY_REWARD)
-	var reward: GearItem = inventory.add_equipment(load("res://data/equipment/ancient_sword_bounty.tres") as EquipmentData)
+	var reward: GearItem = inventory.add_equipment(load("res://data/equipment/ancient_sword_bounty.tres") as EquipmentData, GearItem.Quality.COMMON, false)
 	reward.source = &"crafted"
 	reward.loot_rolled = true
 	if not _save_safe():
@@ -137,7 +141,7 @@ func quote_enhance(uid: int) -> Dictionary:
 	var grade: int = ceili(float(next) / 2.0)
 	var stone: StringName = StringName("enhancement_stone_%d" % grade)
 	var coins: int = next * 5
-	return {"uid": uid, "level": level, "next_level": next, "stone_grade": grade, "stone_id": stone, "coin_cost": coins, "can_enhance": not _busy and hub_access and profile != null and item != null and item.kind == &"weapon" and item.can_equip() and level >= 0 and level < 12 and profile.material_stash.get(stone, 0) >= 1 and profile.coins >= coins}
+	return {"uid": uid, "level": level, "next_level": next, "stone_grade": grade, "stone_id": stone, "coin_cost": coins, "can_enhance": _bag_transactions_available() and item != null and item.kind == &"weapon" and item.can_equip() and level >= 0 and level < 12 and inventory.materials.get(stone, 0) >= 1 and profile.coins >= coins}
 
 
 func enhance_item(uid: int) -> bool:
@@ -146,11 +150,11 @@ func enhance_item(uid: int) -> bool:
 	_busy = true
 	var item: GearItem = inventory.items[uid]
 	var stone: StringName = quote["stone_id"]
-	profile.material_stash[stone] -= 1
+	inventory.materials[stone] -= 1
 	profile.coins -= int(quote["coin_cost"])
 	item.enhancement_level += 1
 	if not _save_safe():
-		profile.material_stash[stone] += 1
+		inventory.materials[stone] += 1
 		profile.coins += int(quote["coin_cost"])
 		item.enhancement_level -= 1
 		_busy = false
@@ -163,7 +167,7 @@ func quote_combine_stones(grade: int, batches: int = 1) -> Dictionary:
 	var source: StringName = StringName("enhancement_stone_%d" % grade)
 	var target: StringName = StringName("enhancement_stone_%d" % (grade + 1))
 	var valid: bool = grade >= 1 and grade < 6 and batches > 0 and batches <= MaterialCatalog.MAX_COUNT / 5
-	return {"grade": grade, "source_id": source, "target_id": target, "input_count": batches * 5 if valid else 0, "output_count": batches if valid else 0, "can_combine": valid and profile != null and hub_access and not _busy and profile.material_stash.get(source, 0) >= batches * 5 and profile.material_stash.get(target, 0) <= MaterialCatalog.MAX_COUNT - batches}
+	return {"grade": grade, "source_id": source, "target_id": target, "input_count": batches * 5 if valid else 0, "output_count": batches if valid else 0, "can_combine": valid and _bag_transactions_available() and inventory.materials.get(source, 0) >= batches * 5 and inventory.materials.get(target, 0) <= MaterialCatalog.MAX_COUNT - batches}
 
 
 func combine_stones(grade: int, batches: int = 1) -> bool:
@@ -172,11 +176,11 @@ func combine_stones(grade: int, batches: int = 1) -> bool:
 	_busy = true
 	var source: StringName = quote["source_id"]
 	var target: StringName = quote["target_id"]
-	profile.material_stash[source] -= batches * 5
-	profile.material_stash[target] += batches
+	inventory.materials[source] -= batches * 5
+	inventory.materials[target] += batches
 	if not _save_safe():
-		profile.material_stash[source] += batches * 5
-		profile.material_stash[target] -= batches
+		inventory.materials[source] += batches * 5
+		inventory.materials[target] -= batches
 		_busy = false
 		return false
 	_publish_commit()
@@ -190,9 +194,9 @@ func register_recipe(recipe: ForgeRecipe) -> bool:
 
 
 func _has_costs(costs: Dictionary) -> bool:
-	if profile == null: return false
+	if not _bag_transactions_available(): return false
 	for id: StringName in costs:
-		if profile.material_stash.get(id, 0) < int(costs[id]): return false
+		if inventory.materials.get(id, 0) < int(costs[id]): return false
 	return true
 
 
@@ -212,14 +216,14 @@ func forge(id: StringName, rng: RandomNumberGenerator) -> Dictionary:
 	var recipe: ForgeRecipe = forge_recipes[id]
 	var item: GearItem
 	if success:
-		item = inventory.add_equipment(recipe.equipment, recipe.quality)
+		item = inventory.add_equipment(recipe.equipment, recipe.quality, false)
 		item.source = &"crafted"
 		item.loot_rolled = true
 	profile.coins -= int(quote["coin_cost"])
-	for material: StringName in quote["materials"]: profile.material_stash[material] -= int(quote["materials"][material])
+	for material: StringName in quote["materials"]: inventory.materials[material] -= int(quote["materials"][material])
 	if not _save_safe():
 		profile.coins += int(quote["coin_cost"])
-		for material: StringName in quote["materials"]: profile.material_stash[material] += int(quote["materials"][material])
+		for material: StringName in quote["materials"]: inventory.materials[material] += int(quote["materials"][material])
 		if item != null: inventory.items.erase(item.uid)
 		inventory.changed.emit()
 		rng.state = previous_rng
@@ -233,14 +237,14 @@ func quote_buy(id: StringName, quality: int) -> Dictionary:
 	var basic: bool = id in [&"common_sword", &"starter_top", &"starter_pants", &"starter_boots", &"starter_gloves", &"starter_ring", &"starter_amulet"]
 	var valid: bool = WorldProgressionCatalog.valid_id(id) and (basic or id.begins_with("world_")) and ResourceLoader.exists("res://data/equipment/%s.tres" % id) and quality in [GearItem.Quality.COMMON, GearItem.Quality.RARE]
 	var cost: int = 20 if quality == GearItem.Quality.COMMON else 40
-	return {"id": id, "quality": quality, "coin_cost": cost, "can_buy": valid and not _busy and hub_access and profile != null and inventory != null and (basic or profile.learned_blueprints.has(id)) and profile.coins >= cost and inventory.equipment_bag_uids().size() < GearInventory.EQUIPMENT_BAG_CAPACITY}
+	return {"id": id, "quality": quality, "coin_cost": cost, "can_buy": valid and _bag_transactions_available() and (basic or profile.learned_blueprints.has(id)) and profile.coins >= cost and inventory.equipment_bag_uids().size() < GearInventory.EQUIPMENT_BAG_CAPACITY}
 
 
 func buy_weapon(id: StringName, quality: int) -> bool:
 	var quote: Dictionary = quote_buy(id, quality)
 	if not quote["can_buy"]: return false
 	_busy = true
-	var item: GearItem = inventory.add_equipment(load("res://data/equipment/%s.tres" % id) as EquipmentData, quality)
+	var item: GearItem = inventory.add_equipment(load("res://data/equipment/%s.tres" % id) as EquipmentData, quality, false)
 	item.source = &"merchant"
 	item.loot_rolled = true
 	profile.coins -= int(quote["coin_cost"])
@@ -263,10 +267,10 @@ func craft_consumable(id: StringName) -> bool:
 	var quote: Dictionary = quote_consumable(id)
 	if not quote["can_craft"]: return false
 	_busy = true
-	for material: StringName in quote["materials"]: profile.material_stash[material] -= int(quote["materials"][material])
+	for material: StringName in quote["materials"]: inventory.materials[material] -= int(quote["materials"][material])
 	inventory.consumables[id] += 1
 	if not _save_safe():
-		for material: StringName in quote["materials"]: profile.material_stash[material] += int(quote["materials"][material])
+		for material: StringName in quote["materials"]: inventory.materials[material] += int(quote["materials"][material])
 		inventory.consumables[id] -= 1
 		_busy = false
 		return false
@@ -276,7 +280,7 @@ func craft_consumable(id: StringName) -> bool:
 
 func quote_buy_consumable(id: StringName) -> Dictionary:
 	var price: int = 10 if id == &"potion" else 0
-	return {"id": id, "quantity": 1, "coin_cost": price, "can_buy": price > 0 and not _busy and hub_access and profile != null and inventory != null and profile.coins >= price and inventory.consumables.get(id, 0) < MaterialCatalog.MAX_COUNT}
+	return {"id": id, "quantity": 1, "coin_cost": price, "can_buy": price > 0 and _bag_transactions_available() and profile.coins >= price and inventory.consumables.get(id, 0) < MaterialCatalog.MAX_COUNT}
 
 
 func buy_consumable(id: StringName) -> bool:
@@ -363,7 +367,7 @@ func quote_bag_material_sale(id: StringName, amount: int = 1) -> Dictionary:
 	var owned: int = inventory.materials.get(id, 0) if inventory != null else 0
 	var total: int = price * amount
 	var valid: bool = price > 0 and MaterialCatalog.valid_count(amount) and amount > 0 and MaterialCatalog.valid_count(owned) and owned >= amount and total <= MaterialCatalog.MAX_COUNT
-	return {"id":id, "quantity":amount, "owned":owned, "unit_price":price, "total":total, "can_sell":valid and not _busy and hub_access and profile != null and not profile.read_only and profile.coins <= MaterialCatalog.MAX_COUNT - total}
+	return {"id":id, "quantity":amount, "owned":owned, "unit_price":price, "total":total, "can_sell":valid and _bag_transactions_available() and profile.coins <= MaterialCatalog.MAX_COUNT - total}
 
 func sell_bag_material(id: StringName, amount: int = 1) -> bool:
 	var quote: Dictionary = quote_bag_material_sale(id, amount)
@@ -396,20 +400,79 @@ func quote_bag_equipment_sale(uid: int) -> Dictionary:
 		if eligible:
 			price = 5 if item.quality == GearItem.Quality.COMMON else 10
 			if item.broken: price = 2 if item.quality == GearItem.Quality.COMMON else 5
-	return {"uid":uid, "quantity":1, "eligible":eligible, "total":price, "can_sell":eligible and not _busy and hub_access and profile != null and not profile.read_only and profile.coins <= MaterialCatalog.MAX_COUNT - price}
+	return {"uid":uid, "quantity":1, "eligible":eligible, "total":price, "can_sell":eligible and _bag_transactions_available() and profile.coins <= MaterialCatalog.MAX_COUNT - price}
 
 func sell_bag_equipment(uid: int) -> bool:
 	var quote: Dictionary = quote_bag_equipment_sale(uid)
 	if not quote["can_sell"]: return false
 	_busy = true
-	var item: GearItem = inventory.items[uid]
+	var previous_items: Dictionary[int, GearItem] = inventory.items.duplicate()
 	var positions: Array[int] = inventory.equipment_positions.duplicate()
 	inventory.items.erase(uid)
 	profile.coins += int(quote["total"])
 	if not _save_safe():
-		inventory.items[uid] = item
+		inventory.items.assign(previous_items)
 		inventory.equipment_positions.assign(positions)
 		profile.coins -= int(quote["total"])
+		_busy = false
+		return false
+	_publish_commit()
+	return true
+
+
+func quote_sell_all_bag() -> Dictionary:
+	var uids: Array[int] = []
+	var amounts: Dictionary = {}
+	var total: int = 0
+	var count: int = 0
+	if inventory != null:
+		for uid: int in inventory.equipment_bag_uids():
+			var offer: Dictionary = quote_bag_equipment_sale(uid)
+			# Enhanced gear is an investment; bulk sale always preserves it.
+			if offer["eligible"] and inventory.items[uid].enhancement_level == 0:
+				uids.append(uid)
+				total += int(offer["total"])
+				count += 1
+		for id: StringName in MaterialCatalog.SELL_PRICES:
+			var amount: int = inventory.materials.get(id, 0)
+			if MaterialCatalog.valid_count(amount) and amount > 0:
+				amounts[id] = amount
+				total += amount * int(MaterialCatalog.SELL_PRICES[id])
+				count += amount
+	var signature: String = JSON.stringify([uids, amounts, total, count]).sha256_text()
+	var allowed: bool = persist_safe_inventory and not _busy and hub_access and profile != null and not profile.read_only and not profile.hub_inventory_quarantined and inventory != null and count > 0 and total > 0 and total <= MaterialCatalog.MAX_COUNT and profile.coins <= MaterialCatalog.MAX_COUNT - total
+	return {"equipment_uids":uids, "materials":amounts, "item_count":count, "total":total, "signature":signature, "can_sell":allowed}
+
+
+func sell_all_bag(expected_signature: String) -> bool:
+	var offer: Dictionary = quote_sell_all_bag()
+	if not offer["can_sell"] or expected_signature.is_empty() or expected_signature != offer["signature"]: return false
+	_busy = true
+	var previous_items: Dictionary[int, GearItem] = inventory.items.duplicate()
+	var positions: Array[int] = inventory.equipment_positions.duplicate()
+	for uid: int in offer["equipment_uids"]:
+		inventory.items.erase(uid)
+	for id: StringName in offer["materials"]: inventory.materials[id] -= int(offer["materials"][id])
+	profile.coins += int(offer["total"])
+	if not _save_safe():
+		inventory.items.assign(previous_items)
+		inventory.equipment_positions.assign(positions)
+		for id: StringName in offer["materials"]: inventory.materials[id] += int(offer["materials"][id])
+		profile.coins -= int(offer["total"])
+		_busy = false
+		return false
+	_publish_commit()
+	return true
+
+
+func sort_bag(mode: int = -1) -> bool:
+	if not persist_safe_inventory or _busy or not hub_access or profile == null or profile.read_only or profile.hub_inventory_quarantined or inventory == null: return false
+	_busy = true
+	var previous: Array[int] = inventory.equipment_positions.duplicate()
+	if mode in [0, 1, 2]: inventory.sort_equipment(mode, false)
+	else: inventory.sort_equipment_bag(false)
+	if not _save_safe():
+		inventory.equipment_positions.assign(previous)
 		_busy = false
 		return false
 	_publish_commit()
@@ -420,11 +483,8 @@ func quote_crystal_sale() -> Dictionary:
 
 
 func quote_material_sale(id: StringName) -> Dictionary:
-	var unit_price: int = MaterialCatalog.SELL_PRICES.get(id, 0)
-	var quantity: int = profile.material_stash.get(id, 0) if profile != null else 0
-	var proceeds: int = quantity * unit_price
-	var valid: bool = unit_price > 0 and id in MaterialCatalog.IDS and MaterialCatalog.valid_count(quantity)
-	return {"id": id, "quantity": quantity, "unit_price": unit_price, "total": proceeds, "can_sell": valid and profile != null and hub_access and not _busy and quantity > 0 and profile.coins <= MaterialCatalog.MAX_COUNT - proceeds}
+	# Retained API: all merchant sales now use the carried bag, never the bank.
+	return quote_bag_material_sale(id, inventory.materials.get(id, 0) if inventory != null else 0)
 
 
 func sell_all_crystals() -> bool:
@@ -432,27 +492,13 @@ func sell_all_crystals() -> bool:
 
 
 func sell_material(id: StringName) -> bool:
-	var quote: Dictionary = quote_material_sale(id)
-	if not quote["can_sell"]:
-		return false
-	_busy = true
-	var previous_coins: int = profile.coins
-	var quantity: int = quote["quantity"]
-	profile.coins += int(quote["total"])
-	profile.material_stash[id] = 0
-	if not _save_safe():
-		profile.coins = previous_coins
-		profile.material_stash[id] = quantity
-		_busy = false
-		return false
-	_publish_commit()
-	return true
+	return sell_bag_material(id, inventory.materials.get(id, 0) if inventory != null else 0)
 
 
 func quote_repair(uid: int) -> Dictionary:
 	var item: GearItem = inventory.items.get(uid) if inventory != null else null
 	var cost: Dictionary[StringName, int] = MaterialCatalog.repair_cost(item.quality if item != null else GearItem.Quality.COMMON)
-	var has_materials: bool = profile != null and profile.material_stash.get(&"metal", 0) >= cost[&"metal"] and profile.material_stash.get(&"dust", 0) >= cost[&"dust"]
+	var has_materials: bool = _bag_transactions_available() and inventory.materials.get(&"metal", 0) >= cost[&"metal"] and inventory.materials.get(&"dust", 0) >= cost[&"dust"]
 	var blank: bool = item != null and item.is_forging_blank()
 	return {"uid": uid, "metal": cost[&"metal"], "dust": cost[&"dust"], "requires_forging": blank, "can_repair": not _busy and hub_access and item != null and inventory.equipment_slot(uid) >= 0 and item.broken and not blank and has_materials}
 
@@ -463,12 +509,12 @@ func repair_item(uid: int) -> bool:
 		return false
 	_busy = true
 	var item: GearItem = inventory.items[uid]
-	profile.material_stash[&"metal"] -= int(quote["metal"])
-	profile.material_stash[&"dust"] -= int(quote["dust"])
+	inventory.materials[&"metal"] -= int(quote["metal"])
+	inventory.materials[&"dust"] -= int(quote["dust"])
 	if not item.repair() or not _save_safe():
 		item.broken = true
-		profile.material_stash[&"metal"] += int(quote["metal"])
-		profile.material_stash[&"dust"] += int(quote["dust"])
+		inventory.materials[&"metal"] += int(quote["metal"])
+		inventory.materials[&"dust"] += int(quote["dust"])
 		_busy = false
 		return false
 	_publish_commit()
@@ -484,13 +530,29 @@ func _publish_commit() -> void:
 	_busy = false
 
 func quote_social_help(life_owner: NpcWorldState, id: String) -> Dictionary:
-	var available: bool = not _busy and hub_access and profile != null and inventory != null and OpeningSocialRuntime.can_help(profile, life_owner, id)
+	var available: bool = _bag_transactions_available() and OpeningSocialRuntime.can_help(profile, life_owner, id, inventory)
 	return {"can_help":available, "material":NpcSocialCatalog.HELP_MATERIAL, "cost":NpcSocialCatalog.HELP_COST}
 
 func help_resident(life_owner: NpcWorldState, id: String) -> bool:
 	if not quote_social_help(life_owner,id)["can_help"]: return false
 	_busy = true
-	var success: bool = OpeningSocialRuntime.help(profile,life_owner,id)
+	var success: bool = OpeningSocialRuntime.help(profile,life_owner,id,inventory)
+	if success: _publish_commit()
+	else: _busy = false
+	return success
+
+
+func quote_courier_choice(choice: StringName) -> Dictionary:
+	if profile == null: return {"available":false,"consequence":"Chưa mở được phiếu tiếp tế."}
+	var offer: Dictionary = profile.quote_courier_choice(choice, inventory)
+	offer["available"] = bool(offer.get("available", false)) and _bag_transactions_available()
+	return offer
+
+
+func commit_courier_choice(choice: StringName) -> bool:
+	if not quote_courier_choice(choice)["available"]: return false
+	_busy = true
+	var success: bool = profile.commit_courier_choice(choice, inventory)
 	if success: _publish_commit()
 	else: _busy = false
 	return success

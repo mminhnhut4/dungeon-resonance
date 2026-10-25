@@ -5,6 +5,7 @@ var world_state: NpcWorldState
 var stable_id: String
 var player: Player
 var origin_offset_x: float = 0.0
+var witness_provider: Callable
 var _causes: Dictionary[String, bool] = {}
 
 func resolve(event: DamageEvent) -> DamageResult:
@@ -14,17 +15,27 @@ func resolve(event: DamageEvent) -> DamageResult:
 		blocked.block_reason = &"npc_protected"
 		return blocked
 	# The accepted damage pipeline remains shared. No synthetic kill is emitted.
-	health.minimum_health = 1.0
+	health.minimum_health = world_state.damage_health_floor(stable_id)
+	var previous_health: float = health.current_health
 	var result: DamageResult = super.resolve(event)
 	if result.actual_damage > 0.0:
 		var cause_id: int = event.root_event_id if event.root_event_id > 0 else event.attack_id
 		var cause: String = "%d:%d" % [event.source_id,cause_id]
 		var first_cause: bool = not _causes.has(cause)
-		if first_cause:
+		var actor: Node2D = health.get_parent() as Node2D
+		var witnesses: Array[String]=[]
+		if is_player_cause(event) and witness_provider.is_valid():witnesses.assign(witness_provider.call(stable_id))
+		if not world_state.receive_hit(stable_id,health.current_health,event.attack_origin.x-origin_offset_x,is_player_cause(event),actor.global_position.x-origin_offset_x,first_cause,witnesses):
+			# A refused canonical mutation cannot leave a representation injured or
+			# provoke a counterattack. The attack stays consumed in dedup history.
+			health.current_health = previous_health
+			result.actual_damage = 0.0
+			result.killed = false
+			result.blocked = true
+			result.block_reason = &"npc_commit_failed"
+		elif first_cause:
 			if _causes.size() >= 128: _causes.erase(_causes.keys()[0])
 			_causes[cause] = true
-		var actor: Node2D = health.get_parent() as Node2D
-		world_state.receive_hit(stable_id,health.current_health,event.attack_origin.x-origin_offset_x,is_player_cause(event),actor.global_position.x-origin_offset_x,first_cause)
 	return result
 
 func is_player_cause(event: DamageEvent) -> bool:

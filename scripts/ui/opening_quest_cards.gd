@@ -36,6 +36,8 @@ static func decorate(rows: Array[Dictionary], profile: SanctuaryProfile, invento
 			if SectJourneyProgress.valid(saved) and faction_id in SectRouteCatalog.FACTIONS:
 				var entry: Dictionary=saved[faction_id]
 				card.merge({"location":SectRouteCatalog.title(SectRouteCatalog.first(faction_id)),"progress":"%d/2 quan sát · %s" % [entry["markers"].size(),"Đã có quyền khách" if entry["guest"] else "Chưa trình đủ ghi chép"],"count":entry["markers"].size(),"prerequisite":"Nhận việc ở sổ gần cổng; tới từng mốc và chọn Ghi quan sát.","reward":"Quyền khách vào sân trong của môn phái này","reward_mode":"Trình hai ghi chép tại sổ trong khuôn viên; không mất tiền, không có thưởng tiền/đồ.","reward_status":"Đã mở sân trong" if entry["guest"] else "Chờ trình ghi chép","optional":true},true)
+		if String(id).begins_with("tan_dang_"):
+			card.merge({"action":row["body"],"location":"Căn cứ · Đèn / Mộc Yên / Sổ; Đường Bộ P03 · Trú ẩn","prerequisite":"Tương tác E và xác nhận tại chỗ; không có đếm ngược.","reward":"2 cống hiến mỗi nhiệm vụ · tổng 6 để đổi Hồi Đăng","reward_mode":"Nhận một lần qua giao dịch hồ sơ và NPC; khách nhận đủ.","reward_status":"Đã nhận" if row["done"] else "Chờ hoàn tất và nhận tại tương tác","optional":true},true)
 		row["card"] = card
 		if row.has("guide"):
 			row["body"] = "HÀNH TRANG & SỨC MẠNH · %s\n%s" % [row["guide"]["topic"],row["guide"]["body"]]
@@ -50,8 +52,15 @@ static func decorate(rows: Array[Dictionary], profile: SanctuaryProfile, invento
 			var guide: Dictionary = OpeningProgressionGuide.for_milestone(&"first_upgrade",profile,inventory)
 			result.append({"id":&"cultivation_breakthrough","title":"Đột phá Trúc Cơ lần đầu","body":guide["body"],"target":ExteriorRouteCatalog.HUB,"done":false,"next":false,"card":{"title":"Đột phá Trúc Cơ lần đầu","action":"Đến SÂN LUYỆN → TU LUYỆN. Rèn đòn trúng mộc nhân, điều tức và xem các điều kiện; tại bước cuối chọn một nhánh rồi đột phá.","location":"Căn Cứ Lữ Khách · Sân Luyện","progress":"Cảnh giới %d/3" % progress["actors"]["player"]["stage"],"count":int(progress["actors"]["player"]["stage"]),"prerequisite":"Năng lượng, thông thạo, lĩnh ngộ, tài nguyên và chứng tích đúng bảng tu luyện.","reward":"Học 1 động tác: Hồi Phong Kiếm hoặc Tỏa Linh Ấn (G)","reward_mode":"Nhận một lần cùng đột phá cuối; cần trả chi phí đang ghi trên bảng.","reward_status":"Chưa học nhánh","complete":false,"optional":false,"command":&"","command_label":"","command_enabled":false}})
 			result[-1]["card"]["optional"] = not opening_complete
-			result[-1]["card"]["action"] = OpeningProgressionGuide.cultivation_next_step(profile)
+			result[-1]["card"]["action"] = OpeningProgressionGuide.cultivation_next_step(profile, inventory)
 			result[-1]["body"] = "LỘ TRÌNH TRÚC CƠ · Làm từng bước, giữ tiến độ qua chuyến đi.\n" + guide["body"]
+			var cultivation: Dictionary = OpeningProgressionGuide.cultivation_view(profile, inventory)
+			result[-1]["card"]["location"] = cultivation["location"]
+			result[-1]["card"]["progress"] = cultivation["progress"]
+			result[-1]["card"]["reward"] = cultivation["reward"]
+			result[-1]["card"]["prerequisite"] = "Nguyên liệu đang mang trong túi; kho chỉ cất/rút. Xem thiếu hụt và nơi kiếm ở chi tiết bên dưới."
+			result[-1]["card"]["reward_status"] = "Sẵn sàng đột phá · đến Sân Luyện" if cultivation["status"] == "requirements_ready" else "Chưa đủ điều kiện · làm bước tiếp theo"
+
 		elif opening_complete:
 			result.append({"id":&"prepare_next_run","title":"Chuẩn bị chuyến đi tiếp theo","body":"Các mốc mở đầu và Trúc Cơ đã hoàn tất. Chuyến đi tiếp theo là mục tiêu tự chọn.","target":ExteriorRouteCatalog.HUB,"done":false,"next":false,"card":{"title":"Chuẩn bị chuyến đi tiếp theo","action":"Mở Hành trang để trang bị, gặp Thiết Lão để sửa hoặc cường hóa nếu đủ vật liệu, rồi vào cổng hầm ngục.","location":"Căn Cứ Lữ Khách · Thiết Lão → cổng hầm ngục","progress":"Mục tiêu tự chọn · không có hạn","count":0,"prerequisite":"Vũ khí dùng được; vật liệu/Linh Thạch theo giá hiện tại nếu chọn nâng cấp.","reward":"Đồ rơi và Tàn Hồn tùy chuyến đi, không bảo đảm một gói thưởng nhiệm vụ","reward_mode":"Nhặt và mang về theo luật hành trình hiện có.","reward_status":"Không có thưởng nhiệm vụ mới để nhận","complete":false,"optional":true,"command":&"","command_label":"","command_enabled":false}})
 	# Victory/reward can finish before enough random Souls for Thanh Vy. Give a
@@ -126,7 +135,7 @@ static func _bounty(profile: SanctuaryProfile,inventory: GearInventory) -> Dicti
 	else:
 		card["action"] = "Về căn cứ và nhận Kiếm Lữ Hành · Liên Thức. Thưởng vào túi; mở Hành trang để so sánh rồi trang bị."
 		card["command"] = &"bounty_claim"; card["command_label"] = "Nhận Kiếm Lữ Hành · Liên Thức"; card["command_enabled"] = bool(quote["can_claim"])
-		if not quote["can_claim"]: card["prerequisite"] = "Túi trang bị đã đầy; phân giải một món dự phòng rồi nhận lại. Phần thưởng chưa bị trừ."
+		if not quote["can_claim"]: card["prerequisite"] = "Cần trống thêm 1 ô túi. Tại Kael, bán một món đủ điều kiện hoặc phân giải đồ dự phòng đã tháo; phần thưởng vẫn chờ nhận."
 	if profile.read_only or profile.hub_inventory_quarantined:
 		card["command_enabled"] = false; card["prerequisite"] = "Hồ sơ cần được kiểm tra trước khi lưu phần thưởng."
 	return card
@@ -143,6 +152,11 @@ static func _upgrade(profile: SanctuaryProfile,inventory: GearInventory,row: Dic
 		var quote: Dictionary = economy.quote_upgrade(id)
 		if int(quote["level"]) >= int(quote["max_level"]): continue
 		card["reward"] = "%s +%.0f → +%.0f %s · giá %d Tàn Hồn (đang có %d)" % [names[id],quote["value"],float(quote["value"])+float(WorldProgressionCatalog.VALUES[id]),quote["unit"],quote["cost"],profile.souls]
+		var missing: int = maxi(0, int(quote["cost"]) - profile.souls)
+		card["progress"] = "Tàn Hồn %d/%d · thiếu %d" % [profile.souls, quote["cost"], missing]
+		card["action"] = "Đến Thanh Vy → %s → xác nhận %d Tàn Hồn." % [names[id], quote["cost"]] if missing == 0 else "Nhặt thêm %d Tàn Hồn bằng E từ phần rơi của quái/thủ lĩnh trong hầm ngục, rồi về Thanh Vy → %s. Phần rơi có thể trống." % [missing, names[id]]
+		card["prerequisite"] = "Đủ Tàn Hồn cho lựa chọn này; xác nhận giá trước khi mua." if missing == 0 else "Thiếu %d Tàn Hồn; rèn/cường hóa dùng Linh Thạch và vật liệu riêng." % missing
+
 		break
 	if card["reward"] == "": card["reward"] = "Các nâng cấp hiện có đã đạt giới hạn."
 	return card

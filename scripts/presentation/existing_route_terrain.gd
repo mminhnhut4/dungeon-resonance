@@ -42,6 +42,13 @@ void fragment(){
 }
 """
 static var _shader: Shader
+# Fixed, immutable source shared by the existing route themes. Room adapters
+# still own their polygons/materials and release them in clear().
+static var _terrain_texture: Texture2D
+static func _texture() -> Texture2D:
+	if _terrain_texture == null and ResourceLoader.exists(PATH):
+		_terrain_texture = load(PATH) as Texture2D
+	return _terrain_texture if _terrain_texture != null else FALLBACK
 var raster_bound: bool=false
 var owner_id: int=0
 var skinned: Array[Dictionary]=[]
@@ -55,7 +62,7 @@ static func attach(room: ExteriorRoom) -> Node2D:
 func rebuild(room: ExteriorRoom) -> bool:
 	clear()
 	if not is_instance_valid(room) or not THEMES.has(room.room_id) or room.route_id!=ExteriorRouteCatalog.MAIN: return false
-	var texture: Texture2D=load(PATH) as Texture2D if ResourceLoader.exists(PATH) else FALLBACK
+	var texture: Texture2D=_texture()
 	raster_bound=texture!=FALLBACK
 	owner_id=room.get_instance_id()
 	if _shader==null: _shader=Shader.new(); _shader.code=CODE

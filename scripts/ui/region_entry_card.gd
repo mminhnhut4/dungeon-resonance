@@ -6,7 +6,7 @@ const INK := Color("211716")
 const TEXT := Color("f0d9a6")
 const GOLD := Color("bd995a")
 const RED := Color("93443d")
-## Current ArtHUD frame and three rune sockets, including their outer margins.
+## ArtHUD frame and dynamic rune row (up to 296px), including outer margins.
 const HUD_SAFE_RECT := Rect2(16,16,380,180)
 
 class AntiqueFrame extends PanelContainer:

@@ -30,7 +30,44 @@ var catalyst_capacity: int = 3
 var weapon_capacity: int = 1
 var permanent_rune_capacity: int = 0
 var run_coins: int = 0
+## Only live expedition bookkeeping; no second inventory or owned-item ledger.
+var expedition_active: bool = false
+var protected_materials: Dictionary[StringName, int] = {}
 const CATALYST_INDICES: Array[int] = [0, 1, 2, 4, 5]
+
+func begin_expedition() -> void:
+	expedition_active = true
+	protected_materials.assign(materials)
+
+func spend_material(id: StringName, amount: int) -> bool:
+	if amount < 0 or materials.get(id, 0) < amount: return false
+	if expedition_active:
+		var protected: int = protected_materials.get(id, 0)
+		var new_amount: int = maxi(0, materials.get(id, 0) - protected)
+		protected_materials[id] = maxi(0, protected - maxi(0, amount - new_amount))
+	materials[id] -= amount
+	return true
+
+func defeat_materials() -> Dictionary[StringName, int]:
+	var result: Dictionary[StringName, int] = MaterialCatalog.empty_counts()
+	for id: StringName in result:
+		result[id] = mini(materials.get(id, 0), protected_materials.get(id, 0))
+	return result
+
+func sort_equipment(mode: int = 0, publish: bool = true) -> void:
+	var ordered: Array[int] = equipment_bag_uids()
+	ordered.sort_custom(func(a: int, b: int) -> bool:
+		var left: GearItem = items[a]
+		var right: GearItem = items[b]
+		if mode == 1 and left.quality != right.quality: return left.quality > right.quality
+		if mode == 0 and equipment_slot(a) != equipment_slot(b): return equipment_slot(a) < equipment_slot(b)
+		var left_name: String = left.equipment_definition.item_name if left.equipment_definition != null else String(left.definition_id)
+		var right_name: String = right.equipment_definition.item_name if right.equipment_definition != null else String(right.definition_id)
+		if left_name != right_name: return left_name.naturalnocasecmp_to(right_name) < 0
+		return a < b)
+	equipment_positions.assign(ordered)
+	while equipment_positions.size() < EQUIPMENT_BAG_CAPACITY: equipment_positions.append(0)
+	if publish: changed.emit()
 
 
 func add_material(id: StringName, amount: int = 1) -> bool:
@@ -224,8 +261,8 @@ func craft(id: StringName, weapon_uid: int = 0) -> bool:
 		_: return false
 	if materials[&"metal"] < metal or materials[&"dust"] < dust:
 		return false
-	materials[&"metal"] -= metal
-	materials[&"dust"] -= dust
+	spend_material(&"metal", metal)
+	spend_material(&"dust", dust)
 	if id == &"upgrade":
 		items[weapon_uid].quality += 1
 	else:
@@ -252,34 +289,50 @@ func equipment_bag_uids() -> Array[int]:
 	return result
 
 
-func equipment_grid_uids() -> Array[int]:
+func equipment_grid_uids(update_positions: bool = true) -> Array[int]:
 	var available: Array[int] = equipment_bag_uids()
-	if equipment_positions.size() < EQUIPMENT_BAG_CAPACITY:
-		equipment_positions.resize(EQUIPMENT_BAG_CAPACITY)
-		equipment_positions.fill(0)
-	for index: int in equipment_positions.size():
-		if not available.has(equipment_positions[index]):
-			equipment_positions[index] = 0
+	var positions: Array[int] = equipment_positions.duplicate()
+	while positions.size() < EQUIPMENT_BAG_CAPACITY: positions.append(0)
+	for index: int in positions.size():
+		if not available.has(positions[index]):
+			positions[index] = 0
 	for uid: int in available:
-		if equipment_positions.has(uid):
+		if positions.has(uid):
 			continue
-		var free: int = equipment_positions.find(0)
+		var free: int = positions.find(0)
 		if free >= 0:
-			equipment_positions[free] = uid
+			positions[free] = uid
 		else:
 			# Legacy/debug loot is never deleted. Extra pages expose that overflow.
-			equipment_positions.append(uid)
-	return equipment_positions.duplicate()
+			positions.append(uid)
+	if update_positions: equipment_positions.assign(positions)
+	return positions
 
 
-func add_equipment(data: EquipmentData, quality: int = GearItem.Quality.COMMON) -> GearItem:
+func sort_equipment_bag(publish: bool = true) -> void:
+	# Stable ordering, preserving every UID (including legacy overflow pages).
+	var ordered: Array[int] = equipment_bag_uids()
+	ordered.sort_custom(func(a: int, b: int) -> bool:
+		var left: GearItem = items[a]
+		var right: GearItem = items[b]
+		if equipment_slot(a) != equipment_slot(b): return equipment_slot(a) < equipment_slot(b)
+		if left.quality != right.quality: return left.quality > right.quality
+		if left.enhancement_level != right.enhancement_level: return left.enhancement_level > right.enhancement_level
+		if left.definition_id != right.definition_id: return String(left.definition_id) < String(right.definition_id)
+		return a < b)
+	equipment_positions.assign(ordered)
+	while equipment_positions.size() < EQUIPMENT_BAG_CAPACITY: equipment_positions.append(0)
+	if publish: changed.emit()
+
+
+func add_equipment(data: EquipmentData, quality: int = GearItem.Quality.COMMON, publish: bool = true) -> GearItem:
 	if data == null or data.id == &"" or data.slot_type < 0 or data.slot_type >= equipment_uids.size() or equipment_bag_uids().size() >= EQUIPMENT_BAG_CAPACITY:
 		return null
 	if data.slot_type == EquipmentData.SlotType.WEAPON and data.moveset == null:
 		return null
 	var item: GearItem = add_item(EquipmentData.SLOT_KINDS[data.slot_type], data.id, quality)
 	item.equipment_definition = data
-	changed.emit()
+	if publish: changed.emit()
 	return item
 
 

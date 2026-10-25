@@ -56,6 +56,7 @@ func configure(id: StringName, route: StringName, opened: bool) -> bool:
 	else:
 		_author_details()
 		SectJourney.author_room(self)
+		OpeningExploration.author(self)
 	for key: StringName in interactions:
 		if key in [&"door_west",&"door_east"]: _door(interactions[key],"← Lối về" if key == &"door_west" else "Đi tiếp →")
 	if room_id == &"o01_p01" and route_id == ExteriorRouteCatalog.MAIN:
@@ -137,10 +138,12 @@ func _author_details() -> void:
 			hanh.preview_tint = Color("b59c76")
 			hanh.position = interactions[&"hanh"]
 			add_child(hanh)
+			MemberConceptRig.attach_to(hanh,"hanh")
 			_sign(interactions[&"hanh"],"E · Hạnh / thợ đóng thuyền")
 			_sign(interactions[&"shipyard_record"],"E · Ghi chép xưởng")
-			_art(_rect(Rect2(1160,_y(1.3)-220,14,240)),Color("9e9982"),-1)
-			_art(_rect(Rect2(1130,_y(1.3)-220,250,12)),Color("9e9982"),-1)
+			var mast_foot := Vector2(1160,floor_y(1160))
+			_art(_rect(Rect2(mast_foot+Vector2(0,-240),Vector2(14,240))),Color("9e9982"),-1)
+			_art(_rect(Rect2(mast_foot+Vector2(-30,-240),Vector2(250,12))),Color("9e9982"),-1)
 			_art(PackedVector2Array([Vector2(1400,_y(0)-30),Vector2(1780,_y(0)-30),Vector2(1710,_y(0)+30),Vector2(1460,_y(0)+30)]),Color("766447"),-11)
 			_sign(Vector2(width-350,surface[-1].y),"Cầu tàu khô · Chưa mở đường thuyền")
 
@@ -154,8 +157,13 @@ func _branch(plateau_end_index: int, rise_h: float, caption: String) -> void:
 	var lift: float = rise_h*ExteriorRouteCatalog.H
 	var first := Vector2(takeoff.x+110,takeoff.y-lift)
 	var second := first+Vector2(180,-lift)
-	_solid(_rect(Rect2(first,Vector2(110,8))),Color("b3a383"))
-	_solid(_rect(Rect2(second,Vector2(110,8))),Color("b3a383"))
+	# These optional jump landings sit only ~50px above the main slope. Keep
+	# their top surfaces, but do not turn the grounded road into a low tunnel.
+	# Ordinary terrain, boundaries and the SC01 gate remain fully solid.
+	var first_shelf := _solid(_rect(Rect2(first,Vector2(110,8))),Color("b3a383"),true)
+	first_shelf.name = "BranchShelf1"
+	var second_shelf := _solid(_rect(Rect2(second,Vector2(110,8))),Color("b3a383"),true)
+	second_shelf.name = "BranchShelf2"
 	jumps.append({"takeoff":takeoff+Vector2(-15,0),"landing":first+Vector2(55,0),"delta_z":lift,"edge_gap":110.0})
 	jumps.append({"takeoff":first+Vector2(95,0),"landing":second+Vector2(55,0),"delta_z":lift,"edge_gap":70.0})
 	min_y = minf(min_y,second.y)
@@ -202,11 +210,12 @@ func _lamp(point: Vector2) -> void:
 	_art(_rect(Rect2(point+Vector2(-3,-90),Vector2(6,90))),Color("a49a74"),1)
 	_art(_rect(Rect2(point+Vector2(-11,-90),Vector2(22,16))),Color("d6bb65"),2)
 
-func _solid(points: PackedVector2Array, color: Color) -> StaticBody2D:
+func _solid(points: PackedVector2Array, color: Color, one_way: bool = false) -> StaticBody2D:
 	var body := StaticBody2D.new()
 	var collider := CollisionPolygon2D.new()
 	collider.polygon = points
-	collider.one_way_collision = false
+	collider.one_way_collision = one_way
+	if one_way: collider.one_way_collision_margin = 4.0
 	body.add_child(collider)
 	var art := Polygon2D.new()
 	art.polygon = points
@@ -234,6 +243,10 @@ func _sign(point: Vector2, caption: String, beside_npc: bool = false) -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.set_meta(&"debug_keep",true)
+	# P03 groups several station signs beside resident nameplates. The existing
+	# bottom prompt identifies the nearest E target; keep directional door signs.
+	if room_id == &"o01_p03" and route_id == ExteriorRouteCatalog.MAIN and caption.begins_with("E ·"):
+		label.hide()
 	add_child(label)
 
 func _rect(rect: Rect2) -> PackedVector2Array:

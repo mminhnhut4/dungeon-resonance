@@ -36,15 +36,18 @@ static func state(permanent: SanctuaryProfile) -> Dictionary:
 	var current: Dictionary = permanent.extension_state("npc_social")
 	return current if NpcSocialProgress.valid(current) else NpcSocialProgress.empty()
 
-static func can_help(permanent: SanctuaryProfile, life: NpcWorldState, id: String) -> bool:
-	return permanent != null and permanent.profile_version == 2 and permanent.social_transactions_available() and life != null and life.save_path == permanent.save_path + ".npc_v1.json" and id in NpcSocialCatalog.IDS and life.records.has(id) and not NpcSocialProgress.helped(state(permanent),id) and permanent.material_stash.get(NpcSocialCatalog.HELP_MATERIAL,0) >= NpcSocialCatalog.HELP_COST and life.records[id]["fear"] < 12 and not life.social_fence(id).is_empty()
+static func can_help(permanent: SanctuaryProfile, life: NpcWorldState, id: String, carried: GearInventory = null) -> bool:
+	if permanent == null or (carried != null and permanent.hub_inventory_quarantined): return false
+	var source: Dictionary = carried.materials if carried != null else permanent.material_stash
+	var amount: Variant = source.get(NpcSocialCatalog.HELP_MATERIAL, 0)
+	return permanent.profile_version == 2 and permanent.social_transactions_available() and life != null and life.save_path == permanent.save_path + ".npc_v1.json" and id in NpcSocialCatalog.IDS and life.records.has(id) and not NpcSocialProgress.helped(state(permanent),id) and MaterialCatalog.valid_count(amount) and int(amount) >= NpcSocialCatalog.HELP_COST and life.records[id]["fear"] < 12 and not life.social_fence(id).is_empty()
 
-static func help(permanent: SanctuaryProfile, life: NpcWorldState, id: String) -> bool:
-	if not can_help(permanent,life,id): return false
+static func help(permanent: SanctuaryProfile, life: NpcWorldState, id: String, carried: GearInventory = null) -> bool:
+	if not can_help(permanent,life,id,carried): return false
 	var raw_fence: Dictionary = life.social_fence(id)
 	var fence: Dictionary = raw_fence.duplicate(true); fence["kind"] = "npc_social"
 	var next: Dictionary = NpcSocialProgress.with_help(state(permanent),id,NpcWorldState.life_id(id))
-	return permanent.commit_extension_event("npc_social",NpcSocialProgress.event_id(id,NpcWorldState.life_id(id)),{NpcSocialCatalog.HELP_MATERIAL:NpcSocialCatalog.HELP_COST},0,next,permanent.extension_revision("npc_social"),fence,life.social_fence_matches.bind(raw_fence)).get("ok",false)
+	return permanent.commit_extension_event("npc_social",NpcSocialProgress.event_id(id,NpcWorldState.life_id(id)),{NpcSocialCatalog.HELP_MATERIAL:NpcSocialCatalog.HELP_COST},0,next,permanent.extension_revision("npc_social"),fence,life.social_fence_matches.bind(raw_fence),carried).get("ok",false)
 
 func _durable_reader(fence: Dictionary) -> Dictionary:
 	var refused: Dictionary = {"ok":false,"eligible":false,"unchanged":false}

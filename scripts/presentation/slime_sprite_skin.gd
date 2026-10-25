@@ -185,7 +185,9 @@ func refresh_skin(use_motion_facing: bool = false) -> void:
 	var actor: Node2D = instance_from_id(_actor_id) as Node2D
 	var mutant: Variant = actor.get("projectile_element")
 	tint = ICE_TINT if mutant == &"ice" else POISON_TINT if mutant == &"poison" else Color.WHITE
-	var flash_time: float = float(actor.get("_flash_remaining"))
+	# Only a resolved contact starts the local recoil clock. DoT may update the
+	# legacy body flash timer, but cannot create a contact flash on this skin.
+	var flash_time: float = minf(float(actor.get("_flash_remaining")), maxf(0.0, _hit_remaining - 0.02))
 	var body_color: Color = _body.color
 	# Base green belongs to the asset; only the old feedback colors become tints.
 	if flash_time > 0.0:
@@ -208,6 +210,9 @@ func _on_visual_hit(event: DamageEvent, result: DamageResult) -> void:
 	hit_reaction_count += 1
 	active_cue_remaining = 0.0
 	_bite_was_active = false
+	# The normal physics sampler pauses during hit-stop; commit the accepted
+	# contact tint now without advancing its pose or animation clock.
+	refresh_skin(true)
 
 
 func _draw() -> void:

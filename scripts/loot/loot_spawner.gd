@@ -2,6 +2,7 @@ class_name LootSpawner
 extends Node2D
 
 signal pickup_spawned(pickup: LootPickup)
+signal pickup_collected(pickup: LootPickup)
 
 var player: Player
 var inventory: GearInventory
@@ -73,6 +74,7 @@ func spawn(kind: StringName, id: StringName, location: Vector2, quantity: int = 
 	pickup.position = location
 	pickup.floor_y = location.y + 14.0
 	pickup.launch_velocity = Vector2(rng.randf_range(-45, 45), -110)
+	pickup.collected.connect(func(value: LootPickup) -> void:pickup_collected.emit(value))
 	add_child(pickup)
 	spawned_total += 1
 	pickup_spawned.emit(pickup)
@@ -157,7 +159,7 @@ func chest_drop(location: Vector2, large: bool = false) -> void:
 
 func _world_chest_drop(location: Vector2, large: bool) -> void:
 	var count: int = rng.randi_range(3, 5) + (1 if large else 0)
-	var materials: Array[StringName] = [&"metal", &"dust", &"crystal", &"healing_herb", &"linen_fiber", &"detox_root", &"enhancement_stone_1", &"enhancement_stone_2"]
+	var materials: Array[StringName] = MaterialCatalog.WORLD_CHEST_POOL
 	for index: int in count:
 		var point: Vector2 = location + Vector2((index - count / 2.0) * 20, 0)
 		if index == count - 1 and rng.randf() < 0.5:

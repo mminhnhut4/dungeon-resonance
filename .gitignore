@@ -1,22 +1,12 @@
-.godot/
-builds/
+/.godot/
+/TeamTestData/
+/QA_Profile/
+/tools/engine/
+/.agents/
+/.codex/
+*.log
 *.tmp
-
-# Local caches, exports, QA saves and credentials
-*.translation
-exports/
-dist/
-.env
-.env.*
-!.env.example
-export_credentials.cfg
-*.pfx
-*.p12
-*.pem
-.DS_Store
-Thumbs.db
-
-# Historical generated QA is local; keep asset provenance required by tests.
-docs/verification/*
-!docs/verification/asset_pipeline_manifest.json
-!docs/verification/asset_pipeline_sources/
+*.bak
+*.zip
+*.exe
+*.pdb

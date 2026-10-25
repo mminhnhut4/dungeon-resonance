@@ -13,6 +13,8 @@ var _action_panel: PanelContainer
 var _slot: PanelContainer
 var _action_label: Label
 var compact: bool = false
+var extra_controls: Control
+var extra_focus: Array[Control] = []
 
 static func create(icon: Texture2D, title: String, details: String, quantity: String, action: String, callback: Callable, use_compact: bool = false) -> ServiceItemCard:
 	var card := ServiceItemCard.new()
@@ -84,6 +86,21 @@ static func create(icon: Texture2D, title: String, details: String, quantity: St
 	if callback.is_valid(): card.pressed.connect(callback)
 	return card
 
+func set_extra_controls(control: Control) -> void:
+	# Preserve the card's action NodePath and grid placement while child inputs
+	# consume their own events instead of triggering the one-item action.
+	if extra_controls != null: return
+	extra_controls = control
+	_margin.remove_child(_row)
+	var column := VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 6)
+	_margin.add_child(column)
+	column.add_child(_row)
+	column.add_child(control)
+	control.minimum_size_changed.connect(_update_height)
+	_update_height()
+
 func set_display_only() -> void:
 	# action_button aliases this card; only the action chip should disappear.
 	_action_panel.hide()
@@ -112,7 +129,8 @@ static func _ignore_children(control: Control) -> void:
 
 func _update_height() -> void:
 	if _row != null:
-		custom_minimum_size.y = maxf(76 if compact else 96, _row.get_combined_minimum_size().y + (16 if compact else 20))
+		var extra_height: float = extra_controls.get_combined_minimum_size().y + 6 if extra_controls != null else 0.0
+		custom_minimum_size.y = maxf(76 if compact else 96, _row.get_combined_minimum_size().y + extra_height + (16 if compact else 20))
 
 func _draw() -> void:
 	if _action_panel != null:

@@ -27,8 +27,10 @@ static func build(hub: Node, session: Node, panel: Container) -> void:
 	if actor.is_empty():
 		_text(hub, panel, "Chưa thể đọc cảnh giới của nhân vật.")
 		return
-	var next_step: Label = _text(hub, panel, "VIỆC NÊN LÀM TIẾP\n" + OpeningProgressionGuide.cultivation_next_step(hub.profile))
+	var next_step: Label = _text(hub, panel, "VIỆC NÊN LÀM TIẾP\n" + OpeningProgressionGuide.cultivation_next_step(hub.profile, hub.gear.inventory))
 	next_step.name = "CultivationNextStep"
+	var lesson: Label=_text(hub,panel,"TỰ GHÉP VÀ THỬ\n"+FoundationLesson.example_text()+"\nHai bia ở Sân Luyện không đánh trả, tự hồi. Tab → Bùa để xem bộ đang lắp và lý do chưa có liên kết. Ghép bùa là đòn chính; nhánh G là động tác riêng.")
+	lesson.name="CultivationResonanceLesson"
 	_text(hub, panel, "Tu vi tích lũy dùng để đột phá; mana trên thanh chiến đấu dùng tung chiêu. Muốn tăng máu/mana tối đa: gặp Thanh Vy → Tịnh hóa bằng Tàn Hồn.")
 	if int(actor["stage"]) < 3:
 		var notice: String = _breakthrough_hint(actor, config, materials, souls, proofs, true)
@@ -36,8 +38,8 @@ static func build(hub: Node, session: Node, panel: Container) -> void:
 			var requirement: Label = _text(hub, panel, notice)
 			# Keep the reason near the first native focus row; disabled branches are skipped.
 			requirement.name = "CultivationRequirements_player"
-	_text(hub, panel, "Thông số sơ bộ · %d năng lượng mỗi phiên %.1f giây · %d Tinh Thạch trong kho/phiên. Tư chất tăng tốc điều tức; lĩnh ngộ và thông thạo vẫn cần tự rèn luyện." % [config["training_gain"], float(config["training_session_ticks"]) / float(config["ticks_per_second"]), config["training_cost"]])
-	_text(hub, panel, "Kho căn cứ: %d Tinh Thạch · %d Bột Phép · %d Tàn Hồn" % [materials.get("crystal", 0), materials.get("dust", 0), souls])
+	_text(hub, panel, "Thông số sơ bộ · %d năng lượng mỗi phiên %.1f giây · %d Tinh Thạch đang mang/phiên. Tư chất tăng tốc điều tức; lĩnh ngộ và thông thạo vẫn cần tự rèn luyện." % [config["training_gain"], float(config["training_session_ticks"]) / float(config["ticks_per_second"]), config["training_cost"]])
+	_text(hub, panel, "Trong túi: %d Tinh Thạch · %d Bột Phép · %d Tàn Hồn" % [materials.get("crystal", 0), materials.get("dust", 0), souls])
 	_actor_summary(hub, panel, "Lữ khách", actor, config)
 	var training_actor: String = str(view.get("training_actor", ""))
 	if not training_actor.is_empty():
@@ -45,7 +47,7 @@ static func build(hub: Node, session: Node, panel: Container) -> void:
 		_button(hub, panel, "Dừng điều tức", _stop.bind(hub, session), "CultivationStop", true)
 	_button(hub, panel, "Đóng bảng và bắt đầu điều tức", _start.bind(hub, session, "player"), "CultivationStartPlayer", int(actor["stage"]) < 3 and int(materials.get("crystal", 0)) >= int(config["training_cost"]))
 	_breakthrough_button(hub, session, panel, "player", actor, config, materials, souls, proofs, true)
-	_text(hub, panel, "NGƯỜI HÁI THUỐC · Tài trợ tự nguyện\nChỉ luyện khi người này còn sống và đang nghỉ. Mỗi phiên dùng Tinh Thạch trong kho chung; một đợt tài trợ tối đa %d phiên." % config["max_npc_sessions"])
+	_text(hub, panel, "NGƯỜI HÁI THUỐC · Tài trợ tự nguyện\nChỉ luyện khi người này còn sống và đang nghỉ. Mỗi phiên dùng Tinh Thạch đang mang; một đợt tài trợ tối đa %d phiên." % config["max_npc_sessions"])
 	var npc: Dictionary = actors.get(NPC_ID, {})
 	if not npc.is_empty():
 		_actor_summary(hub, panel, "Người hái thuốc", npc, config)
@@ -63,7 +65,7 @@ static func _actor_summary(hub: Node, panel: Container, caption: String, actor: 
 	var stage: int = clampi(int(actor.get("stage", 0)), 0, 3)
 	var detail: String = "%s · %s · Tư chất %d" % [caption, STAGES[stage], actor.get("aptitude", 0)]
 	if stage < 3:
-		detail += "\nNăng lượng %d/%d · Thông thạo %d/%d · Lĩnh ngộ %d/%d" % [actor["energy"], config["energy_thresholds"][stage], actor["mastery"], config["mastery_thresholds"][stage], actor["insight_ids"].size(), config["insight_thresholds"][stage]]
+		detail += "\nTu vi %d/%d · Thông thạo %d/%d · Lĩnh ngộ %d/%d" % [actor["energy"], config["energy_thresholds"][stage], actor["mastery"], config["mastery_thresholds"][stage], actor["insight_ids"].size(), config["insight_thresholds"][stage]]
 	else:
 		detail += "\nĐã hoàn thành vòng tu luyện đầu."
 	_text(hub, panel, detail)
@@ -73,12 +75,13 @@ static func _breakthrough_button(hub: Node, session: Node, panel: Container, act
 	if stage >= 3: return
 	var cost: int = int(config["final_dust_cost"] if stage == 2 else config["interim_dust_cost"])
 	var text: String = "%s %s · %d Bột Phép" % ["Đột phá" if stage==2 else "Tiến tầng",STAGES[stage + 1], cost]
-	if stage == 2: text += " + %d Tàn Hồn · Có %d · Thiếu %d · Cần chứng tích Golem" % [config["final_soul_cost"], souls, maxi(0, int(config["final_soul_cost"]) - souls)]
+	if stage == 2 and int(config["final_soul_cost"]) > 0: text += " + %d Tàn Hồn · Có %d" % [config["final_soul_cost"], souls]
+	if stage == 2 and int(config["final_golem_proof"]) > 0: text += " · Cần chứng tích Golem"
 	var allowed: bool = eligible and bool(actor["enrolled"]) and int(actor["energy"]) >= int(config["energy_thresholds"][stage]) and int(actor["mastery"]) >= int(config["mastery_thresholds"][stage]) and actor["insight_ids"].size() >= int(config["insight_thresholds"][stage]) and int(materials.get("dust", 0)) >= cost
 	if stage == 2: allowed = allowed and souls >= int(config["final_soul_cost"]) and int(proofs.get("golem", 0)) >= int(config["final_golem_proof"])
 	var hint: String = _breakthrough_hint(actor, config, materials, souls, proofs, eligible) if not allowed else text
 	if stage==2 and actor_id=="player":
-		_text(hub,panel,"Chọn một nhánh khi đột phá. Trang bị và bộ bùa vẫn quyết định cách chơi; G dùng động tác đã chọn.")
+		_text(hub,panel,"ĐỘT PHÁ MỞ LIÊN ẤN\n"+FoundationResonance.description()+"\nVí dụ Hỏa + Phong: trước 0 → sau 1 liên kết. Đồng thời chọn một nhánh G bên dưới; trang bị vẫn quyết định bộ đòn.")
 		var cloud_return_button: Button = _button(hub,panel,text+" · Hồi Phong Kiếm",_perform.bind(hub,session,"breakthrough",{"actor_id":actor_id,"branch_id":"cloud_return"}),"CultivationBranch_cloud_return",allowed)
 		if not allowed: cloud_return_button.tooltip_text = hint
 		var tether_sigil_button: Button = _button(hub,panel,text+" · Tỏa Linh Ấn",_perform.bind(hub,session,"breakthrough",{"actor_id":actor_id,"branch_id":"tether_sigil"}),"CultivationBranch_tether_sigil",allowed)
@@ -98,16 +101,16 @@ static func _breakthrough_hint(actor: Dictionary, config: Dictionary, materials:
 	var insight: int = maxi(0, int(config["insight_thresholds"][stage]) - actor["insight_ids"].size())
 	var dust_cost: int = int(config["final_dust_cost"] if stage == 2 else config["interim_dust_cost"])
 	var dust: int = maxi(0, dust_cost - int(materials.get("dust", 0)))
-	if energy > 0: missing.append("%d năng lượng" % energy)
-	if mastery > 0: missing.append("%d thông thạo" % mastery)
-	if insight > 0: missing.append("%d lĩnh ngộ" % insight)
-	if dust > 0: missing.append("%d Bột Phép trong kho" % dust)
+	if energy > 0: missing.append("%d tu vi · điều tức tại Sân Luyện" % energy)
+	if mastery > 0: missing.append("%d thông thạo · đánh trúng mộc nhân/quái bằng cận chiến" % mastery)
+	if insight > 0: missing.append("%d lĩnh ngộ · Đường Bộ, Thanh Vy, Golem" % insight)
+	if dust > 0: missing.append("%d Bột Phép trong túi · rút ở kho hoặc kiếm từ quái/rương, phân giải đồ dự phòng" % dust)
 	if stage == 2:
 		var soul_count: int = maxi(0, int(config["final_soul_cost"]) - souls)
 		var proof_count: int = maxi(0, int(config["final_golem_proof"]) - int(proofs.get("golem", 0)))
-		if soul_count > 0: missing.append("%d Tàn Hồn" % soul_count)
-		if proof_count > 0: missing.append("%d chứng tích Golem" % proof_count)
-	if missing.is_empty(): return ""
+		if soul_count > 0: missing.append("%d Tàn Hồn · E nhặt phần rơi của quái/thủ lĩnh" % soul_count)
+		if proof_count > 0: missing.append("%d chứng tích Golem · hạ Golem trong hầm ngục" % proof_count)
+	if missing.is_empty(): return "SẴN SÀNG ĐỘT PHÁ · Đủ điều kiện lên %s. Chọn nút bên dưới để xác nhận chi phí%s." % [STAGES[stage + 1], " và học một nhánh (G)" if stage == 2 else ""]
 	return "Còn thiếu: %s. Đột phá được xác nhận bằng nút này khi đủ điều kiện." % "; ".join(missing)
 
 static func _origins(hub: Node, session: Node, panel: Container, view: Dictionary, config: Dictionary, materials: Dictionary, npc_enabled: bool) -> void:
@@ -203,9 +206,9 @@ static func _error_text(error: String) -> String:
 		"energy_required": "Chưa tích đủ năng lượng để đột phá.",
 		"mastery_required": "Chưa đủ thông thạo. Hãy luyện kiếm trên mộc nhân hoặc chiến đấu.",
 		"insight_required": "Chưa đủ lĩnh ngộ. Hãy khám phá, gặp Thanh Vy và hạ Golem.",
-		"training_resource_required": "Kho căn cứ chưa đủ Tinh Thạch cho phiên luyện.",
-		"breakthrough_resource_required": "Kho căn cứ chưa đủ Bột Phép để đột phá.",
-		"pill_resource_required": "Kho căn cứ chưa đủ Bột Phép để chế đan.",
+		"training_resource_required": "Túi chưa đủ Tinh Thạch cho phiên luyện.",
+		"breakthrough_resource_required": "Túi chưa đủ Bột Phép để đột phá.",
+		"pill_resource_required": "Túi chưa đủ Bột Phép để chế đan.",
 		"golem_proof_required": "Cần chứng tích hạ Golem đã được ghi nhận.",
 		"souls_required": "Chưa đủ Tàn Hồn để đột phá.",
 		"actor_not_enrolled": "Hãy đăng ký một đợt tài trợ trước khi luyện cùng người hái thuốc.",
