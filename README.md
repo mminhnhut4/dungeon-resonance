@@ -4,6 +4,8 @@
 
 Nhánh `review/amd201-20261105` bổ sung API ASP.NET Core, cổng React và client đồng bộ thử nghiệm trong Godot. Xem [hướng dẫn AMD201](docs/amd201/README.md), [cấu hình triển khai](docs/amd201/DEPLOYMENT.md) và [báo cáo PDF](docs/amd201/Bao_cao_AMD201.pdf).
 
+Thành viên mới bắt đầu từ [hướng dẫn mở game và thao tác từng bước](docs/amd201/HUONG_DAN_TEAM.md) hoặc [bản PDF để đọc](docs/amd201/Huong_dan_team_AMD201.pdf).
+
 Các kiểm thử xuyên client hiện dùng SQLite trong host QA; PostgreSQL thật, Docker, CI và triển khai PaaS chưa được kiểm chứng. Bản này chưa phải bản production và chưa chứng minh đã hết crash/khựng. Đăng nhập AMD và save của nó dùng entry riêng, không tự mở khóa progression thường.
 
 Bản thử source có menu chọn toàn bộ nội dung đang chạy. Godot **4.7.2**, renderer **Compatibility**. Không kèm engine binary, cache hay save. Main của dự án vẫn mở khóa theo nhiệm vụ bình thường; scene TEAM TEST là entry riêng.
