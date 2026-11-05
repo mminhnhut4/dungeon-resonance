@@ -1,0 +1,20 @@
+# Review template, NOT an active root render.yaml and NOT deployed.
+# Replace image owner/repository and choose an approved plan before creating
+# resources. No database/account/credential is provisioned by this template.
+services:
+  - type: web
+    name: dungeon-amd201-demo
+    runtime: image
+    plan: free
+    image:
+      url: ghcr.io/REPLACE_OWNER/REPLACE_REPOSITORY-amd201:REPLACE_COMMIT
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_HTTP_PORTS
+        value: '8080'
+      - key: ConnectionStrings__Game
+        sync: false
+    # Run the migration image command once against the approved DB before
+    # first start and before later schema changes. A paid plan may support
+    # preDeployCommand; do not select/enable a paid plan without approval.
+    # preDeployCommand: dotnet Dungeon.Api.dll --migrate

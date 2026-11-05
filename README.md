@@ -1,5 +1,11 @@
 # Dungeon Resonance — TEAM TEST 25/10/2026
 
+## AMD201 — bản review cho giảng viên
+
+Nhánh `review/amd201-20261105` bổ sung API ASP.NET Core, cổng React và client đồng bộ thử nghiệm trong Godot. Xem [hướng dẫn AMD201](docs/amd201/README.md), [cấu hình triển khai](docs/amd201/DEPLOYMENT.md) và [báo cáo PDF](docs/amd201/Bao_cao_AMD201.pdf).
+
+Các kiểm thử xuyên client hiện dùng SQLite trong host QA; PostgreSQL thật, Docker, CI và triển khai PaaS chưa được kiểm chứng. Bản này chưa phải bản production và chưa chứng minh đã hết crash/khựng. Đăng nhập AMD và save của nó dùng entry riêng, không tự mở khóa progression thường.
+
 Bản thử source có menu chọn toàn bộ nội dung đang chạy. Godot **4.7.2**, renderer **Compatibility**. Không kèm engine binary, cache hay save. Main của dự án vẫn mở khóa theo nhiệm vụ bình thường; scene TEAM TEST là entry riêng.
 
 ## Lấy bản và chạy trên Windows

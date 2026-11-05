@@ -10,3 +10,14 @@
 *.zip
 *.exe
 *.pdb
+
+# AMD201 local runtime and private test data
+AMD201Data/
+online/**/bin/
+online/**/obj/
+online/**/node_modules/
+online/**/.pnpm-store/
+online/**/amd201_20261030/
+online/src/Dungeon.Api/wwwroot/
+online/.secrets/
+online/*.db*

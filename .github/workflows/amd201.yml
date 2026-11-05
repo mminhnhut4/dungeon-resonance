@@ -1,0 +1,102 @@
+# Source template only: not pushed/executed in the implementation task.
+# Publication/deployment require explicit repository flags + approved secrets.
+name: AMD201 API portal and container
+on:
+  push:
+    branches: [main]
+    paths: ['online/**', '.github/workflows/amd201.yml']
+  pull_request:
+    paths: ['online/**', '.github/workflows/amd201.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: amd201-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: dungeon_ci
+          POSTGRES_PASSWORD: synthetic-ci-only-not-production
+          POSTGRES_DB: dungeon_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U dungeon_ci -d dungeon_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+          skip-lts-prepass: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Restore pinned dependencies
+        run: |
+          dotnet restore online/tests/Dungeon.Api.Tests/Dungeon.Api.Tests.csproj --locked-mode
+          npm install --global pnpm@11.25.0
+          pnpm --dir online/web install --frozen-lockfile --ignore-scripts
+      - name: Policy HTTP and actual PostgreSQL migration/concurrency tests
+        env:
+          AMD201_TEST_PG: Host=127.0.0.1;Port=5432;Database=dungeon_ci;Username=dungeon_ci;Password=synthetic-ci-only-not-production
+        run: dotnet test online/tests/Dungeon.Api.Tests/Dungeon.Api.Tests.csproj --no-restore --logger trx --results-directory TestResults
+      - name: Portal tests and production build
+        run: |
+          pnpm --dir online/web test
+          pnpm --dir online/web build
+      - name: Build deployment container on every verified main push
+        run: docker build --tag dungeon-amd201-ci:${{ github.sha }} online
+  publish:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AMD201_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: amd201-publication
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish verified commit image to GHCR
+        id: image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DOCKER_CONFIG="$RUNNER_TEMP/amd201-docker"
+          trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}-amd201"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --tag "$IMAGE:$GITHUB_SHA" online
+          docker push "$IMAGE:$GITHUB_SHA"
+          DIGEST_REF=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:$GITHUB_SHA")
+          test -n "$DIGEST_REF"
+          echo "image=$DIGEST_REF" >> "$GITHUB_OUTPUT"
+  deploy:
+    needs: publish
+    if: vars.AMD201_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: amd201-demo
+    steps:
+      - name: Ask approved Render service to deploy this immutable image
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE: ${{ needs.publish.outputs.image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOOK"
+          test -n "$IMAGE"
+          curl --silent --show-error --fail --max-time 30 --get --data-urlencode "imgURL=$IMAGE" --output "$RUNNER_TEMP/amd201-deploy-response.json" "$DEPLOY_HOOK"
+          echo "Deployment requested. Verify the PaaS result and /health/ready before recording a successful demo."

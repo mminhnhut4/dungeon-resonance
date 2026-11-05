@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/node_modules
+**/.pnpm-store
+**/amd201_20261030
+**/wwwroot
+tests
+tools
+web/test
+.config
+.env*
+*.db*
+*.log
+.secrets

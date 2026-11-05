@@ -1,0 +1,37 @@
+# Explicitly requires an approved Docker runtime and caller-supplied local secret.
+# Never run against a real player's database. Only loopback API port is exposed.
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: dungeon
+      POSTGRES_USER: dungeon
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    secrets: [pg_password]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U dungeon -d dungeon]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  migrate:
+    build: .
+    command: [--migrate]
+    environment: &api_environment
+      ConnectionStrings__Game: Host=db;Database=dungeon;Username=dungeon;Timeout=5
+      AMD201_DB_PASSWORD_FILE: /run/secrets/pg_password
+    secrets: [pg_password]
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    build: .
+    environment: *api_environment
+    secrets: [pg_password]
+    ports: ["127.0.0.1:5086:8080"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+secrets:
+  pg_password:
+    file: ${AMD201_PG_PASSWORD_FILE:?Set an approved local secret file path}
+volumes:
+  pg_data:
