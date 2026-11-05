@@ -10,7 +10,7 @@ public sealed class ProgressService(GameDb db, TimeProvider time)
         var row = await db.Progress.AsNoTracking().SingleOrDefaultAsync(x => x.UserId == user, ct)
             ?? throw new DomainFailure(404, "no_cloud_progress");
         var capsule = JsonSerializer.Deserialize<CloudCapsule>(row.CapsuleJson, CapsulePolicy.Json)!;
-        return new(row.Revision, row.UpdatedAt, capsule, CapsulePolicy.Validate(capsule));
+        return new(row.Revision, row.UpdatedAt, capsule, CapsulePolicy.ValidateStored(capsule));
     }
     public async Task<SaveResult> Save(Guid user, Guid operation, SaveProgress request, CancellationToken ct)
     {

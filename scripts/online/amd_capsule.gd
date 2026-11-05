@@ -2,7 +2,12 @@ class_name AmdCapsule
 extends RefCounted
 var error: String = ""
 const BUILD: String = "amd201-20261030"
-const MAX_BYTES: int = 1048576
+const MAX_PROFILE_BYTES: int = 524288 # ProfileCommitWriter reader limit.
+const MAX_NPC_BYTES: int = 32768 # NpcWorldState reader limit.
+const MAX_BYTES: int = MAX_PROFILE_BYTES + MAX_NPC_BYTES
+
+static func file_limit(key: String) -> int:
+	return MAX_PROFILE_BYTES if key == "profile" else MAX_NPC_BYTES
 
 static func safe_hub(flow: GameFlow) -> bool:
 	return is_instance_valid(flow) and flow.active_scene is ExteriorHub and not flow.returning and not flow.return_save_pending and not flow.profile.read_only and not flow.profile.hub_inventory_quarantined and not flow.active_scene.outside and flow.active_scene.npc_population.talking_id == "" and not flow.get_tree().paused
@@ -22,7 +27,7 @@ func capture(flow: GameFlow, user: String) -> Dictionary:
 	for key: String in ["profile", "npc"]:
 		var file_path: String = path + (NpcWorldState.NPC_SUFFIX if key == "npc" else "")
 		var text: String = FileAccess.get_file_as_string(file_path)
-		if text.is_empty() or text.to_utf8_buffer().size() > 524288: error = "local_file_invalid"; return {}
+		if text.is_empty() or text.to_utf8_buffer().size() > file_limit(key): error = "local_file_invalid"; return {}
 		files[key] = {"text":text,"sha256":text.sha256_text()}
 	if _has_recovery(path): error = "local_recovery_pending"; return {}
 	return {"schemaVersion":1,"gameBuild":BUILD,"profileSchema":int(flow.profile.profile_version),"files":files}
@@ -42,7 +47,7 @@ func stage(capsule: Dictionary, user: String, store: AmdSlotStore) -> String:
 		if not files[key] is Dictionary or not files[key].get("text") is String or not files[key].get("sha256") is String: error = "invalid_capsule_file"; return ""
 		var text: String = files[key]["text"]
 		bytes += text.to_utf8_buffer().size()
-		if bytes > MAX_BYTES or text.to_utf8_buffer().size() > 524288 or text.sha256_text() != files[key]["sha256"]:
+		if bytes > MAX_BYTES or text.to_utf8_buffer().size() > file_limit(key) or text.sha256_text() != files[key]["sha256"]:
 			error = "capsule_digest_or_size"; return ""
 	var profile_data: Variant = JSON.parse_string(files["profile"]["text"])
 	if not profile_data is Dictionary or profile_data.get("version") != capsule["profileSchema"]: error = "profile_schema_mismatch"; return ""

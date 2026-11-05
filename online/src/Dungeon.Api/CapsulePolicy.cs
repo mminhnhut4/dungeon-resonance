@@ -9,10 +9,18 @@ namespace Dungeon.Api;
 /// seal/UID/life schema again before activating a restored local slot.
 public static class CapsulePolicy
 {
-    public const int MaximumBytes = 1_048_576;
+    // Match the existing Godot readers; never increase a core save limit here.
+    public const int MaximumProfileBytes = 524_288;
+    public const int MaximumNpcBytes = 32_768;
+    public const int MaximumBytes = MaximumProfileBytes + MaximumNpcBytes;
+    private const int LegacyMaximumBytes = 1_048_576;
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     public static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
-    public static ProgressSummary Validate(CloudCapsule? capsule)
+    public static ProgressSummary Validate(CloudCapsule? capsule) => Validate(capsule, true);
+    // Previously accepted cloud documents remain retrievable byte-for-byte.
+    // This read-only path does not permit new oversized writes or relax Godot's reader.
+    public static ProgressSummary ValidateStored(CloudCapsule? capsule) => Validate(capsule, false);
+    private static ProgressSummary Validate(CloudCapsule? capsule, bool newUpload)
     {
         if (capsule is null || capsule.SchemaVersion != 1 || capsule.ProfileSchema is not (1 or 2))
             throw new DomainFailure(422, "unsupported_schema");
@@ -20,12 +28,15 @@ public static class CapsulePolicy
             capsule.Files.Count != 2 || !capsule.Files.ContainsKey("profile") || !capsule.Files.ContainsKey("npc"))
             throw new DomainFailure(422, "invalid_capsule");
         long bytes = 0;
-        foreach (var file in capsule.Files.Values)
+        foreach (var (key, file) in capsule.Files)
         {
             if (file is null || file.Text is null || file.Sha256 is null || file.Sha256.Length != 64)
                 throw new DomainFailure(422, "invalid_file");
-            bytes += Encoding.UTF8.GetByteCount(file.Text);
-            if (bytes > MaximumBytes) throw new DomainFailure(413, "capsule_too_large");
+            var fileBytes = Encoding.UTF8.GetByteCount(file.Text);
+            bytes += fileBytes;
+            if (newUpload && fileBytes > (key == "profile" ? MaximumProfileBytes : MaximumNpcBytes))
+                throw new DomainFailure(413, "capsule_file_too_large");
+            if (bytes > (newUpload ? MaximumBytes : LegacyMaximumBytes)) throw new DomainFailure(413, "capsule_too_large");
             if (!string.Equals(Hash(file.Text), file.Sha256, StringComparison.Ordinal))
                 throw new DomainFailure(422, "digest_mismatch");
         }

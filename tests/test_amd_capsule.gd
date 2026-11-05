@@ -29,6 +29,21 @@ func _run() -> void:
 	if staged != "":
 		var restored := SanctuaryProfile.new(); restored.save_path = staged
 		check(restored.load_profile() and restored.souls == 77,"existing reader restores exact fixture")
+	# Pad real writer documents with legal JSON whitespace; reader/seal checks
+	# still run, and the accepted bytes must remain exact at each boundary.
+	for key: String in ["profile","npc"]:
+		for offset: int in [-1,0,1]:
+			var boundary: Dictionary = wire.duplicate(true)
+			var size: int = AmdCapsule.file_limit(key) + offset
+			var text: String = str(files[key]["text"])
+			text += " ".repeat(size - text.to_utf8_buffer().size())
+			boundary["files"][key] = {"text":text,"sha256":text.sha256_text()}
+			var result: String = capsule.stage(boundary,user,store)
+			if offset <= 0:
+				var target: String = result + (NpcWorldState.NPC_SUFFIX if key == "npc" else "")
+				check(result != "" and FileAccess.get_file_as_string(target) == text,"accept exact " + key + " byte boundary " + str(size) + ": " + capsule.error)
+			else:
+				check(result == "" and capsule.error == "capsule_digest_or_size","reject " + key + " one byte over without activation")
 	for key: String in ["schemaVersion","profileSchema"]:
 		for wrong: Variant in [null,true,false,"1",1.5,0,-1,999,INF,NAN]:
 			var broken: Dictionary = wire.duplicate(true); broken[key] = wrong

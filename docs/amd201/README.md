@@ -34,6 +34,10 @@ Mở `http://127.0.0.1:5086/` cho SPA. Từ root game:
 
 Launcher tạo vùng `AMD201Data` riêng trước khi Godot khởi động. Nhập cùng email trong game và SPA. Lưu/tải ở Hub; chuyến đi giữ cơ chế bank/return hiện có. Đăng nhập trên máy mới **không tự ghi local rỗng lên cloud**. Normal launcher/main scene không đổi.
 
+Launcher AMD nay chạy import headless tăng dần trước mỗi lần mở để tạo/khôi phục cache class và asset của source checkout. Chờ đúng tiến trình Windows kết thúc; import có lỗi hoặc không tạo được class cache sẽ chặn mở game. Log nằm trong `AMD201Data/launcher-logs`. Không sửa launcher thường hoặc cơ chế lưu lõi.
+
+Giới hạn capsule mới tính theo byte UTF-8, khớp reader hiện hành: profile **524.288 byte**, NPC **32.768 byte**; tổng tối đa **557.056 byte**. API từ chối upload quá ngưỡng bằng HTTP413 trước khi ghi DB. Không đổi schema, seal, revision hay nội dung file. GET dùng đường đọc tương thích cho bản đã lưu theo tổng trần cũ1MiB, giữ nguyên bytes/digest và không sửa DB; client vẫn từ chối file vượt trần reader, giữ slot local. Không tự cắt/chuyển đổi bản cloud cũ hoặc nới reader để nhận nó.
+
 Cold restore đã sửa: số nguyên JSON được Godot parse thành float nên phép membership mảng int từ chối schema hợp lệ; client nay kiểm đúng miền số nguyên, không ép chuỗi/bool/số lẻ. Retry hàng chờ cũng chuẩn hóa số envelope thành integer token cho ASP.NET, giữ nguyên chuỗi profile/NPC. Regression invalid type/schema/digest/seal vẫn từ chối.
 
 Menu cloud đặt dưới vùng HUD, nút ở góc dưới phải. **F9** mở, **Esc/Đóng** trở lại game; Tab/Shift+Tab và phím mũi tên đi trong các nút của menu. Game tạm dừng khi menu mở, HTTP vẫn chạy; có thể đóng menu để chơi trong lúc chờ mạng. Pause chỉ sở hữu nhánh GameFlow, giữ và trả lại các process override của UI cũ, không đổi global pause, combat FSM hay chỉ số. Click đóng không trở thành đòn đánh. Native ở1152×648 và960×540, mở/đóng lặp, focus/keyboard/mouse, di chuyển/cast sau đóng và quyền khóa của owner khác đã kiểm: **41/41 pass**. Cold restore sau thay đổi UI **11/11 pass**, launcher smoke pass. Xem [UI_QA.md](UI_QA.md).
@@ -41,6 +45,8 @@ Menu cloud đặt dưới vùng HUD, nút ở góc dưới phải. **F9** mở, 
 Kiểm launcher không đăng nhập bằng `-SmokeTest -DataRoot '<thư mục QA mới>'`. Smoke test xác nhận vùng lưu tách biệt, chưa tạo profile trước login và main scene thường không đổi. Token server có hạn 8 giờ; khi mạng mất, logout xóa token client nhưng có thể chưa thu hồi được phiên server. Không lưu mật khẩu/token vào profile hay browser storage.
 
 ## Kiểm tra
+
+Kiểm lại sau sửa launcher/giới hạn ngày05/11: backend **18 pass / 1 PostgreSQL skip**; Godot capsule **38/38 pass** qua reader thật, gồm dưới/đúng/trên ngưỡng cả hai file. Source sạch tự import và smoke pass; thiếu riêng class cache được khôi phục. Fixture asset import lỗi chặn game trước khi chạy. Native với API SQLite: write **30/30**, cold restore **11/11**, exit0. Bản cloud cũ quá ngưỡng mới vẫn GET nguyên bytes; upload quá ngưỡng trả413 và không đổi revision, capsule hay receipt; upload hợp lệ tiếp theo vẫn hoạt động. Đây là regression tập trung, không phải kiểm PostgreSQL hoặc toàn game.
 
 `dotnet test online/tests/Dungeon.Api.Tests/Dungeon.Api.Tests.csproj` có 9 policy/HTTP test dùng SQLite *chỉ trong test host*. Test PostgreSQL riêng bị skip khi thiếu `AMD201_TEST_PG`; **không tính skip là pass**. Khi được phép có test DB synthetic, set biến đó rồi chạy filter `PostgresTests`; test tạo/xóa schema `qa_<guid>` trong DB test, kiểm migrations, concurrent writers, idempotency và ownership. Không trỏ DB thật.
 

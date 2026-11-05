@@ -65,6 +65,8 @@ Mở cửa sổ mới trong cùng thư mục source. Thay đường dẫn ví d�
 .\Run-AMD201.ps1 -GodotPath 'C:\Tools\Godot_v4.7.2-stable_win64.exe'
 ```
 
+Launcher tự chạy import Godot trước khi mở game. Lần đầu hoặc khi thiếu cache sẽ lâu hơn; chờ thông báo, không mở nhiều launcher cùng lúc. Nếu import lỗi, game không được mở; xem log trong `AMD201Data\launcher-logs`, sửa lỗi được báo rồi thử lại. Không cần tự xóa cache hoặc mở Godot Editor/F5.
+
 Launcher tạo `AMD201Data` riêng cho bản AMD. Nếu thấy Hub ngay mà không qua màn tài khoản, có thể bạn đã dùng F6/F5 hoặc mở entry game thường; hãy dùng launcher ở trên. `CHAY_TEAM_TEST.cmd` là bản mở khóa test khác, không phải luồng tài khoản AMD.
 
 Trong game, nhập email thử của riêng mình và mật khẩu 12-128 ký tự, chọn Đăng ký. Sau thông báo thành công, nhập lại mật khẩu rồi chọn Đăng nhập. Không gửi mật khẩu trong nhóm hoặc báo cáo lỗi.
@@ -100,6 +102,7 @@ Trong menu Cloud, Tab/Shift+Tab và phím mũi tên đổi focus, Space kích ho
 
 - **Không nhận dotnet/node/npx:** thiếu phần mềm hoặc terminal chưa nhận PATH; mở terminal mới và kiểm phiên bản. Không cần cài Docker để làm demo QA này.
 - **Không tìm thấy Godot/sai phiên bản:** sửa `-GodotPath` tới đúng EXE4.7.2; launcher không tự tải engine.
+- **Import thất bại:** giữ log `AMD201Data\launcher-logs` và gửi bước tái hiện đã che đường dẫn riêng. Không bỏ qua lỗi để mở game; không gửi cả thư mục dữ liệu cá nhân.
 - **Web không vào được hoặc game báo network:** kiểm cửa sổ A, địa chỉ5086 và log lỗi. Nếu cổng đang được ứng dụng khác dùng, dừng đúng tiến trình của mình hoặc nhờ người phụ trách, không kill bừa.
 - **Web404/trang trắng:** chạy lại build web ở bước4; `ASPNETCORE_CONTENTROOT` phải trỏ tới thư mục API source. Khởi động lại API sau build nếu cần.
 - **Không đăng nhập được:** đăng ký tài khoản trên chính API local này; kiểm mật khẩu và thông báo lỗi. Nếu bị giới hạn số lần thử, chờ rồi thử lại.
@@ -118,3 +121,7 @@ Khi báo lỗi, gửi branch/commit, bước tái hiện, thông báo đã che t
 Source của hướng dẫn đã đối chiếu với launcher, QA host và InputMap. Kiểm thêm cho hướng dẫn: restore/build QA host pass, web install giữ lockfile và kiểm nguồn gói pass, build web pass; API khởi động với thư mục QA mới, `/health/ready` và trang web trả HTTP200 rồi đã dừng. Web được kiểm bằng pnpm CLI11.25.0 sẵn có; chưa chạy nguyên lệnh npx cài mới trên một máy Windows khác.
 
 Gói review đã import Godot sạch; backend9pass/1PGskip, web3test pass. Các bằng chứng trước đó gồm native menu41/cold restore11 và demo browser6pass, dùng SQLite synthetic. Chưa chứng minh cài đặt sạch trên mọi máy hoặc toàn bộ hành trình ổn định. PostgreSQL thật, Docker/CI/deploy và crash/khựng lịch sử vẫn còn giới hạn như báo cáo AMD.
+
+Giới hạn upload mới khớp reader game: profile 524.288 byte, NPC 32.768 byte UTF-8. Bản cloud cũ vẫn được API giữ/đọc nguyên văn; nếu vượt trần reader, game từ chối tải và giữ local, không tự cắt hoặc sửa save.
+
+Kiểm tập trung sau sửa ngày05/11: source sạch tự import, thiếu class cache được khôi phục và lỗi asset import chặn mở game; backend18pass/1PGskip, capsule38pass, native lưu30pass và cold restore11pass qua SQLite. Chưa phải kiểm toàn bộ game hoặc PostgreSQL.

@@ -45,6 +45,14 @@ public static class Sample
         var npc = "{\"npc_schema\":8,\"tick\":0,\"records\":{}}";
         return new(1, "synthetic-contract-test", 2, new() { ["profile"] = new(profile, CapsulePolicy.Hash(profile)), ["npc"] = new(npc, CapsulePolicy.Hash(npc)) });
     }
+    public static CloudCapsule WithFileBytes(CloudCapsule capsule, string key, int size)
+    {
+        var text = capsule.Files[key].Text;
+        text += new string(' ', size - System.Text.Encoding.UTF8.GetByteCount(text));
+        var files = capsule.Files.ToDictionary(x => x.Key, x => x.Value);
+        files[key] = new(text, CapsulePolicy.Hash(text));
+        return capsule with { Files = files };
+    }
     public static async Task<string> Login(HttpClient client, string email)
     {
         var input = new Credentials(email, "Synthetic test passphrase 42");
@@ -92,9 +100,61 @@ public sealed class PolicyTests
         a.Files["profile"] = new(text, CapsulePolicy.Hash(text));
         Assert.Equal(413, Assert.Throws<DomainFailure>(() => CapsulePolicy.Validate(a)).Status);
     }
+    [Theory]
+    [InlineData("profile", -1)] [InlineData("profile", 0)] [InlineData("profile", 1)]
+    [InlineData("npc", -1)] [InlineData("npc", 0)] [InlineData("npc", 1)]
+    public void EachFileMatchesGodotReaderByteBoundary(string key, int offset)
+    {
+        var limit = key == "profile" ? CapsulePolicy.MaximumProfileBytes : CapsulePolicy.MaximumNpcBytes;
+        var capsule = Sample.WithFileBytes(Sample.Capsule(), key, limit + offset);
+        if (offset <= 0) Assert.Equal(12, CapsulePolicy.Validate(capsule).Souls);
+        else
+        {
+            var error = Assert.Throws<DomainFailure>(() => CapsulePolicy.Validate(capsule));
+            Assert.Equal(413, error.Status); Assert.Equal("capsule_file_too_large", error.Code);
+        }
+    }
+    [Fact] public void FileLimitCountsUtf8BytesAndBothMaximumFilesAreAccepted()
+    {
+        var capsule = Sample.WithFileBytes(Sample.WithFileBytes(Sample.Capsule(), "profile", CapsulePolicy.MaximumProfileBytes), "npc", CapsulePolicy.MaximumNpcBytes);
+        Assert.Equal(12, CapsulePolicy.Validate(capsule).Souls);
+        var text = "{\"version\":2,\"note\":\"" + new string('đ', CapsulePolicy.MaximumProfileBytes / 2) + "\"}";
+        capsule.Files["profile"] = new(text, CapsulePolicy.Hash(text));
+        Assert.True(text.Length < CapsulePolicy.MaximumProfileBytes);
+        Assert.Equal(413, Assert.Throws<DomainFailure>(() => CapsulePolicy.Validate(capsule)).Status);
+    }
 }
 public sealed class HttpContractTests
 {
+    [Theory] [InlineData("profile")] [InlineData("npc")]
+    public async Task LegacyCloudBytesRemainReadableAndRejectedUploadDoesNotOverwriteThem(string key)
+    {
+        using var host = new ContractHost(); using var client = host.Start();
+        await Sample.Login(client, "legacy@amd.test");
+        var limit = key == "profile" ? CapsulePolicy.MaximumProfileBytes : CapsulePolicy.MaximumNpcBytes;
+        var legacy = Sample.WithFileBytes(Sample.Capsule(41), key, limit + 1);
+        var storedJson = JsonSerializer.Serialize(legacy, CapsulePolicy.Json);
+        using (var scope = host.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GameDb>();
+            db.Progress.Add(new() { UserId = (await db.Accounts.SingleAsync()).Id, Revision = 3, UpdatedAt = DateTime.UtcNow, CapsuleJson = storedJson });
+            await db.SaveChangesAsync();
+        }
+        var read = (await client.GetFromJsonAsync<CloudProgress>("/api/progress"))!;
+        Assert.Equal(3, read.Revision); Assert.Equal(legacy.Files[key].Text, read.Capsule.Files[key].Text);
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/progress") { Content = JsonContent.Create(new SaveProgress(3, legacy)) };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, (await client.SendAsync(request)).StatusCode);
+        using (var scope = host.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GameDb>();
+            var row = await db.Progress.SingleAsync();
+            Assert.Equal(3, row.Revision); Assert.Equal(storedJson, row.CapsuleJson); Assert.Empty(await db.Receipts.ToListAsync());
+        }
+        // A subsequent valid upload still follows the existing revision contract.
+        Assert.Equal(HttpStatusCode.OK, (await Sample.Save(client, Guid.NewGuid(), 3, 42)).StatusCode);
+        Assert.Equal(4, (await client.GetFromJsonAsync<CloudProgress>("/api/progress"))!.Revision);
+    }
     [Fact] public async Task PrivateProgressRequiresSessionAndUnknownApiIs404()
     {
         using var host = new ContractHost(); using var client = host.Start();
