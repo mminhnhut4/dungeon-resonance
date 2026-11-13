@@ -21,3 +21,6 @@ online/**/amd201_20261030/
 online/src/Dungeon.Api/wwwroot/
 online/.secrets/
 online/*.db*
+
+# Mac-only launch project/cache; never commit generated runtime links
+/.amd-mac-runtime/
