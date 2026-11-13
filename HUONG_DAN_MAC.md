@@ -44,3 +44,10 @@ npx --yes pnpm@11.25.0 --dir online/web build
 Smoke-test chỉ kiểm import, cache, vùng dữ liệu AMD riêng và trạng thái trước đăng nhập; không kiểm API/PostgreSQL hoặc đo độ mượt. Để dựng lại sau đổi source API/web, lặp các bước build tương ứng. Không dùng dữ liệu thật trong QA host. Không thay cấu hình .NET production chỉ vì QA Mac chạy được.
 
 Launcher từ chối khởi động khi cổng 5086 đang có server khác; đóng phiên AMD trước rồi mở lại. Không tự dùng chung server đang chạy, tránh gửi tài khoản/save vào nhầm database.
+
+
+## Điểm nổi bật môn và ảnh trình diễn
+
+Xem [DEMO_DIEM_NOI_BAT.md](docs/amd201/DEMO_DIEM_NOI_BAT.md): ảnh Godot lưu revision 3, React cùng tài khoản đọc đúng revision/tài nguyên, cold restore giữ slot cũ và tài khoản B không thấy A. Ảnh dùng dữ liệu synthetic. Kiểm Mac bổ sung: API 18 pass / 1 PG skip; native edge 32, menu 41, combat 14, UI comparison 21; showcase 21, cold revision 3 đạt 11 và Chrome 6. Đây không phải chứng minh toàn game ổn định hoặc triển khai thật.
+
+Đối chiếu tài liệu mới hơn: Week 03 trang 12 yêu cầu SQL Server/PostgreSQL và chuỗi Docker/Actions/registry/PaaS. SQLite local vẫn chỉ là QA; chưa đủ điều kiện gọi bài cuối kỳ hoàn tất.

@@ -1,0 +1,60 @@
+{
+  "capturedOn": "2026-11-13",
+  "sourceCommit": "9d82d4839a0b42171b026a5cf00e8d751b3fc7cd",
+  "scope": "Actual native Godot and Chrome screenshots, synthetic isolated SQLite QA only. Not PostgreSQL, Docker, CI, deployment or whole-game stability evidence.",
+  "godot": "4.7.2 stable Mono / Compatibility / Apple M5 Pro",
+  "browser": {
+    "executable": "Google Chrome",
+    "version": "157.0.8103.51",
+    "headless": true
+  },
+  "fixture": {
+    "account": "synthetic A/B @amd.test",
+    "cloudRevision": 3,
+    "souls": 321,
+    "coins": 17,
+    "note": "Synthetic QA values; not earned progression or a balance claim."
+  },
+  "checks": {
+    "apiPassed": 18,
+    "apiPostgresSkipped": 1,
+    "webPassed": 3,
+    "webBuild": "pass",
+    "capsulePassed": 38,
+    "nativeWritePassed": 30,
+    "nativeColdRestorePassed": 11,
+    "nativeEdgePassed": 32,
+    "nativeMenuPassed": 41,
+    "nativeCombatPassed": 14,
+    "nativeUiPerfPassed": 21,
+    "nativeShowcasePassed": 21,
+    "nativeColdRevision3Passed": 11,
+    "browserRevision3Passed": 6
+  },
+  "files": [
+    {
+      "filename": "01-godot-save-revision-3.png",
+      "sha256": "3f9edbeba757ef3066ff87aac039b3e767b90d227224e120cb2cbe5935bb82bd"
+    },
+    {
+      "filename": "02-godot-server-revision-3.png",
+      "sha256": "0ec69f387d947a3dee803f86ac900fd40a3517e76e38a774cf0fd41d0b25e894"
+    },
+    {
+      "filename": "03-react-same-account-revision-3.png",
+      "sha256": "812adf6266fba8ad014684e9dc4c4a4cc493b1214da7970d32159ad128801fca"
+    },
+    {
+      "filename": "04-godot-cold-restore.png",
+      "sha256": "d592235a10a1a58877d6788bde22c0d79f20427d8b4ecc9a201c38d740f591db"
+    },
+    {
+      "filename": "05-react-account-b-empty.png",
+      "sha256": "9bd265db667331811de2139d680ff71edf4b38f109d0d635bc26a692e244ae5a"
+    },
+    {
+      "filename": "06-react-mobile-login.png",
+      "sha256": "9fe481f8284d91b063b2e090ad52ccf56e2e8d00e2acfcb92bd8e8c3f95df0a6"
+    }
+  ]
+}
