@@ -49,4 +49,4 @@ config/custom_user_dir_name="Dungeon Resonance Scope QA/<mã-lượt-mới>"
 
 Save cũ có tối đa tám scope vẫn đọc không cần migration. Binary cũ còn trần tám scope có thể từ chối save mới đã vượt tám; không khẳng định tương thích ngược với client chưa vá. Dùng client đã cập nhật khi chuyển save đó giữa máy.
 
-Đây là kiểm logic/persistence/cloud-policy có giới hạn, không phải full playthrough, strict toàn game, đo FPS, kiểm âm thanh hoặc chứng minh crash lịch sử đã hết. Bản sửa ở nhánh local `fix/game-profile-scope-capacity-20261113`; chưa push và chưa áp vào checkout AMD đang dùng tại thời điểm ghi báo cáo.
+Đây là kiểm logic/persistence/cloud-policy có giới hạn, không phải full playthrough, strict toàn game, đo FPS, kiểm âm thanh hoặc chứng minh crash lịch sử đã hết. Bản sửa ban đầu ở nhánh local `fix/game-profile-scope-capacity-20261113` (77f4c31), sau đó được tích hợp vào checkout AMD review thành `437827d`. Đã kiểm lại owner 217/217, cold 42/42, capsule 38/38 và native AMD write/restore/edge/menu; xem `docs/amd201/INTEGRATION_MAC_20261113.md`. Trạng thái push/deploy cần đối chiếu remote; tích hợp local không tự chứng minh deployment.
