@@ -28,6 +28,9 @@ var opening_progress: Dictionary = OpeningProgress.empty()
 var opening_progress_quarantined: bool = false
 const CommitWriter = preload("res://scripts/runtime/profile_commit_writer.gd")
 const CultivationState = preload("res://scripts/cultivation/opening_cultivation_state.gd")
+## Nine ordinary content owners already share this envelope. Keep headroom for
+## bounded additive content and QA, without relaxing byte or receipt budgets.
+const MAX_EXTENSION_NAMESPACES: int = 16
 var cultivation_progress: Dictionary = {}
 var profile_version: int = 1
 var read_only: bool = false
@@ -328,7 +331,7 @@ func commit_cultivation(proposal: Dictionary, fence: Dictionary = {}, guard: Cal
 		if ability_choice not in ["cloud_return","tether_sigil"]:
 			last_commit={"ok":false,"status":"rejected","error":"branch_choice_required"}; return false
 		var extensions: Dictionary = _retained_fields.get("event_extensions",{"schema_version":1,"namespaces":{}}).duplicate(true)
-		if not _valid_extensions(extensions) or extensions["namespaces"].has("abilities") or extensions["namespaces"].size()>=8:
+		if not _valid_extensions(extensions) or extensions["namespaces"].has("abilities") or extensions["namespaces"].size()>=MAX_EXTENSION_NAMESPACES:
 			last_commit={"ok":false,"status":"rejected","error":"ability_scope_requires_review"}; return false
 		var ability_state: Dictionary = {"version":1,"learned_ids":[ability_choice],"selected_id":ability_choice}
 		var receipt: Dictionary = {"id":"truc_co_branch_v1","arguments_sha256":CommitWriter.canonical(ability_state).sha256_text(),"revision":1}
@@ -521,7 +524,7 @@ func migrate_legacy_event_scope(scope_id: String, legacy_key: String, validator:
 		if not _valid_extension_entry(extensions["namespaces"][scope_id]): return {"ok":false,"status":"extension_quarantined","error":"malformed_or_future_namespace"}
 		if CommitWriter.canonical(extensions["namespaces"][scope_id]["state"])!=CommitWriter.canonical(legacy): return {"ok":false,"status":"extension_quarantined","error":"legacy_scope_conflict"}
 	else:
-		if extensions["namespaces"].size()>=8: return {"ok":false,"status":"rejected","error":"scope_capacity"}
+		if extensions["namespaces"].size()>=MAX_EXTENSION_NAMESPACES: return {"ok":false,"status":"rejected","error":"scope_capacity"}
 		var receipt: Dictionary = {"id":"migration_legacy_"+scope_id+"_v1","arguments_sha256":CommitWriter.canonical([scope_id,legacy_key,legacy]).sha256_text(),"revision":1}
 		extensions["namespaces"][scope_id]={"revision":1,"state":legacy.duplicate(true),"receipts":[receipt]}
 	var previous: Dictionary = _retained_fields.duplicate(true)
@@ -550,7 +553,7 @@ func commit_extension_event(scope_id: String, event_id: String, materials_cost: 
 	for receipt: Dictionary in current["receipts"]:
 		if receipt["id"]==event_id:
 			return {"ok":true,"status":"already_committed","revision":receipt["revision"]} if receipt["arguments_sha256"]==args_hash else {"ok":false,"status":"rejected","error":"event_conflict"}
-	if int(current["revision"])!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=8): return {"ok":false,"status":"rejected","error":"revision_or_capacity"}
+	if int(current["revision"])!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=MAX_EXTENSION_NAMESPACES): return {"ok":false,"status":"rejected","error":"revision_or_capacity"}
 	if souls<souls_cost: return {"ok":false,"status":"rejected","error":"insufficient_souls"}
 	var source: Dictionary = carried.materials if carried != null else material_stash
 	for id: Variant in materials_cost:
@@ -596,7 +599,7 @@ func commit_npc_extension_event(scope_id: String, event_id: String, next_state: 
 	for receipt: Dictionary in current["receipts"]:
 		if receipt["id"]==event_id:
 			return {"ok":true,"status":"already_committed","revision":receipt["revision"]} if receipt["arguments_sha256"]==args_hash else {"ok":false,"status":"rejected","error":"event_conflict"}
-	if current["revision"]!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=8) or not npc_owner.sect_proposal_matches(npc_proposal): return {"ok":false,"status":"rejected","error":"stale_sect_proposal_or_capacity"}
+	if current["revision"]!=expected_revision or current["receipts"].size()>=256 or (not extensions["namespaces"].has(scope_id) and extensions["namespaces"].size()>=MAX_EXTENSION_NAMESPACES) or not npc_owner.sect_proposal_matches(npc_proposal): return {"ok":false,"status":"rejected","error":"stale_sect_proposal_or_capacity"}
 	# Knowledge already available never consumes sect credit through this API.
 	if not knowledge_recipe.is_empty() and (discovered_recipes.has(&"firestorm") or archived_recipes.has(&"firestorm")): return {"ok":false,"status":"rejected","error":"recipe_already_known"}
 	var assistance_count: int = 0
@@ -656,7 +659,7 @@ static func _json_data(value: Variant, level: int = 0) -> bool:
 	return value==null or value is bool or value is int or value is String or value is StringName or (value is float and is_finite(value))
 
 static func _valid_extensions(data: Variant) -> bool:
-	if not data is Dictionary or data.size()!=2 or data.get("schema_version")!=1 or not data.get("namespaces") is Dictionary or data["namespaces"].size()>8: return false
+	if not data is Dictionary or data.size()!=2 or data.get("schema_version")!=1 or not data.get("namespaces") is Dictionary or data["namespaces"].size()>MAX_EXTENSION_NAMESPACES: return false
 	for scope_id: Variant in data["namespaces"]:
 		if not scope_id is String or not _extension_id(scope_id,32): return false
 		# Social is an opaque extension boundary, even when its own envelope is
